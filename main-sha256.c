@@ -13,7 +13,7 @@ int main(int argc, char **argv)
     {
         char * const string = argv[1];
 
-        PRINT("Calculating SHA1 for \"%s\"...\n", string);
+        PRINT("Calculating SHA256 for \"%s\"...\n", string);
         PRINT("Using byte size of %u\n", (unsigned) CHAR_BIT);
 
         uint8_t *digest = SHAstring(string);
