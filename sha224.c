@@ -5,7 +5,7 @@
 #include <string.h>
 #include <limits.h>
 
-#define SHA256_LENGTH                                        (64 + 1)
+#define SHA224_LENGTH                                       (56 + 1)
 
 /* functions called by SHAstring */
 extern uint32_t append_padding(uint8_t **, const char *, uint32_t *);
@@ -97,14 +97,14 @@ uint8_t *SHAstring(const char *msg)
 
     /* the initial hash value, H(0), shall consist of the following eight 32-bit words, in hex: */
 
-    h0 = 0x6a09e667;
-    h1 = 0xbb67ae85;
-    h2 = 0x3c6ef372;
-    h3 = 0xa54ff53a;
-    h4 = 0x510e527f;
-    h5 = 0x9b05688c;
-    h6 = 0x1f83d9ab;
-    h7 = 0x5be0cd19;
+    h0 = 0xc1059ed8;
+    h1 = 0x367cd507;
+    h2 = 0x3070dd17;
+    h3 = 0xf70e5939;
+    h4 = 0xffc00b31;
+    h5 = 0x68581511;
+    h6 = 0x64f98fa7;
+    h7 = 0xbefa4fa4;
 
     /**
      * TODO
@@ -198,9 +198,9 @@ void process(uint8_t **digest, uint32_t block_count)
     }
 
     free(*digest);
-    *digest = malloc(SHA256_LENGTH);
+    *digest = malloc(SHA224_LENGTH);
 
-    snprintf((char *) *digest, SHA256_LENGTH, "%08x%08x%08x%08x%08x%08x%08x%08x", h0, h1, h2, h3, h4, h5, h6, h7);
+    snprintf((char *) *digest, SHA224_LENGTH, "%08x%08x%08x%08x%08x%08x%08x", h0, h1, h2, h3, h4, h5, h6);
 }
 
 uint32_t h(uint8_t i, uint32_t x, uint32_t y, uint32_t z)
