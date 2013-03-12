@@ -35,6 +35,7 @@
  * should have type NULL.
  */
 
+#include "md5.h"
 #include "util.h"
 
 #include <stdio.h>
@@ -50,9 +51,9 @@
 #define MD5_LENGTH       (32 + 1)
 
 /* functions called by MD5string */
-extern uint32_t append_padding(uint8_t **, const char *, uint32_t *);
-static void append_length(uint8_t *, uint64_t, uint32_t);
-static void process(uint8_t **, uint32_t);
+extern uint32_t append_padding(uint8_t **, const char *, uint32_t *, struct hash_info *);
+static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
+static void process(uint8_t **, const uint32_t, const uint16_t);
 
 /* hash functions */
 static uint32_t h(uint8_t, uint32_t, uint32_t, uint32_t);
@@ -86,6 +87,12 @@ extern uint32_t rotl(const uint32_t, const uint8_t);
 
 uint8_t *MD5string(const char *msg)
 {
+    struct hash_info *info = malloc(sizeof *info);
+
+    info->block_size = BLOCK_SIZE_BITS;
+    info->padded_length = PADDED_LENGTH_BITS;
+    info->digest_length = DIGEST_LENGTH_BITS;
+
     uint8_t *digest;
 
     /* length in bytes */
@@ -124,7 +131,7 @@ uint8_t *MD5string(const char *msg)
      */
 
     uint32_t padded_length = message_length;
-    const uint32_t block_count = append_padding(&digest, msg, &padded_length);
+    const uint32_t block_count = append_padding(&digest, msg, &padded_length, info);
 
     /**
      * Step 2. Append Length
@@ -144,7 +151,7 @@ uint8_t *MD5string(const char *msg)
      */
 
     PRINT("padded length = %u\n", padded_length);
-    append_length(digest, b, padded_length);
+    append_length(digest, b, padded_length, info->block_size);
 
 #ifdef DEBUG
     print_d(digest, padded_length);
@@ -201,7 +208,7 @@ uint8_t *MD5string(const char *msg)
      * is in radians. The elements of the table are given in the appendix.
      */
 
-    process(&digest, block_count);
+    process(&digest, block_count, info->block_size);
 
     return digest;
 }
@@ -214,9 +221,9 @@ void init_table()
     }
 }
 
-void append_length(uint8_t *digest, uint64_t length, uint32_t index)
+void append_length(uint8_t *digest, const uint64_t length, const uint32_t index, const uint16_t block_size)
 {
-    const uint8_t len_bytes = BLOCK_SIZE_BITS / CHAR_BIT;
+    const uint8_t len_bytes = block_size / CHAR_BIT;
 
     /* assume length < 2^64 */
     for (uint8_t i = 0; i < len_bytes; ++i)
@@ -225,7 +232,7 @@ void append_length(uint8_t *digest, uint64_t length, uint32_t index)
     }
 }
 
-void process(uint8_t **digest, uint32_t block_count)
+void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_size)
 {
     init_table();
 
@@ -241,7 +248,7 @@ void process(uint8_t **digest, uint32_t block_count)
     /* Process each 16-word block. */
     for (uint32_t block = 0, i = 0; block < block_count; ++block, i = 0)
     {
-        X = *digest + block * BLOCK_SIZE_BITS;
+        X = *digest + block * block_size;
 
         /* Save h0 as $0, h1 as $1, h2 as $2, and h3 as $3. */
         $0 = h0;
@@ -389,5 +396,5 @@ void r(uint32_t *a, uint32_t b, uint32_t c, uint32_t d, uint8_t k, uint8_t s, ui
                + (X[4 * k + 2] << 16)
                + (X[4 * k + 3] << 24);
 
-    *a = b + rotl(*a + h(i, b, c, d) + x + T[i], s);
+    *a = b + ROTL(*a + h(i, b, c, d) + x + T[i], s);
 }

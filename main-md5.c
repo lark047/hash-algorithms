@@ -3,7 +3,55 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <limits.h>
+
+#include <CUnit/Basic.h>
+
+static void testMD5(void)
+{
+    const char *msgs[] = {
+        "",
+        "a",
+        "abc",
+        "message digest",
+        "abcdefghijklmnopqrstuvwxyz",
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+        "12345678901234567890123456789012345678901234567890123456789012345678901234567890",
+        "The quick brown fox jumps over the lazy dog",
+        "The quick brown fox jumps over the lazy dog.",
+        0
+    };
+
+    const char *md5s[] = {
+        "d41d8cd98f00b204e9800998ecf8427e",
+        "0cc175b9c0f1b6a831c399e269772661",
+        "900150983cd24fb0d6963f7d28e17f72",
+        "f96b697d7cb7938d525a2f31aaf161d0",
+        "c3fcd3d76192e4007dfb496cca67e13b",
+        "d174ab98d277d9f5a5611c2c9f419d9f",
+        "57edf4a22be3c955ac49da2e2107b67a",
+        "9e107d9d372bb6826bd81d3542a419d6",
+        "e4d909c290d0fb1ca068ffaddf22cbd0"
+    };
+    const char *actual, *expected;
+
+    for (uint8_t i = 0; msgs[i]; ++i)
+    {
+        expected = md5s[i];
+        actual = (const char *) MD5string(msgs[i]);
+
+        CU_ASSERT_STRING_EQUAL(actual, expected);
+
+        if (strcmp(expected, actual))
+        {
+            fprintf(stderr, "\n");
+            fprintf(stderr, "%s\n", msgs[i]);
+            fprintf(stderr, "expected: %s\n", expected);
+            fprintf(stderr, "actual  : %s\n", actual);
+        }
+    }
+}
 
 int main(int argc, char **argv)
 {
@@ -11,12 +59,47 @@ int main(int argc, char **argv)
 
     if (argc == 2)
     {
-        char * const string = argv[1];
+        if (strcmp(argv[1], "-t") == 0)
+        {
+            CU_pSuite suite;
 
-        PRINT("Calculating MD5 for \"%s\"...\n", string);
-        PRINT("Using byte size of %u\n", (unsigned) CHAR_BIT);
+            if (CU_initialize_registry() != CUE_SUCCESS)
+            {
+                rc = CU_get_error();
+            }
+            else
+            {
+                if ((suite = CU_add_suite("SHA56 Test Suite", NULL, NULL)) == NULL)
+                {
+                    CU_cleanup_registry();
+                    rc = CU_get_error();
+                }
+                else
+                {
+                    if (CU_ADD_TEST(suite, testMD5) == NULL)
+                    {
+                        CU_cleanup_registry();
+                        rc = CU_get_error();
+                    }
+                    else
+                    {
+                        CU_basic_set_mode(CU_BRM_VERBOSE);
+                        CU_basic_run_tests();
+                        CU_cleanup_registry();
 
-        uint8_t *digest = MD5string(string);
+                        rc = CU_get_error();
+                    }
+                }
+            }
+        }
+        else
+        {
+            char * const string = argv[1];
+
+            PRINT("Calculating MD5 for \"%s\"...\n", string);
+            PRINT("Using byte size of %u\n", (unsigned) CHAR_BIT);
+
+            uint8_t *digest = MD5string(string);
 
     /* 0: 11b3d4b6bbf79f541eb76a7f55f2fd3f */
     /* 1: 3cf198ac802190f62e0036ecf545ee79 */
@@ -35,55 +118,17 @@ int main(int argc, char **argv)
     /* e: 9e107d9d372bb6826bd81d3542a419d6 */
     /*    9e107d9d372bb6826bd81d3542a419d6 */
 
-    /**
-     * Results
-     *
-     * ""
-     *   expected: d41d8cd98f00b204e9800998ecf8427e
-     *     actual: d41d8cd98f00b204e9800998ecf8427e
-     *
-     * "a"
-     *   expected: 0cc175b9c0f1b6a831c399e269772661
-     *     actual: 0cc175b9c0f1b6a831c399e269772661
-     *
-     * "abc"
-     *   expected: 900150983cd24fb0d6963f7d28e17f72
-     *     actual: 900150983cd24fb0d6963f7d28e17f72
-     *
-     * "message digest"
-     *   expected: f96b697d7cb7938d525a2f31aaf161d0
-     *     actual: f96b697d7cb7938d525a2f31aaf161d0
-     *
-     * "abcdefghijklmnopqrstuvwxyz"
-     *   expected: c3fcd3d76192e4007dfb496cca67e13b
-     *     actual: c3fcd3d76192e4007dfb496cca67e13b
-     *
-     * "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-     *   expected: d174ab98d277d9f5a5611c2c9f419d9f
-     *     actual: d174ab98d277d9f5a5611c2c9f419d9f
-     *
-     * "12345678901234567890123456789012345678901234567890123456789012345678901234567890"
-     *   expected: 57edf4a22be3c955ac49da2e2107b67a
-     *     actual: 57edf4a22be3c955ac49da2e2107b67a
-     *
-     * "The quick brown fox jumps over the lazy dog"
-     *   expected: 9e107d9d372bb6826bd81d3542a419d6
-     *     actual: 9e107d9d372bb6826bd81d3542a419d6
-     *
-     * "The quick brown fox jumps over the lazy dog."
-     *   expected: e4d909c290d0fb1ca068ffaddf22cbd0
-     *     actual: e4d909c290d0fb1ca068ffaddf22cbd0
-     */
 
-        printf("%s\n", digest);
+            printf("%s\n", digest);
 
-        /* clean up */
-        PRINT("%s\n", "Cleaning up...");
-        PRINT("0x%p\n", (void *) digest);
-        free(digest);
-        digest = NULL;
+            /* clean up */
+            PRINT("%s\n", "Cleaning up...");
+            PRINT("0x%p\n", (void *) digest);
+            free(digest);
+            digest = NULL;
 
-        rc = EXIT_SUCCESS;
+            rc = EXIT_SUCCESS;
+        }
     }
     else
     {
