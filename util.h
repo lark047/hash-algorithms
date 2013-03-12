@@ -3,17 +3,19 @@
 
 #include <stdint.h>
 
-uint32_t append_padding(uint8_t **, const char *, uint32_t *);
+struct hash_info
+{
+    /* in bits */
+    uint8_t   block_size;
+    uint16_t  padded_length;
+    uint16_t  digest_length;
+};
 
-#if 0
-uint32_t rotl(const uint32_t, const uint8_t);
-uint32_t rotr(const uint32_t, const uint8_t);
-uint32_t shr(const uint32_t, const uint8_t);
-#else
+uint32_t append_padding(uint8_t **, const char *, uint32_t *, struct hash_info *);
+
 # define ROTL(v,s) (((v) << (s)) | ((v) >> (sizeof(v) * CHAR_BIT - (s))))
 # define ROTR(v,s) (((v) >> (s)) | ((v) << (sizeof(v) * CHAR_BIT - (s))))
 # define SHR(v,s)  ((v) >> (s))
-#endif
 
 #ifdef DEBUG
 # define PRINT(f, ...)  printf("[debug] " f, __VA_ARGS__)
@@ -21,12 +23,8 @@ uint32_t shr(const uint32_t, const uint8_t);
 # define PRINT(f, ...)  /* NO-OP */
 #endif
 
-#if defined MD5 || defined SHA1 || defined SHA224 || defined SHA256
-# define BLOCK_SIZE_BITS      64
-# define PADDED_LENGTH_BITS  448
-# define DIGEST_LENGTH_BITS  512
-#endif
-
 void print_d(uint8_t *, uint8_t);
+
+#define SIZE(a) (sizeof a / sizeof *a)
 
 #endif /* UTIL_H_ */
