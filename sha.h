@@ -51,4 +51,10 @@
 
 uint8_t *SHAstring(const char *);
 
+#if defined SHA1 || defined SHA224 || defined SHA256
+# define BLOCK_SIZE_BITS      64
+# define PADDED_LENGTH_BITS  448
+# define DIGEST_LENGTH_BITS  512
+#endif
+
 #endif /* SHA_H_ */

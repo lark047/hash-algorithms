@@ -1,3 +1,4 @@
+#include "sha.h"
 #include "util.h"
 
 #include <stdio.h>
@@ -8,9 +9,9 @@
 #define SHA1_LENGTH  (40 + 1)
 
 /* functions called by SHAstring */
-extern uint32_t append_padding(uint8_t **, const char *, uint32_t *);
-static void append_length(uint8_t *, uint64_t, uint32_t);
-static void process(uint8_t **, uint32_t);
+extern uint32_t append_padding(uint8_t **, const char *, uint32_t *, struct hash_info *);
+static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
+static void process(uint8_t **, const uint32_t, const uint16_t);
 
 /* hash function */
 static uint32_t h(uint8_t, uint32_t, uint32_t, uint32_t);
@@ -28,6 +29,12 @@ static const uint8_t *M;
 
 uint8_t *SHAstring(const char *msg)
 {
+    struct hash_info *info = malloc(sizeof *info);
+
+    info->block_size = BLOCK_SIZE_BITS;
+    info->padded_length = PADDED_LENGTH_BITS;
+    info->digest_length = DIGEST_LENGTH_BITS;
+
     uint8_t *digest;
 
     /* length in bytes */
@@ -47,10 +54,10 @@ uint8_t *SHAstring(const char *msg)
     PRINT("Message length: %llu bits\n", l);
 
     uint32_t padded_length = message_length;
-    const uint32_t block_count = append_padding(&digest, msg, &padded_length);
+    const uint32_t block_count = append_padding(&digest, msg, &padded_length, info);
 
     PRINT("padded length = %u\n", padded_length);
-    append_length(digest, l, padded_length);
+    append_length(digest, l, padded_length, info->block_size);
 
 #ifdef DEBUG
     print_d(digest, padded_length);
@@ -95,14 +102,18 @@ uint8_t *SHAstring(const char *msg)
      * digest.
      */
 
-    process(&digest, block_count);
+    process(&digest, block_count, info->block_size);
+
+    /* clean up */
+    free(info);
+    info = NULL;
 
     return digest;
 }
 
-void append_length(uint8_t *digest, uint64_t length, uint32_t index)
+void append_length(uint8_t *digest, const uint64_t length, const uint32_t index, const uint16_t block_size)
 {
-    const uint8_t len_bytes = BLOCK_SIZE_BITS / CHAR_BIT;
+    const uint8_t len_bytes = block_size / CHAR_BIT;
 
     /* assume length < 2^64 */
     for (uint8_t i = len_bytes; i > 0; --i)
@@ -111,7 +122,7 @@ void append_length(uint8_t *digest, uint64_t length, uint32_t index)
     }
 }
 
-void process(uint8_t **digest, uint32_t block_count)
+void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_size)
 {
     uint32_t W[80];
 
@@ -120,7 +131,7 @@ void process(uint8_t **digest, uint32_t block_count)
 
     for (uint32_t block = 0; block < block_count; ++block)
     {
-        M = *digest + block * BLOCK_SIZE_BITS;
+        M = *digest + block * block_size;
 
         for (uint8_t t = 0; t < 80; ++t)
         {
