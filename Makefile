@@ -1,9 +1,11 @@
 CC = gcc
 CFLAGS = -W -Wall -O2 -std=c99 -pedantic
+LIB-DIR = /usr/local/lib
 LIB-MATH = m
+LIB-CUNIT = cunit
 DEBUG = -DDEBUG
 
-all: sha1-debug
+all: sha1
 
 util.o: util.c util.h
 	$(CC) $(CFLAGS) $< -c -o util.o -DMD5
@@ -23,10 +25,10 @@ md5-debug.o: md5.c md5.h util.o
 
 #### SHA1 ####
 sha1: main-sha1.c sha1.o
-	$(CC) $(CFLAGS) -l$(LIB-MATH) $< sha1.o util.o -o sha1
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $< sha1.o util.o -o sha1 -l$(LIB-MATH) -l$(LIB-CUNIT)
 
 sha1-debug: main-sha1.c sha1-debug.o
-	$(CC) $(CFLAGS) -l$(LIB-MATH) $< sha1-debug.o util.o -o sha1 $(DEBUG)
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $< sha1-debug.o util.o -o sha1 $(DEBUG) -l$(LIB-MATH) -l$(LIB-CUNIT)
 
 sha1.o: sha1.c sha.h util.o
 	$(CC) $(CFLAGS) -c $< -o sha1.o -DSHA1
@@ -46,6 +48,19 @@ sha256.o: sha256.c sha.h util.o
 
 sha256-debug.o: sha256.c sha.h util.o
 	$(CC) $(CFLAGS) -c $< -o sha256-debug.o -DSHA256 $(DEBUG)
+
+#### SHA224 ####
+sha224: main-sha224.c sha224.o
+	$(CC) $(CFLAGS) -l$(LIB-MATH) $< sha224.o util.o -o sha224
+
+sha224-debug: main-sha224.c sha224-debug.o
+	$(CC) $(CFLAGS) -l$(LIB-MATH) $< sha224-debug.o util.o -o sha224 $(DEBUG)
+
+sha224.o: sha224.c sha.h util.o
+	$(CC) $(CFLAGS) -c $< -o sha224.o -DSHA224
+
+sha224-debug.o: sha224.c sha.h util.o
+	$(CC) $(CFLAGS) -c $< -o sha224-debug.o -DSHA224 $(DEBUG)
 
 
 
