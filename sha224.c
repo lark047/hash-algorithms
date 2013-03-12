@@ -5,7 +5,7 @@
 #include <string.h>
 #include <limits.h>
 
-#define SHA224_LENGTH                                       (56 + 1)
+#define SHA224_LENGTH  (56 + 1)
 
 /* functions called by SHAstring */
 extern uint32_t append_padding(uint8_t **, const char *, uint32_t *);
