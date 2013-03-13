@@ -49,16 +49,44 @@
 
 #include <stdint.h>
 
-#if defined SHA1 || defined SHA224 || defined SHA256
+/* common to SHA224, SHA256, SHA384, SHA512 */
+# define CH(x,y,z)                (((x) & (y)) ^ (~(x) & (z)))
+# define MAJ(x,y,z)  (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+
+#if defined SHA1
+
 # define BLOCK_SIZE_BITS      64
 # define PADDED_LENGTH_BITS  448
 # define DIGEST_LENGTH_BITS  512
+
+#elif defined SHA224 || defined SHA256
+
+# define BLOCK_SIZE_BITS      64
+# define PADDED_LENGTH_BITS  448
+# define DIGEST_LENGTH_BITS  512
+
+# define SIGMA0(x)  (ROTR((x),  2) ^ ROTR((x), 13) ^ ROTR((x), 22))
+# define SIGMA1(x)  (ROTR((x),  6) ^ ROTR((x), 11) ^ ROTR((x), 25))
+# define sigma0(x)  (ROTR((x),  7) ^ ROTR((x), 18) ^  SHR((x),  3))
+# define sigma1(x)  (ROTR((x), 17) ^ ROTR((x), 19) ^  SHR((x), 10))
+
+#elif defined SHA384 || defined SHA512
+
+# define BLOCK_SIZE_BITS      128
+# define PADDED_LENGTH_BITS   896
+# define DIGEST_LENGTH_BITS  1024
+
+# define SIGMA0(x)  (ROTR((x), 28) ^ ROTR((x), 34) ^ ROTR((x), 39))
+# define SIGMA1(x)  (ROTR((x), 14) ^ ROTR((x), 18) ^ ROTR((x), 41))
+# define sigma0(x)  (ROTR((x),  1) ^ ROTR((x),  8) ^  SHR((x),  7))
+# define sigma1(x)  (ROTR((x), 19) ^ ROTR((x), 61) ^  SHR((x),  6))
+
 #endif
 
 uint8_t *SHA1string(const char *);
 uint8_t *SHA224string(const char *);
 uint8_t *SHA256string(const char *);
-/*uint8_t *SHA384string(const char *);
-uint8_t *SHA512string(const char *); */
+uint8_t *SHA384string(const char *);
+/* uint8_t *SHA512string(const char *); */
 
 #endif /* SHA_H_ */
