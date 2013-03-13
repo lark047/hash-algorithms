@@ -161,31 +161,9 @@ void append_length(uint8_t *digest, uint64_t length, const uint32_t index, const
     }
 }
 
-#if 0
-00 00 00 00 00 00 00 00
-00 00 00 00 00 00 01 58
-
-digest[+ 0] = lengths[1] >> 56 & 0xff
-digest[+ 1] = lengths[1] >> 48 & 0xff
-digest[+ 2] = lengths[1] >> 40 & 0xff
-digest[+ 3] = lengths[1] >> 32 & 0xff
-digest[+ 4] = lengths[1] >> 24 & 0xff
-digest[+ 5] = lengths[1] >> 16 & 0xff
-digest[+ 6] = lengths[1] >>  8 & 0xff
-digest[+ 7] = lengths[1] >>  0 & 0xff
-digest[+ 8] = lengths[1] >> 56 & 0xff
-digest[+ 9] = lengths[1] >> 48 & 0xff
-digest[+10] = lengths[1] >> 40 & 0xff
-digest[+11] = lengths[1] >> 32 & 0xff
-digest[+12] = lengths[1] >> 24 & 0xff
-digest[+13] = lengths[1] >> 16 & 0xff
-digest[+14] = lengths[1] >>  8 & 0xff
-digest[+15] = lengths[1] >>  0 & 0xff
-#endif
-
 void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_size)
 {
-    uint64_t W[80];
+    uint64_t W[ROUNDS];
 
     /* temporary registers */
     uint64_t $0, $1, $2, $3, $4, $5, $6, $7, T[2];
@@ -194,18 +172,11 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
     {
         M = *digest + block * block_size;
 
-        for (uint8_t t = 0; t < 80; ++t)
+        for (uint8_t t = 0; t < ROUNDS; ++t)
         {
             if (t < 16)
             {
-                W[t] = ((uint64_t) M[8 * t + 0] << 56)
-                     + ((uint64_t) M[8 * t + 1] << 48)
-                     + ((uint64_t) M[8 * t + 2] << 40)
-                     + ((uint64_t) M[8 * t + 3] << 32)
-                     + ((uint64_t) M[8 * t + 4] << 24)
-                     + ((uint64_t) M[8 * t + 5] << 16)
-                     + ((uint64_t) M[8 * t + 6] <<  8)
-                     + ((uint64_t) M[8 * t + 7] <<  0);
+                W[t] = PREPARE(M, t);
             }
             else
             {
@@ -222,7 +193,7 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
         $6 = h6;
         $7 = h7;
 
-        for (uint8_t t = 0; t < 80; ++t)
+        for (uint8_t t = 0; t < ROUNDS; ++t)
         {
             T[0] = $7 + SIGMA1($4) + CH($4, $5, $6) + K[t] + W[t];
             T[1] = SIGMA0($0) + MAJ($0, $1, $2);

@@ -124,7 +124,7 @@ void append_length(uint8_t *digest, const uint64_t length, const uint32_t index,
 
 void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_size)
 {
-    uint32_t W[80];
+    uint32_t W[ROUNDS];
 
     /* temporary registers */
     uint32_t $0, $1, $2, $3, $4, T;
@@ -133,14 +133,11 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
     {
         M = *digest + block * block_size;
 
-        for (uint8_t t = 0; t < 80; ++t)
+        for (uint8_t t = 0; t < ROUNDS; ++t)
         {
             if (t < 16)
             {
-                W[t] = (M[4 * t + 0] << 24)
-                     + (M[4 * t + 1] << 16)
-                     + (M[4 * t + 2] <<  8)
-                     + (M[4 * t + 3] <<  0);
+                W[t] = PREPARE(M, t);
             }
             else
             {
@@ -154,7 +151,7 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
         $3 = h3;
         $4 = h4;
 
-        for (uint8_t t = 0; t < 80; ++t)
+        for (uint8_t t = 0; t < ROUNDS; ++t)
         {
             T = ROTL($0, 5) + h(t, $1, $2, $3) + $4 + K[(uint8_t) (t / 20)] + W[t];
 
