@@ -10,7 +10,7 @@ all: main
 util.o: util.c util.h
 	$(CC) $(CFLAGS) $< -c -o $@
 
-main: main.c md5.o md5-test.o sha1.o sha1-test.o util.o
+main: main.c md5.o md5-test.o sha1.o sha1-test.o sha224.o sha224-test.o sha256.o sha256-test.o util.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o hash -l$(LIB-CUNIT)
 
 #### MD5 ####
@@ -46,17 +46,20 @@ sha1-test.o: sha1-test.c sha1.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
 #### SHA256 ####
-sha256: main-sha256.c sha256.o
-	$(CC) $(CFLAGS) -L$(LIB-DIR) $< sha256.o util.o -o sha256 -l$(LIB-MATH) -l$(LIB-CUNIT)
+sha256: sha256-main.c sha256.o sha256-test.o util.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
 
-sha256-debug: main-sha256.c sha256-debug.o
-	$(CC) $(CFLAGS) -L$(LIB-DIR) $< sha256-debug.o util.o -o sha256 $(DEBUG) -l$(LIB-MATH) -l$(LIB-CUNIT)
+sha256-debug: sha256-main.c sha256-debug.o sha256-test.o util.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) $(DEBUG)
 
-sha256.o: sha256.c sha.h util.o
-	$(CC) $(CFLAGS) -c $< -o sha256.o -DSHA256
+sha256.o: sha256.c sha.h
+	$(CC) $(CFLAGS) -c $< -o $@ -DSHA256
 
-sha256-debug.o: sha256.c sha.h util.o
-	$(CC) $(CFLAGS) -c $< -o sha256-debug.o -DSHA256 $(DEBUG)
+sha256-debug.o: sha256.c sha.h
+	$(CC) $(CFLAGS) -c $< -o $@ -DSHA256 $(DEBUG)
+
+sha256-test.o: sha256-test.c sha256.o
+	$(CC) $(CFLAGS) -c $< -o $@
 
 #### SHA224 ####
 sha224: sha224-main.c sha224.o sha224-test.o util.o
