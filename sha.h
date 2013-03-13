@@ -56,8 +56,8 @@
 #endif
 
 uint8_t *SHA1string(const char *);
-/*uint8_t *SHA224string(const char *);
-uint8_t *SHA256string(const char *);
+uint8_t *SHA224string(const char *);
+/*uint8_t *SHA256string(const char *);
 uint8_t *SHA384string(const char *);
 uint8_t *SHA512string(const char *); */
 
