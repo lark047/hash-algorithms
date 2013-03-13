@@ -26,11 +26,15 @@ uint32_t append_padding(uint8_t **digest_ref, const char *msg, uint32_t *length,
     const uint32_t block_count = total_length / info->block_size;
     PRINT("total_length / 64 = %u (%u) <== should be 0\n", block_count, total_length % info->block_size);
 
-    PRINT("Allocating %d block%s of 512 bits...\n", block_count, (block_count == 1 ? "" : "s"));
+    PRINT("Allocating %d block%s of %u bits...\n", block_count, (block_count == 1 ? "" : "s"), info->digest_length);
 
     (*digest_ref) = malloc(total_length * sizeof *(*digest_ref));
     PRINT("Allocated %u bytes...\n", total_length * sizeof *(*digest_ref));
 
+    /* set all bytes to 0x0 */
+    memset(*digest_ref, 0x0, total_length);
+
+    /* copy the message in */
     memcpy(*digest_ref, msg, total_length);
 
     /* a single "1" bit is appended to the message... */
@@ -43,7 +47,7 @@ uint32_t append_padding(uint8_t **digest_ref, const char *msg, uint32_t *length,
      */
     memset(*digest_ref + *length + 1, 0x0, nils);
 #ifdef DEBUG
-    print_d(*digest_ref, 56);
+    print_d(*digest_ref, block_count, info);
 #endif
     PRINT("%s\n", "*******");
 
@@ -52,37 +56,17 @@ uint32_t append_padding(uint8_t **digest_ref, const char *msg, uint32_t *length,
     return block_count;
 }
 
-#if 0
-uint32_t rotl(const uint32_t value, const uint8_t shift)
+void print_d(const uint8_t *data, uint32_t block_count, const struct hash_info *info)
 {
-#if 0 /* don't need optimization */
-    if ((shift &= sizeof(value) * CHAR_BIT - 1) == 0)
-    {
-        return value;
-    }
-#endif
+    const uint8_t length = block_count * info->digest_length / CHAR_BIT;
+    PRINT("Printing %u bits...\n", length * CHAR_BIT);
+    const uint8_t block_size = info->block_size / CHAR_BIT;
 
-    return (value << shift) | (value >> (sizeof(value) * CHAR_BIT - shift));
-}
-
-uint32_t rotr(const uint32_t value, const uint8_t shift)
-{
-    return (value >> shift) | (value << (sizeof(value) * CHAR_BIT - shift));
-}
-
-uint32_t shr(const uint32_t value, const uint8_t shift)
-{
-    return value >> shift;
-}
-#endif
-
-void print_d(uint8_t *data, uint8_t length)
-{
     for (int i = 0; i < length; ++i)
     {
         printf("%02x ", (char) data[i] & 0xff);
         fflush(stdout);
 
-        if ((i + 1) % 8 == 0) printf("\n");
+        if ((i + 1) % block_size == 0) printf("\n");
     }
 }

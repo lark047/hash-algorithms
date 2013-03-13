@@ -19,11 +19,11 @@ uint32_t append_padding(uint8_t **, const char *, uint32_t *, struct hash_info *
 
 #ifdef DEBUG
 # define PRINT(f, ...)  printf("[debug] " f, __VA_ARGS__)
+void print_d(const uint8_t *, uint32_t, const struct hash_info *);
 #else
 # define PRINT(f, ...)  /* NO-OP */
 #endif
 
-void print_d(uint8_t *, uint8_t);
 
 #define SIZE(a) (sizeof a / sizeof *a)
 
