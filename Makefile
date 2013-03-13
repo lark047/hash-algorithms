@@ -59,20 +59,20 @@ sha256-debug.o: sha256.c sha.h util.o
 	$(CC) $(CFLAGS) -c $< -o sha256-debug.o -DSHA256 $(DEBUG)
 
 #### SHA224 ####
-sha224: sha224-main.c sha224.o sha224-test.o
-	$(CC) $(CFLAGS) -L$(LIB-DIR) $< sha224.o sha224-test.o util.o -o sha224 -l$(LIB-MATH) -l$(LIB-CUNIT)
+sha224: sha224-main.c sha224.o sha224-test.o util.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
 
-sha224-debug: sha224-main.c sha224-debug.o sha224-test.o
-	$(CC) $(CFLAGS) -L$(LIB-DIR) $< sha224-debug.o sha224-test.o util.o -o sha224 $(DEBUG) -l$(LIB-MATH) -l$(LIB-CUNIT)
+sha224-debug: sha224-main.c sha224-debug.o sha224-test.o util.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) $(DEBUG)
 
-sha224.o: sha224.c sha.h util.o
-	$(CC) $(CFLAGS) -c $< -o sha224.o -DSHA224
+sha224.o: sha224.c sha.h
+	$(CC) $(CFLAGS) -c $< -o $@ -DSHA224
 
-sha224-debug.o: sha224.c sha.h util.o
-	$(CC) $(CFLAGS) -c $< -o sha224-debug.o -DSHA224 $(DEBUG)
+sha224-debug.o: sha224.c sha.h
+	$(CC) $(CFLAGS) -c $< -o $@ -DSHA224 $(DEBUG)
 
 sha224-test.o: sha224-test.c sha1.o
-	$(CC) $(CFLAGS) -c $< -o sha224-test.o
+	$(CC) $(CFLAGS) -c $< -o $@
 
 
 .PHONY: clean
