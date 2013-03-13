@@ -154,7 +154,7 @@ uint8_t *MD5string(const char *msg)
     append_length(digest, b, padded_length, info->block_size);
 
 #ifdef DEBUG
-    print_d(digest, padded_length);
+    print_d(digest, block_count, info);
 #endif
 
     /**

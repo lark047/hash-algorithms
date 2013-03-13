@@ -13,13 +13,7 @@ extern uint32_t append_padding(uint8_t **, const char *, uint32_t *, struct hash
 static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
 static void process(uint8_t **, const uint32_t, const uint16_t);
 
-/* hash functions */
-#define CH(x,y,z)                        (((x) & (y)) ^ (~(x) & (z)))
-#define MAJ(x,y,z)          (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
-#define SIGMA0(x)     (ROTR((x),  2) ^ ROTR((x), 13) ^ ROTR((x), 22))
-#define SIGMA1(x)     (ROTR((x),  6) ^ ROTR((x), 11) ^ ROTR((x), 25))
-#define sigma0(x)     (ROTR((x),  7) ^ ROTR((x), 18) ^  SHR((x),  3))
-#define sigma1(x)     (ROTR((x), 17) ^ ROTR((x), 19) ^  SHR((x), 10))
+/* hash functions defined in sha.h */
 
 /* hash registers */
 static uint32_t h0, h1, h2, h3, h4, h5, h6, h7;
@@ -77,7 +71,7 @@ uint8_t *SHA256string(const char *msg)
     append_length(digest, l, padded_length, info->block_size);
 
 #ifdef DEBUG
-    print_d(digest, padded_length);
+    print_d(digest, block_count, info);
 #endif
 
     /**

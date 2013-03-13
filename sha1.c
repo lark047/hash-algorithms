@@ -60,7 +60,7 @@ uint8_t *SHA1string(const char *msg)
     append_length(digest, l, padded_length, info->block_size);
 
 #ifdef DEBUG
-    print_d(digest, padded_length);
+    print_d(digest, block_count, info);
 #endif
 
     /**
