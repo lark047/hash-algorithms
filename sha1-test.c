@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdint.h>
+
 #include <CUnit/Basic.h>
 
 extern char *SHA1string(const char *);
