@@ -27,7 +27,7 @@ static uint32_t K[] = {
 /* pointer to 32-bit word blocks */
 static const uint8_t *M;
 
-uint8_t *SHAstring(const char *msg)
+uint8_t *SHA1string(const char *msg)
 {
     struct hash_info *info = malloc(sizeof *info);
 

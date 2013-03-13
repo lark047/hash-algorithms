@@ -55,6 +55,10 @@
 # define DIGEST_LENGTH_BITS  512
 #endif
 
-uint8_t *SHAstring(const char *);
+uint8_t *SHA1string(const char *);
+/*uint8_t *SHA224string(const char *);
+uint8_t *SHA256string(const char *);
+uint8_t *SHA384string(const char *);
+uint8_t *SHA512string(const char *); */
 
 #endif /* SHA_H_ */
