@@ -26,7 +26,7 @@ int main(int argc, char **argv)
             }
             else
             {
-                if ((suite = CU_add_suite("SHA56 Test Suite", NULL, NULL)) == NULL)
+                if ((suite = CU_add_suite("SHA256 Test Suite", NULL, NULL)) == NULL)
                 {
                     CU_cleanup_registry();
                     rc = CU_get_error();
