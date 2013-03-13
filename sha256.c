@@ -44,7 +44,7 @@ static uint32_t K[] = {
 /* pointer to 32-bit word blocks */
 static const uint8_t *M;
 
-uint8_t *SHAstring(const char *msg)
+uint8_t *SHA256string(const char *msg)
 {
     struct hash_info *info = malloc(sizeof *info);
 
@@ -212,17 +212,4 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
     *digest = malloc(SHA256_LENGTH);
 
     snprintf((char *) *digest, SHA256_LENGTH, "%08x%08x%08x%08x%08x%08x%08x%08x", h0, h1, h2, h3, h4, h5, h6, h7);
-}
-
-uint32_t h(uint8_t i, uint32_t x, uint32_t y, uint32_t z)
-{
-    switch ((uint8_t) (i / 20))
-    {
-        case 0: /*  0 <= i < 20 */ return (x & y) ^ (~x & z);
-        case 1: /* 20 <= i < 40 */ return x ^ y ^ z;
-        case 2: /* 40 <= i < 60 */ return (x & y) ^ (x & z) ^ (y & z);
-        case 3: /* 60 <= i < 80 */ return x ^ y ^ z;
-    }
-
-    return 0;
 }
