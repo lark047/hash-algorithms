@@ -9,11 +9,12 @@
 #define SHA512224_LENGTH  (56 + 1)
 
 /* SHA512/224 requires SHA512 */
-extern uint8_t *SHA512string(const char *);
+extern uint8_t *SHA512string_with_initial_values(const char *, const uint64_t *);
 
 /* functions called by SHAstring */
 extern uint32_t append_padding(uint8_t **, const char *, uint32_t *, struct hash_info *);
 static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
+static void generate_initial_hash_values(uint16_t);
 static void process(uint8_t **, const uint32_t, const uint16_t);
 
 /* hash functions defined in sha.h */
@@ -113,25 +114,16 @@ uint8_t *SHA512224string(const char *msg)
 
     /* the initial hash value, H(0), shall consist of the following eight 64-bit words, in hex: */
 
-    const uint64_t salt = 0xa5a5a5a5a5a5a5a5;
+    h0 = 0x6a09e667f3bcc908;
+    h1 = 0xbb67ae8584caa73b;
+    h2 = 0x3c6ef372fe94f82b;
+    h3 = 0xa54ff53a5f1d36f1;
+    h4 = 0x510e527fade682d1;
+    h5 = 0x9b05688c2b3e6c1f;
+    h6 = 0x1f83d9abfb41bd6b;
+    h7 = 0x5be0cd19137e2179;
 
-    h0 = 0x6a09e667f3bcc908 ^ salt;
-    h1 = 0xbb67ae8584caa73b ^ salt;
-    h2 = 0x3c6ef372fe94f82b ^ salt;
-    h3 = 0xa54ff53a5f1d36f1 ^ salt;
-    h4 = 0x510e527fade682d1 ^ salt;
-    h5 = 0x9b05688c2b3e6c1f ^ salt;
-    h6 = 0x1f83d9abfb41bd6b ^ salt;
-    h7 = 0x5be0cd19137e2179 ^ salt;
-
-    const char *tmp_digest = (char *) SHA512string("SHA-512/224");
-    PRINT("Creating hash value: %s\n", tmp_digest);
-
-#ifdef DEBUG
-    uint8_t n = (uint8_t)
-#endif
-    sscanf(tmp_digest, "%16llx%16llx%16llx%16llx%16llx%16llx%16llx%16llx", &h0, &h1, &h2, &h3, &h4, &h5, &h6, &h7);
-    PRINT("converted %u strings to int\n", n);
+    generate_initial_hash_values(224);
 
     /**
      * TODO
@@ -173,6 +165,46 @@ void append_length(uint8_t *digest, uint64_t length, const uint32_t index, const
         PRINT("digest[%u] = 0x%02x\n", index - i + 0, digest[index - i + 0]);
         PRINT("digest[%u] = 0x%02x\n", index - i + 8, digest[index - i + 8]);
     }
+}
+
+void generate_initial_hash_values(uint16_t t)
+{
+    const uint64_t salt = 0xa5a5a5a5a5a5a5a5;
+    uint64_t H0[8];
+
+    H0[0] = h0 ^ salt;
+    H0[1] = h1 ^ salt;
+    H0[2] = h2 ^ salt;
+    H0[3] = h3 ^ salt;
+    H0[4] = h4 ^ salt;
+    H0[5] = h5 ^ salt;
+    H0[6] = h6 ^ salt;
+    H0[7] = h7 ^ salt;
+
+    const char *template = "SHA-512/%3u";
+
+    char *msg = malloc(strlen(template));
+    sprintf(msg, template, t);
+    PRINT("Hashing \"%s\"...\n", msg);
+
+    const char *tmp_digest = (char *) SHA512string_with_initial_values(msg, H0);
+    PRINT("Created hash value: %s\n", tmp_digest);
+
+    free(msg);
+
+#ifdef DEBUG
+    uint8_t n = (uint8_t)
+#endif
+    sscanf(tmp_digest, "%16llx%16llx%16llx%16llx%16llx%16llx%16llx%16llx", &h0, &h1, &h2, &h3, &h4, &h5, &h6, &h7);
+    PRINT("converted %u strings to int\n", n);
+    PRINT("h0: 0x%16llx\n", h0);
+    PRINT("h1: 0x%16llx\n", h1);
+    PRINT("h2: 0x%16llx\n", h2);
+    PRINT("h3: 0x%16llx\n", h3);
+    PRINT("h4: 0x%16llx\n", h4);
+    PRINT("h5: 0x%16llx\n", h5);
+    PRINT("h6: 0x%16llx\n", h6);
+    PRINT("h7: 0x%16llx\n", h7);
 }
 
 void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_size)
