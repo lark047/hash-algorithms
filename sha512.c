@@ -50,7 +50,7 @@ static const uint64_t K[] = {
 /* pointer to 32-bit word blocks */
 static const uint8_t *M;
 
-uint8_t *SHA512string(const char *msg)
+uint8_t *SHA512string_with_initial_values(const char *msg, const uint64_t *H0)
 {
     struct hash_info *info = malloc(sizeof *info);
 
@@ -101,23 +101,14 @@ uint8_t *SHA512string(const char *msg)
     uint8_t *M;
 #endif
 
-    /**
-     * Setting the Initial Hash Value (H(0))
-     *
-     * Before hash computation begins for each of the secure hash algorithms, the initial hash value,
-     * H(0), must be set. The size and number of words in H(0) depends on the message digest size.
-     */
-
-    /* the initial hash value, H(0), shall consist of the following eight 64-bit words, in hex: */
-
-    h0 = 0x6a09e667f3bcc908;
-    h1 = 0xbb67ae8584caa73b;
-    h2 = 0x3c6ef372fe94f82b;
-    h3 = 0xa54ff53a5f1d36f1;
-    h4 = 0x510e527fade682d1;
-    h5 = 0x9b05688c2b3e6c1f;
-    h6 = 0x1f83d9abfb41bd6b;
-    h7 = 0x5be0cd19137e2179;
+    h0 = H0[0];
+    h1 = H0[1];
+    h2 = H0[2];
+    h3 = H0[3];
+    h4 = H0[4];
+    h5 = H0[5];
+    h6 = H0[6];
+    h7 = H0[7];
 
     /**
      * TODO
@@ -141,6 +132,31 @@ uint8_t *SHA512string(const char *msg)
     info = NULL;
 
     return digest;
+}
+
+uint8_t *SHA512string(const char *msg)
+{
+    /**
+     * Setting the Initial Hash Value (H(0))
+     *
+     * Before hash computation begins for each of the secure hash algorithms, the initial hash value,
+     * H(0), must be set. The size and number of words in H(0) depends on the message digest size.
+     */
+
+    /* the initial hash value, H(0), shall consist of the following eight 64-bit words, in hex: */
+
+    const uint64_t H0[] = {
+        0x6a09e667f3bcc908,
+        0xbb67ae8584caa73b,
+        0x3c6ef372fe94f82b,
+        0xa54ff53a5f1d36f1,
+        0x510e527fade682d1,
+        0x9b05688c2b3e6c1f,
+        0x1f83d9abfb41bd6b,
+        0x5be0cd19137e2179
+    };
+
+    return SHA512string_with_initial_values(msg, H0);
 }
 
 void append_length(uint8_t *digest, uint64_t length, const uint32_t index, const uint16_t block_size)
