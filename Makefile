@@ -13,7 +13,14 @@ util.o: util.c util.h
 util-debug.o: util.c util.h
 	$(CC) $(CFLAGS) $< -c -o $@ $(DEBUG)
 
-main: main.c md5.o md5-test.o sha1.o sha1-test.o sha224.o sha224-test.o sha256.o sha256-test.o sha384.o sha384-test.o sha512.o sha512-test.o util.o
+main: main.c md5.o md5-test.o \
+		sha1.o sha1-test.o \
+		sha224.o sha224-test.o \
+		sha256.o sha256-test.o \
+		sha384.o sha384-test.o \
+		sha512.o sha512-test.o \
+		sha512-224.o \
+		util.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o hash -l$(LIB-CUNIT)
 
 #### MD5 ####
@@ -112,8 +119,27 @@ sha512-debug.o: sha512.c sha.h
 sha512-test.o: sha512-test.c sha512.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
+#### SHA512/224 ####
+sha512-224: sha512-224-main.c sha512-224.o sha512-224-test.o sha512.o util.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
+
+sha512-224-debug: sha512-224-main.c sha512-224-debug.o sha512-224-test.o sha512-debug.o util-debug.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) $(DEBUG)
+
+sha512-224.o: sha512-224.c sha.h
+	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512224
+
+sha512-224-debug.o: sha512-224.c sha.h
+	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512224 $(DEBUG)
+
+sha512-224-test.o: sha512-224-test.c sha512-224.o
+	$(CC) $(CFLAGS) -c $< -o $@
+
 
 .PHONY: clean
 
 clean:
+	cp -p hash.exe hash.out
 	rm -f *.exe *.o *.stackdump
+	cp -p hash.out hash.exe
+	rm -rf hash.out

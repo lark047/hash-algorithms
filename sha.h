@@ -81,7 +81,7 @@
 # define sigma0(x)  (ROTR((x),  7) ^ ROTR((x), 18) ^  SHR((x),  3))
 # define sigma1(x)  (ROTR((x), 17) ^ ROTR((x), 19) ^  SHR((x), 10))
 
-#elif defined SHA384 || defined SHA512
+#elif defined SHA384 || defined SHA512 || defined SHA512224 || defined SHA512256
 
 # define ROUNDS                80
 # define BLOCK_SIZE_BITS      128
@@ -109,5 +109,7 @@ uint8_t *SHA224string(const char *);
 uint8_t *SHA256string(const char *);
 uint8_t *SHA384string(const char *);
 uint8_t *SHA512string(const char *);
+uint8_t *SHA512224string(const char *);
+/* uint8_t *SHA512string(const char *); */
 
 #endif /* SHA_H_ */
