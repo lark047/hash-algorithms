@@ -13,7 +13,7 @@ extern char *SHA256string(const char *);
 extern char *SHA384string(const char *);
 extern char *SHA512string(const char *);
 extern char *SHA512224string(const char *);
-/* extern char *SHA512256string(const char *); */
+extern char *SHA512256string(const char *);
 
 extern void testMD5(void);
 extern void testSHA1(void);
@@ -82,7 +82,7 @@ int main(int argc, char **argv)
         printf("    SHA384: %s\n", SHA384string(msg));
         printf("    SHA512: %s\n", SHA512string(msg));
         printf("SHA512/224: %s\n", SHA512224string(msg));
-        /* printf("SHA512/256: %s\n", SHA512256string(msg)); */
+        printf("SHA512/256: %s\n", SHA512256string(msg));
     }
 
     PRINT("Exiting with status %d\n", rc);
