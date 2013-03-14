@@ -24,32 +24,22 @@ uint32_t append_padding(uint8_t **digest_ref, const char *msg, uint32_t *length,
 
     const uint32_t total_length = *length + 1 + nils + info->block_size / CHAR_BIT;
     const uint32_t block_count = total_length / info->block_size;
-    PRINT("total_length / 64 = %u (%u) <== should be 0\n", block_count, total_length % info->block_size);
 
+    PRINT("total_length / 64 = %u (%u) <== should be 0\n", block_count, total_length % info->block_size);
     PRINT("Allocating %d block%s of %u bits...\n", block_count, (block_count == 1 ? "" : "s"), info->digest_length);
 
     (*digest_ref) = malloc(total_length * sizeof *(*digest_ref));
-    PRINT("Allocated %u bytes...\n", total_length * sizeof *(*digest_ref));
+    PRINT("Allocated %u bytes\n", total_length * sizeof *(*digest_ref));
 
     /* set all bytes to 0x0 */
     memset(*digest_ref, 0x0, total_length);
+    PRINT("Set %u bytes to 0x0\n", total_length);
 
     /* copy the message in */
-    memcpy(*digest_ref, msg, total_length);
+    memcpy(*digest_ref, msg, *length);
 
     /* a single "1" bit is appended to the message... */
     (*digest_ref)[*length] = 0x80;
-
-    /*
-     * ... and then "0" bits are appended so that the length in bits of
-     * the padded message becomes congruent to 448, modulo 512. In all, at
-     * least one bit and at most 512 bits are appended.
-     */
-    memset(*digest_ref + *length + 1, 0x0, nils);
-#ifdef DEBUG
-    print_d(*digest_ref, block_count, info);
-#endif
-    PRINT("%s\n", "*******");
 
     *length = total_length;
 
