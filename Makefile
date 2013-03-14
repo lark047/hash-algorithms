@@ -13,7 +13,7 @@ util.o: util.c util.h
 util-debug.o: util.c util.h
 	$(CC) $(CFLAGS) $< -c -o $@ $(DEBUG)
 
-main: main.c md5.o md5-test.o sha1.o sha1-test.o sha224.o sha224-test.o sha256.o sha256-test.o sha384.o sha384-test.o util.o
+main: main.c md5.o md5-test.o sha1.o sha1-test.o sha224.o sha224-test.o sha256.o sha256-test.o sha384.o sha384-test.o sha512.o sha512-test.o util.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o hash -l$(LIB-CUNIT)
 
 #### MD5 ####
@@ -94,6 +94,22 @@ sha384-debug.o: sha384.c sha.h
 	$(CC) $(CFLAGS) -c $< -o $@ -DSHA384 $(DEBUG)
 
 sha384-test.o: sha384-test.c sha384.o
+	$(CC) $(CFLAGS) -c $< -o $@
+
+#### SHA512 ####
+sha512: sha512-main.c sha512.o sha512-test.o util.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
+
+sha512-debug: sha512-main.c sha512-debug.o sha512-test.o util-debug.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) $(DEBUG)
+
+sha512.o: sha512.c sha.h
+	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512
+
+sha512-debug.o: sha512.c sha.h
+	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512 $(DEBUG)
+
+sha512-test.o: sha512-test.c sha512.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
