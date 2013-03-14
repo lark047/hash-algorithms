@@ -221,11 +221,5 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
     free(*digest);
     *digest = malloc(SHA384_LENGTH);
 
-    snprintf((char *) *digest, SHA384_LENGTH, "%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x%08x",
-                                              (uint32_t) (h0 >> 32), (uint32_t) (h0 & 0xffffffff),
-                                              (uint32_t) (h1 >> 32), (uint32_t) (h1 & 0xffffffff),
-                                              (uint32_t) (h2 >> 32), (uint32_t) (h2 & 0xffffffff),
-                                              (uint32_t) (h3 >> 32), (uint32_t) (h3 & 0xffffffff),
-                                              (uint32_t) (h4 >> 32), (uint32_t) (h4 & 0xffffffff),
-                                              (uint32_t) (h5 >> 32), (uint32_t) (h5 & 0xffffffff));
+    snprintf((char *) *digest, SHA384_LENGTH, "%016llx%016llx%016llx%016llx%016llx%016llx", h0, h1, h2, h3, h4, h5);
 }
