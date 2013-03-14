@@ -267,5 +267,5 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
     free(*digest);
     *digest = malloc(SHA512256_LENGTH);
 
-    snprintf((char *) *digest, SHA512256_LENGTH, "%016llx%016llx%016llx%016llx", h0, h1, h2, h3);
+    snprintf((char *) *digest, SHA512256_LENGTH, "%016llx%016llx%016llx%016llx", h4, h5, h6, h7);
 }
