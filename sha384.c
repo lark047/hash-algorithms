@@ -6,8 +6,6 @@
 #include <string.h>
 #include <limits.h>
 
-#define SHA384_LENGTH  (96 + 1)
-
 /* functions called by SHAstring */
 extern uint32_t append_padding(uint8_t **, const char *, uint32_t *, struct hash_info *);
 static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
@@ -16,10 +14,10 @@ static void process(uint8_t **, const uint32_t, const uint16_t);
 /* hash functions defined in sha.h */
 
 /* hash registers */
-static uint64_t h0, h1, h2, h3, h4, h5, h6, h7;
+static uint64_t H[8];
 
 /* values table */
-static uint64_t K[] = {
+static const uint64_t K[] = {
     0x428a2f98d728ae22, 0x7137449123ef65cd, 0xb5c0fbcfec4d3b2f, 0xe9b5dba58189dbbc,
     0x3956c25bf348b538, 0x59f111f1b605d019, 0x923f82a4af194f9b, 0xab1c5ed5da6d8118,
     0xd807aa98a3030242, 0x12835b0145706fbe, 0x243185be4ee4b28c, 0x550c7dc3d5ffb4e2,
@@ -39,12 +37,12 @@ static uint64_t K[] = {
     0xca273eceea26619c, 0xd186b8c721c0c207, 0xeada7dd6cde0eb1e, 0xf57d4f7fee6ed178,
     0x06f067aa72176fba, 0x0a637dc5a2c898a6, 0x113f9804bef90dae, 0x1b710b35131c471b,
     0x28db77f523047d84, 0x32caab7b40c72493, 0x3c9ebe0a15c9bebc, 0x431d67c49c100d4c,
-    0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817,
+    0x4cc5d4becb3e42b6, 0x597f299cfc657e2a, 0x5fcb6fab3ad6faec, 0x6c44198c4a475817
 };
 
 /* TODO
- * These words represent the first thirty-two bits of the fractional parts of
- * the cube roots of the first sixty-four prime numbers
+ * These words represent the first sixty-four bits of the fractional parts of
+ * the cube roots of the first eighty prime numbers
  */
 
 /* pointer to 32-bit word blocks */
@@ -91,9 +89,9 @@ uint8_t *SHA384string(const char *msg)
      *
      * The message and its padding must be parsed into N m-bit blocks.
      *
-     * [T]he message and its padding are parsed into N 512-bit blocks,
-     * M(1), M(2),...,M(N). Since the 512 bits of the input block may be expressed as sixteen 32-
-     * bit words, the first 32 bits of message block i are denoted M(i,0), the next 32 bits are
+     * [T]he message and its padding are parsed into N 1024-bit blocks,
+     * M(1), M(2),...,M(N). Since the 1024 bits of the input block may be expressed as sixteen 64-
+     * bit words, the first 64 bits of message block i are denoted M(i,0), the next 64 bits are
      * M(i,1), and so on up to M(i,15).
      */
 
@@ -108,16 +106,19 @@ uint8_t *SHA384string(const char *msg)
      * H(0), must be set. The size and number of words in H(0) depends on the message digest size.
      */
 
-    /* the initial hash value, H(0), shall consist of the following eight 64-bit words, in hex: */
+    /**
+     * For SHA-384, the initial hash value, H(0), shall consist of the following eight 64-bit words, in
+     * hex:
+     */
 
-    h0 = 0xcbbb9d5dc1059ed8;
-    h1 = 0x629a292a367cd507;
-    h2 = 0x9159015a3070dd17;
-    h3 = 0x152fecd8f70e5939;
-    h4 = 0x67332667ffc00b31;
-    h5 = 0x8eb44a8768581511;
-    h6 = 0xdb0c2e0d64f98fa7;
-    h7 = 0x47b5481dbefa4fa4;
+    H[0] = 0xcbbb9d5dc1059ed8;
+    H[1] = 0x629a292a367cd507;
+    H[2] = 0x9159015a3070dd17;
+    H[3] = 0x152fecd8f70e5939;
+    H[4] = 0x67332667ffc00b31;
+    H[5] = 0x8eb44a8768581511;
+    H[6] = 0xdb0c2e0d64f98fa7;
+    H[7] = 0x47b5481dbefa4fa4;
 
     /**
      * TODO
@@ -129,9 +130,11 @@ uint8_t *SHA384string(const char *msg)
      * SHA-384
      *
      * SHA-384 may be used to hash a message, M, having a length of l bits, where 0 <= l < 2^128. The
-     * algorithm uses 1) a message schedule of eighty 64-bit words, 2) eight working variables of 64
-     * bits each, and 3) a hash value of eight 64-bit words. The final result of SHA-384 is a 384-bit
-     * message digest.
+     * algorithm is defined in the exact same manner as SHA-512 (see sha512.c), with the following two
+     * exceptions:
+     *         1. The initial hash value, H(0), shall be set as specified [above]; and
+     *         2. The 384-bit message digest is obtained by truncating the final hash value, H(N), to its
+     *            left most 384 bits.
      */
 
     process(&digest, block_count, info->block_size);
@@ -143,16 +146,16 @@ uint8_t *SHA384string(const char *msg)
     return digest;
 }
 
-void append_length(uint8_t *digest, uint64_t length, const uint32_t index, const uint16_t block_size)
+void append_length(uint8_t *digest, const uint64_t length, const uint32_t index, const uint16_t block_size)
 {
-    const uint64_t len_bytes = block_size / CHAR_BIT;
+    const uint8_t len_bytes = block_size / CHAR_BIT;
     const uint64_t lengths[] = {
         (length >>  0), /* upper 32 bits */
         (length >> 32)  /* lower 32 bits */
     };
 
     /* assume length < 2^128 */
-    for (uint16_t i = len_bytes; i > 8; --i)
+    for (uint8_t i = len_bytes; i > 8; --i)
     {
         digest[index - i + 8] = (lengths[0] >> (CHAR_BIT * (i - 1))) & 0xff;
         digest[index - i + 0] = (lengths[1] >> (CHAR_BIT * (i - 1))) & 0xff;
@@ -184,14 +187,14 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
             }
         }
 
-        $0 = h0;
-        $1 = h1;
-        $2 = h2;
-        $3 = h3;
-        $4 = h4;
-        $5 = h5;
-        $6 = h6;
-        $7 = h7;
+        $0 = H[0];
+        $1 = H[1];
+        $2 = H[2];
+        $3 = H[3];
+        $4 = H[4];
+        $5 = H[5];
+        $6 = H[6];
+        $7 = H[7];
 
         for (uint8_t t = 0; t < ROUNDS; ++t)
         {
@@ -208,18 +211,18 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
             $0 = T[0] + T[1];
         }
 
-        h0 += $0;
-        h1 += $1;
-        h2 += $2;
-        h3 += $3;
-        h4 += $4;
-        h5 += $5;
-        h6 += $6;
-        h7 += $7;
+        H[0] += $0;
+        H[1] += $1;
+        H[2] += $2;
+        H[3] += $3;
+        H[4] += $4;
+        H[5] += $5;
+        H[6] += $6;
+        H[7] += $7;
     }
 
     free(*digest);
-    *digest = malloc(SHA384_LENGTH);
+    *digest = malloc(DIGEST_LENGTH);
 
-    snprintf((char *) *digest, SHA384_LENGTH, "%016llx%016llx%016llx%016llx%016llx%016llx", h0, h1, h2, h3, h4, h5);
+    snprintf((char *) *digest, DIGEST_LENGTH, "%016llx%016llx%016llx%016llx%016llx%016llx", H[0], H[1], H[2], H[3], H[4], H[5]);
 }

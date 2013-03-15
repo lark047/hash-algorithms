@@ -6,8 +6,6 @@
 #include <string.h>
 #include <limits.h>
 
-#define SHA224_LENGTH  (56 + 1)
-
 /* functions called by SHAstring */
 extern uint32_t append_padding(uint8_t **, const char *, uint32_t *, struct hash_info *);
 static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
@@ -16,10 +14,10 @@ static void process(uint8_t **, const uint32_t, const uint16_t);
 /* hash functions defined in sha.h */
 
 /* hash registers */
-static uint32_t h0, h1, h2, h3, h4, h5, h6, h7;
+static uint32_t H[8];
 
 /* values table */
-static uint32_t K[] = {
+static const uint32_t K[] = {
     0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
     0xd807aa98, 0x12835b01, 0x243185be, 0x550c7dc3, 0x72be5d74, 0x80deb1fe, 0x9bdc06a7, 0xc19bf174,
     0xe49b69c1, 0xefbe4786, 0x0fc19dc6, 0x240ca1cc, 0x2de92c6f, 0x4a7484aa, 0x5cb0a9dc, 0x76f988da,
@@ -96,30 +94,34 @@ uint8_t *SHA224string(const char *msg)
      * H(0), must be set. The size and number of words in H(0) depends on the message digest size.
      */
 
-    /* the initial hash value, H(0), shall consist of the following eight 32-bit words, in hex: */
+    /**
+     * For SHA-224, the initial hash value, H(0), shall consist of the following eight 32-bit words, in
+     * hex:
+     */
 
-    h0 = 0xc1059ed8;
-    h1 = 0x367cd507;
-    h2 = 0x3070dd17;
-    h3 = 0xf70e5939;
-    h4 = 0xffc00b31;
-    h5 = 0x68581511;
-    h6 = 0x64f98fa7;
-    h7 = 0xbefa4fa4;
+    H[0] = 0xc1059ed8;
+    H[1] = 0x367cd507;
+    H[2] = 0x3070dd17;
+    H[3] = 0xf70e5939;
+    H[4] = 0xffc00b31;
+    H[5] = 0x68581511;
+    H[6] = 0x64f98fa7;
+    H[7] = 0xbefa4fa4;
 
     /**
      * TODO
-     * These words were obtained by taking the first thirty-two bits of the fractional parts of the square
-     * roots of the first eight prime numbers.
+     * (no accompanying text describing the origin of the above eight words)
      */
 
     /**
-     * SHA-256
+     * SHA-224
      *
-     * SHA-256 may be used to hash a message, M, having a length of l bits, where 0 <= l < 2^64. The
-     * algorithm uses 1) a message schedule of sixty-four 32-bit words, 2) eight working variables of 32
-     * bits each, and 3) a hash value of eight 32-bit words. The final result of SHA-256 is a 256-bit
-     * message digest.
+     * SHA-224 may be used to hash a message, M, having a length of l bits, where 0 <= l < 2^64. The
+     * function is defined in the exact same manner as SHA-256 (see sha256.c), with the following two
+     * exceptions:
+     *         1. The initial hash value, H(0), shall be set as specified [above]; and
+     *         2. The 224-bit message digest is obtained by truncating the final hash value, H(N), to its
+     *            left most 224 bits.
      */
 
     process(&digest, block_count, info->block_size);
@@ -165,14 +167,14 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
             }
         }
 
-        $0 = h0;
-        $1 = h1;
-        $2 = h2;
-        $3 = h3;
-        $4 = h4;
-        $5 = h5;
-        $6 = h6;
-        $7 = h7;
+        $0 = H[0];
+        $1 = H[1];
+        $2 = H[2];
+        $3 = H[3];
+        $4 = H[4];
+        $5 = H[5];
+        $6 = H[6];
+        $7 = H[7];
 
         for (uint8_t t = 0; t < ROUNDS; ++t)
         {
@@ -189,18 +191,20 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
             $0 = T[0] + T[1];
         }
 
-        h0 += $0;
-        h1 += $1;
-        h2 += $2;
-        h3 += $3;
-        h4 += $4;
-        h5 += $5;
-        h6 += $6;
-        h7 += $7;
+        H[0] += $0;
+        H[1] += $1;
+        H[2] += $2;
+        H[3] += $3;
+        H[4] += $4;
+        H[5] += $5;
+        H[6] += $6;
+        H[7] += $7;
     }
 
     free(*digest);
-    *digest = malloc(SHA224_LENGTH);
+    *digest = malloc(DIGEST_LENGTH);
 
-    snprintf((char *) *digest, SHA224_LENGTH, "%08x%08x%08x%08x%08x%08x%08x", h0, h1, h2, h3, h4, h5, h6);
+    PRINT("0x%08ux\n", H[0]);
+    PRINT("0x%08x\n", H[0]);
+    snprintf((char *) *digest, DIGEST_LENGTH, "%08x%08x%08x%08x%08x%08x%08x", H[0], H[1], H[2], H[3], H[4], H[5], H[6]);
 }

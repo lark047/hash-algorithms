@@ -49,6 +49,22 @@
 
 #include <stdint.h>
 
+#if defined SHA1
+# define BIT_STRENGTH 160
+#elif defined SHA224 || defined SHA512224
+# define BIT_STRENGTH 224
+#elif defined SHA256 || defined SHA512256
+# define BIT_STRENGTH 256
+#elif defined SHA384
+# define BIT_STRENGTH 384
+#elif defined SHA512
+# define BIT_STRENGTH 512
+#endif
+
+#define CHARS_PER_BYTE                                              2
+#define DIGEST_LENGTH   (CHARS_PER_BYTE * BIT_STRENGTH / CHAR_BIT + 1)
+#undef CHARS_PER_BYTE
+
 /* common to SHA224, SHA256, SHA384, SHA512 */
 # define CH(x,y,z)                (((x) & (y)) ^ (~(x) & (z)))
 # define MAJ(x,y,z)  (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))

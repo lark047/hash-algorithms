@@ -6,8 +6,6 @@
 #include <string.h>
 #include <limits.h>
 
-#define SHA1_LENGTH  (40 + 1)
-
 /* functions called by SHAstring */
 extern uint32_t append_padding(uint8_t **, const char *, uint32_t *, struct hash_info *);
 static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
@@ -17,11 +15,14 @@ static void process(uint8_t **, const uint32_t, const uint16_t);
 static uint32_t h(uint8_t, uint32_t, uint32_t, uint32_t);
 
 /* hash registers */
-static uint32_t h0, h1, h2, h3, h4;
+static uint32_t H[5];
 
 /* values table */
-static uint32_t K[] = {
-    0x5a827999, 0x6ed9eba1, 0x8f1bbcdc, 0xca62c1d6
+static const uint32_t K[] = {
+    0x5a827999,
+    0x6ed9eba1,
+    0x8f1bbcdc,
+    0xca62c1d6
 };
 
 /* pointer to 32-bit word blocks */
@@ -85,13 +86,13 @@ uint8_t *SHA1string(const char *msg)
      * H(0), must be set. The size and number of words in H(0) depends on the message digest size.
      */
 
-    /* the initial hash value, H(0), shall consist of the following five 32-bit words, in hex: */
+    /* For SHA-1, the initial hash value, H(0), shall consist of the following five 32-bit words, in hex: */
 
-    h0 = 0x67452301;
-    h1 = 0xefcdab89;
-    h2 = 0x98badcfe;
-    h3 = 0x10325476;
-    h4 = 0xc3d2e1f0;
+    H[0] = 0x67452301;
+    H[1] = 0xefcdab89;
+    H[2] = 0x98badcfe;
+    H[3] = 0x10325476;
+    H[4] = 0xc3d2e1f0;
 
     /**
      * SHA-1
@@ -145,11 +146,11 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
             }
         }
 
-        $0 = h0;
-        $1 = h1;
-        $2 = h2;
-        $3 = h3;
-        $4 = h4;
+        $0 = H[0];
+        $1 = H[1];
+        $2 = H[2];
+        $3 = H[3];
+        $4 = H[4];
 
         for (uint8_t t = 0; t < ROUNDS; ++t)
         {
@@ -162,17 +163,17 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
             $0 = T;
         }
 
-        h0 += $0;
-        h1 += $1;
-        h2 += $2;
-        h3 += $3;
-        h4 += $4;
+        H[0] += $0;
+        H[1] += $1;
+        H[2] += $2;
+        H[3] += $3;
+        H[4] += $4;
     }
 
     free(*digest);
-    *digest = malloc(SHA1_LENGTH);
+    *digest = malloc(DIGEST_LENGTH);
 
-    snprintf((char *) *digest, SHA1_LENGTH, "%08x%08x%08x%08x%08x", h0, h1, h2, h3, h4);
+    snprintf((char *) *digest, DIGEST_LENGTH, "%08x%08x%08x%08x%08x", H[0], H[1], H[2], H[3], H[4]);
 }
 
 uint32_t h(uint8_t i, uint32_t x, uint32_t y, uint32_t z)
