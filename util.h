@@ -24,7 +24,6 @@ void print_d(const uint8_t *, uint32_t, const struct hash_info *);
 # define PRINT(f, ...)  /* NO-OP */
 #endif
 
-
-#define SIZE(a) (sizeof a / sizeof *a)
+#define SIZE(a) (sizeof (a) / sizeof *(a))
 
 #endif /* UTIL_H_ */
