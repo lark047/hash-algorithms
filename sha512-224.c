@@ -6,8 +6,6 @@
 #include <string.h>
 #include <limits.h>
 
-#define SHA512224_LENGTH  (56 + 1)
-
 /* SHA512/224 requires SHA512 */
 extern uint8_t *SHA512string_with_initial_values(const char *, const uint64_t *);
 
@@ -20,7 +18,7 @@ static void process(uint8_t **, const uint32_t, const uint16_t);
 /* hash functions defined in sha.h */
 
 /* hash registers */
-static uint64_t h0, h1, h2, h3, h4, h5, h6, h7;
+static uint64_t H[8];
 
 /* values table */
 static const uint64_t K[] = {
@@ -95,9 +93,9 @@ uint8_t *SHA512224string(const char *msg)
      *
      * The message and its padding must be parsed into N m-bit blocks.
      *
-     * [T]he message and its padding are parsed into N 512-bit blocks,
-     * M(1), M(2),...,M(N). Since the 512 bits of the input block may be expressed as sixteen 32-
-     * bit words, the first 32 bits of message block i are denoted M(i,0), the next 32 bits are
+     * [T]he message and its padding are parsed into N 1024-bit blocks,
+     * M(1), M(2),...,M(N). Since the 1024 bits of the input block may be expressed as sixteen 64-
+     * bit words, the first 64 bits of message block i are denoted M(i,0), the next 64 bits are
      * M(i,1), and so on up to M(i,15).
      */
 
@@ -114,22 +112,22 @@ uint8_t *SHA512224string(const char *msg)
 
     /* the initial hash value, H(0), shall consist of the following eight 64-bit words, in hex: */
 
-    h0 = 0x6a09e667f3bcc908;
-    h1 = 0xbb67ae8584caa73b;
-    h2 = 0x3c6ef372fe94f82b;
-    h3 = 0xa54ff53a5f1d36f1;
-    h4 = 0x510e527fade682d1;
-    h5 = 0x9b05688c2b3e6c1f;
-    h6 = 0x1f83d9abfb41bd6b;
-    h7 = 0x5be0cd19137e2179;
-
-    generate_initial_hash_values(224);
+    H[0] = 0x6a09e667f3bcc908;
+    H[1] = 0xbb67ae8584caa73b;
+    H[2] = 0x3c6ef372fe94f82b;
+    H[3] = 0xa54ff53a5f1d36f1;
+    H[4] = 0x510e527fade682d1;
+    H[5] = 0x9b05688c2b3e6c1f;
+    H[6] = 0x1f83d9abfb41bd6b;
+    H[7] = 0x5be0cd19137e2179;
 
     /**
      * TODO
      * These words were obtained by taking the first sixty-four bits of the fractional parts of the square
      * roots of the first eight prime numbers.
      */
+
+    generate_initial_hash_values(224);
 
     /**
      * SHA-512/224
@@ -149,16 +147,16 @@ uint8_t *SHA512224string(const char *msg)
     return digest;
 }
 
-void append_length(uint8_t *digest, uint64_t length, const uint32_t index, const uint16_t block_size)
+void append_length(uint8_t *digest, const uint64_t length, const uint32_t index, const uint16_t block_size)
 {
-    const uint64_t len_bytes = block_size / CHAR_BIT;
+    const uint8_t len_bytes = block_size / CHAR_BIT;
     const uint64_t lengths[] = {
         (length >>  0), /* upper 32 bits */
         (length >> 32)  /* lower 32 bits */
     };
 
     /* assume length < 2^128 */
-    for (uint16_t i = len_bytes; i > 8; --i)
+    for (uint8_t i = len_bytes; i > 8; --i)
     {
         digest[index - i + 8] = (lengths[0] >> (CHAR_BIT * (i - 1))) & 0xff;
         digest[index - i + 0] = (lengths[1] >> (CHAR_BIT * (i - 1))) & 0xff;
@@ -170,16 +168,16 @@ void append_length(uint8_t *digest, uint64_t length, const uint32_t index, const
 void generate_initial_hash_values(uint16_t t)
 {
     const uint64_t salt = 0xa5a5a5a5a5a5a5a5;
-    uint64_t H0[8];
-
-    H0[0] = h0 ^ salt;
-    H0[1] = h1 ^ salt;
-    H0[2] = h2 ^ salt;
-    H0[3] = h3 ^ salt;
-    H0[4] = h4 ^ salt;
-    H0[5] = h5 ^ salt;
-    H0[6] = h6 ^ salt;
-    H0[7] = h7 ^ salt;
+    const uint64_t H0[] = {
+        H[0] ^ salt,
+        H[1] ^ salt,
+        H[2] ^ salt,
+        H[3] ^ salt,
+        H[4] ^ salt,
+        H[5] ^ salt,
+        H[6] ^ salt,
+        H[7] ^ salt
+    };
 
     const char *template = "SHA-512/%3u";
 
@@ -193,18 +191,26 @@ void generate_initial_hash_values(uint16_t t)
     free(msg);
 
 #ifdef DEBUG
-    uint8_t n = (uint8_t)
+    uint8_t n = 0;
 #endif
-    sscanf(tmp_digest, "%16llx%16llx%16llx%16llx%16llx%16llx%16llx%16llx", &h0, &h1, &h2, &h3, &h4, &h5, &h6, &h7);
+
+    for (uint8_t i = 0; i < SIZE(H); ++i)
+    {
+#ifdef DEBUG
+        n +=
+#endif
+        sscanf(tmp_digest + 16 * i, "%016llx", H + i);
+    }
+
     PRINT("converted %u strings to int\n", n);
-    PRINT("h0: 0x%16llx\n", h0);
-    PRINT("h1: 0x%16llx\n", h1);
-    PRINT("h2: 0x%16llx\n", h2);
-    PRINT("h3: 0x%16llx\n", h3);
-    PRINT("h4: 0x%16llx\n", h4);
-    PRINT("h5: 0x%16llx\n", h5);
-    PRINT("h6: 0x%16llx\n", h6);
-    PRINT("h7: 0x%16llx\n", h7);
+    PRINT("h0: 0x%016llx\n", H[0]);
+    PRINT("h1: 0x%016llx\n", H[1]);
+    PRINT("h2: 0x%016llx\n", H[2]);
+    PRINT("h3: 0x%016llx\n", H[3]);
+    PRINT("h4: 0x%016llx\n", H[4]);
+    PRINT("h5: 0x%016llx\n", H[5]);
+    PRINT("h6: 0x%016llx\n", H[6]);
+    PRINT("h7: 0x%016llx\n", H[7]);
 }
 
 void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_size)
@@ -230,14 +236,14 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
             }
         }
 
-        $0 = h0;
-        $1 = h1;
-        $2 = h2;
-        $3 = h3;
-        $4 = h4;
-        $5 = h5;
-        $6 = h6;
-        $7 = h7;
+        $0 = H[0];
+        $1 = H[1];
+        $2 = H[2];
+        $3 = H[3];
+        $4 = H[4];
+        $5 = H[5];
+        $6 = H[6];
+        $7 = H[7];
 
         for (uint8_t t = 0; t < ROUNDS; ++t)
         {
@@ -254,18 +260,18 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
             $0 = T[0] + T[1];
         }
 
-        h0 += $0;
-        h1 += $1;
-        h2 += $2;
-        h3 += $3;
-        h4 += $4;
-        h5 += $5;
-        h6 += $6;
-        h7 += $7;
+        H[0] += $0;
+        H[1] += $1;
+        H[2] += $2;
+        H[3] += $3;
+        H[4] += $4;
+        H[5] += $5;
+        H[6] += $6;
+        H[7] += $7;
     }
 
     free(*digest);
-    *digest = malloc(SHA512224_LENGTH);
+    *digest = malloc(DIGEST_LENGTH);
 
-    snprintf((char *) *digest, SHA512224_LENGTH, "%08x%016llx%016llx%016llx", (uint32_t) h4, h5, h6, h7);
+    snprintf((char *) *digest, DIGEST_LENGTH, "%016llx%016llx%016llx%08x", H[0], H[1], H[2], (uint32_t) (H[3] >> 32));
 }
