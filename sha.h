@@ -63,7 +63,6 @@
 
 #define CHARS_PER_BYTE                                              2
 #define DIGEST_LENGTH   (CHARS_PER_BYTE * BIT_STRENGTH / CHAR_BIT + 1)
-#undef CHARS_PER_BYTE
 
 /* common to SHA224, SHA256, SHA384, SHA512 */
 # define CH(x,y,z)                (((x) & (y)) ^ (~(x) & (z)))
