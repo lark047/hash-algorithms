@@ -153,10 +153,14 @@ sha512-256-test.o: sha512-256-test.c sha512-256.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
 
-.PHONY: clean
+.PHONY: clean nuke
 
 clean:
 	cp -p hash.exe hash.out
 	rm -f *.exe *.o *.stackdump
 	cp -p hash.out hash.exe
 	rm -rf hash.out
+
+nuke:
+	rm -f *.exe *.o *.stackdump
+	
