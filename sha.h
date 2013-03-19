@@ -48,6 +48,7 @@
  */
 
 #include <stdint.h>
+#include <stdio.h>
 
 #if defined SHA1
 # define BIT_STRENGTH 160
@@ -119,6 +120,8 @@
 
 #endif
 
+/* public interface */
+
 uint8_t *SHA1string(const char *);
 uint8_t *SHA224string(const char *);
 uint8_t *SHA256string(const char *);
@@ -126,5 +129,16 @@ uint8_t *SHA384string(const char *);
 uint8_t *SHA512string(const char *);
 uint8_t *SHA512224string(const char *);
 uint8_t *SHA512256string(const char *);
+
+uint8_t *SHA1file(FILE *);
+uint8_t *SHA256file(FILE *);
+uint8_t *SHA384file(FILE *);
+uint8_t *SHA512file(FILE *);
+
+#if 0
+uint8_t *SHA224file(FILE *);
+uint8_t *SHA512224file(FILE *);
+uint8_t *SHA512256file(FILE *);
+#endif
 
 #endif /* SHA_H_ */

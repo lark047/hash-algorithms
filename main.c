@@ -6,14 +6,22 @@
 
 #include <CUnit/Basic.h>
 
-extern char *MD5string(const char *);
-extern char *SHA1string(const char *);
-extern char *SHA224string(const char *);
-extern char *SHA256string(const char *);
-extern char *SHA384string(const char *);
-extern char *SHA512string(const char *);
-extern char *SHA512224string(const char *);
-extern char *SHA512256string(const char *);
+extern uint8_t *MD5string(const char *);
+extern uint8_t *SHA1string(const char *);
+extern uint8_t *SHA224string(const char *);
+extern uint8_t *SHA256string(const char *);
+extern uint8_t *SHA384string(const char *);
+extern uint8_t *SHA512string(const char *);
+extern uint8_t *SHA512224string(const char *);
+extern uint8_t *SHA512256string(const char *);
+
+extern uint8_t *MD5file(FILE *);
+extern uint8_t *SHA1file(FILE *);
+/* extern uint8_t *SHA224file(FILE *); */
+extern uint8_t *SHA256file(FILE *);
+extern uint8_t *SHA384file(FILE *);
+extern uint8_t *SHA512file(FILE *);
+/* ... */
 
 extern void testMD5(void);
 extern void testSHA1(void);
@@ -27,6 +35,17 @@ extern void testSHA512(void);
 int main(int argc, char **argv)
 {
     int rc = EXIT_FAILURE;
+
+    const char *labels[] = {
+        "MD5",
+        "SHA1",
+        "SHA224",
+        "SHA256",
+        "SHA384",
+        "SHA512",
+        "SHA512/224",
+        "SHA512/256"
+    };
 
     if (argc == 2 && strcmp(argv[1], "-t") == 0)
     {
@@ -71,18 +90,58 @@ int main(int argc, char **argv)
     }
     else if (argc == 2)
     {
-        const char *msg = argv[1];
+        uint8_t *(*hashes[])(const char *) = {
+            MD5string,
+            SHA1string,
+            SHA224string,
+            SHA256string,
+            SHA384string,
+            SHA512string,
+            SHA512224string,
+            SHA512256string
+        };
 
         /* printf("Hashing \"%s\"\n", msg); */
 
-        printf("       MD5: %s\n", MD5string(msg));
-        printf("      SHA1: %s\n", SHA1string(msg));
-        printf("    SHA224: %s\n", SHA224string(msg));
-        printf("    SHA256: %s\n", SHA256string(msg));
-        printf("    SHA384: %s\n", SHA384string(msg));
-        printf("    SHA512: %s\n", SHA512string(msg));
-        printf("SHA512/224: %s\n", SHA512224string(msg));
-        printf("SHA512/256: %s\n", SHA512256string(msg));
+        for (uint8_t i = 0; i < SIZE(hashes); ++i)
+        {
+            uint8_t *digest = hashes[i](argv[1]);
+
+            printf("%10s: %s\n", labels[i], (char *) digest);
+
+            free(digest);
+        }
+    }
+    else if (argc == 3 && strcmp(argv[1], "-f") == 0)
+    {
+        uint8_t *(*hashes[])(FILE *) = {
+            MD5file,
+            SHA1file,
+            /* SHA224file, */ NULL,
+            SHA256file,
+            SHA384file,
+            SHA512file,
+            /* SHA512224file */ NULL,
+            /* SHA512256file */ NULL,
+        };
+
+        for (uint8_t i = 0; i < SIZE(hashes); ++i)
+        {
+            FILE *fp =        /* TODO */ hashes[i] ? fopen(argv[2], "r") : NULL;
+            uint8_t *digest = /* TODO */ hashes[i] ? hashes[i](fp) : (uint8_t *) "(not yet implemented)";
+
+            /* TODO error handling */
+            printf("%10s: %s\n", labels[i], (char *) digest);
+
+            if (hashes[i]) {
+                fclose(fp);
+                free(digest);
+            }
+        }
+    }
+    else
+    {
+        /* TODO usage */
     }
 
     PRINT("Exiting with status %d\n", rc);

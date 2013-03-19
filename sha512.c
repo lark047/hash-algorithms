@@ -48,6 +48,8 @@ static const uint64_t K[] = {
 /* pointer to 32-bit word blocks */
 static const uint8_t *M;
 
+extern uint8_t *hash_file(FILE *, uint8_t *(*hash)(const char *));
+
 uint8_t *SHA512string_with_initial_values(const char *msg, const uint64_t *H0)
 {
     struct hash_info *info = malloc(sizeof *info);
@@ -114,6 +116,11 @@ uint8_t *SHA512string_with_initial_values(const char *msg, const uint64_t *H0)
     info = NULL;
 
     return digest;
+}
+
+uint8_t *SHA512file(FILE *fp)
+{
+    return hash_file(fp, SHA512string);
 }
 
 uint8_t *SHA512string(const char *msg)

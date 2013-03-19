@@ -85,6 +85,13 @@ extern uint32_t rotl(const uint32_t, const uint8_t);
 #define S3(x)                                 S(1,(x))
 #define S4(x)                                 S(2,(x))
 
+extern uint8_t *hash_file(FILE *, uint8_t *(*hash)(const char *));
+
+uint8_t *MD5file(FILE *fp)
+{
+    return hash_file(fp, MD5string);
+}
+
 uint8_t *MD5string(const char *msg)
 {
     struct hash_info *info = malloc(sizeof *info);

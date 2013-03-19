@@ -36,6 +36,13 @@ static const uint32_t K[] = {
 /* pointer to 32-bit word blocks */
 static const uint8_t *M;
 
+extern uint8_t *hash_file(FILE *, uint8_t *(*hash)(const char *));
+
+uint8_t *SHA256file(FILE *fp)
+{
+    return hash_file(fp, SHA256string);
+}
+
 uint8_t *SHA256string(const char *msg)
 {
     struct hash_info *info = malloc(sizeof *info);

@@ -6,6 +6,46 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* for use with hash_file */
+#define BUFSIZE 1024
+
+/* test messages */
+const char *test_msgs[] = {
+    "",
+    "a",
+    "abc",
+    "message digest",
+    "abcdefghijklmnopqrstuvwxyz",
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
+    "12345678901234567890123456789012345678901234567890123456789012345678901234567890",
+    "The quick brown fox jumps over the lazy dog",
+    "The quick brown fox jumps over the lazy dog.",
+    0
+};
+
+uint8_t *hash_file(FILE *fp, uint8_t *(*hash)(const char *))
+{
+    char buf[BUFSIZE + 1], *msg = NULL;
+    uint64_t length = 0;
+
+    /* TODO use binary: fread() */
+    while (fgets(buf, BUFSIZE + 1, fp) != NULL)
+    {
+        if ((msg = realloc(msg, length + BUFSIZE)) != NULL)
+        {
+            strcpy(msg + length, buf);
+            length += BUFSIZE;
+        }
+    }
+
+    uint8_t *digest = hash(msg);
+
+    /* there's gotta be a better way... I want to just return hash(msg); */
+    free(msg);
+
+    return digest;
+}
+
 uint32_t append_padding(uint8_t **digest_ref, const char *msg, uint32_t *length, struct hash_info *info)
 {
     /* TODO what if the length in bits isn't a multiple of CHAR_BIT? */

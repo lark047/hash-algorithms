@@ -1,25 +1,57 @@
+#include "sha.h"
+#include "util.h"
+
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <CUnit/Basic.h>
 
-extern char *SHA512string(const char *);
+extern uint8_t *SHA512file(FILE *);
+extern uint8_t *SHA512string(const char *);
+
+extern const char *test_msgs[];
+
+static void testSHA512file(void);
+static void testSHA512string(void);
 
 void testSHA512(void)
 {
-    const char *msgs[] = {
-        "",
-        "a",
-        "abc",
-        "message digest",
-        "abcdefghijklmnopqrstuvwxyz",
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-        "12345678901234567890123456789012345678901234567890123456789012345678901234567890",
-        "The quick brown fox jumps over the lazy dog",
-        "The quick brown fox jumps over the lazy dog.",
-        0
-    };
+    testSHA512file();
+    testSHA512string();
+}
 
+void testSHA512file(void)
+{
+    /* TODO doesn't work with text/lorem-ipsum-with-newline.txt */
+
+    const char *filename = "text/lorem-ipsum.txt"; /* 11417 bytes */
+    FILE *fp = fopen(filename, "r");
+
+    if (fp)
+    {
+        const char *expected = "5380d25153631747975a86cb691432f2e0e2bd906f195414e7bc52d06079a1683af0a892262260d5623d820f20d87033e8b685d1455b17d34c7ee0114892ae8a";
+        const char *actual = (const char *) SHA512file(fp);
+
+        CU_ASSERT_STRING_EQUAL(actual, expected);
+
+        if (strcmp(expected, actual))
+        {
+            fprintf(stderr, "\n");
+            fprintf(stderr, "%s\n", filename);
+            fprintf(stderr, "expected: %s\n", expected);
+            fprintf(stderr, "actual  : %s\n", actual);
+        }
+        else
+        {
+            PRINT("%s\n", actual);
+        }
+
+        fclose(fp);
+    }
+}
+void testSHA512string(void)
+{
     const char *sha512s[] = {
         "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
         "1f40fc92da241694750979ee6cf582f2d5d7d28e18335de05abc54d0560e0f5302860c652bf08d560252aa5e74210546f369fbbbce8c12cfc7957b2652fe9a75",
@@ -31,21 +63,24 @@ void testSHA512(void)
         "07e547d9586f6a73f73fbac0435ed76951218fb7d0c8d788a309d785436bbb642e93a252a954f23912547d1e8a3b5ed6e1bfd7097821233fa0538f3db854fee6",
         "91ea1245f20d46ae9a037a989f54f1f790f0a47607eeb8a14d12890cea77a1bbc6c7ed9cf205e67b7f2b8fd4c7dfd3a7a8617e45f3c463d481c7e586c39ac1ed"
     };
-    const char *actual, *expected;
 
-    for (uint8_t i = 0; msgs[i]; ++i)
+    for (uint8_t i = 0; test_msgs[i]; ++i)
     {
-        expected = sha512s[i];
-        actual = (const char *) SHA512string(msgs[i]);
+        const char *expected = sha512s[i];
+        const char *actual = (const char *) SHA512string(test_msgs[i]);
 
         CU_ASSERT_STRING_EQUAL(actual, expected);
 
         if (strcmp(expected, actual))
         {
-            fprintf(stdout, "\n");
-            fprintf(stdout, "string  : -->%s<--\n", msgs[i]);
-            fprintf(stdout, "expected: %s\n", expected);
-            fprintf(stdout, "actual  : %s\n", actual);
+            fprintf(stderr, "\n");
+            fprintf(stderr, "string  : -->%s<--\n", test_msgs[i]);
+            fprintf(stderr, "expected: %s\n", expected);
+            fprintf(stderr, "actual  : %s\n", actual);
+        }
+        else
+        {
+            PRINT("%s\n", actual);
         }
     }
 }

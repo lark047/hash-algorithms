@@ -36,6 +36,13 @@ static const uint32_t K[] = {
 /* pointer to 32-bit word blocks */
 static const uint8_t *M;
 
+extern uint8_t *hash_file(FILE *, uint8_t *(*hash)(const char *));
+
+uint8_t *SHA224file(FILE *fp)
+{
+    return hash_file(fp, SHA224string);
+}
+
 uint8_t *SHA224string(const char *msg)
 {
     struct hash_info *info = malloc(sizeof *info);
@@ -204,7 +211,5 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
     free(*digest);
     *digest = malloc(DIGEST_LENGTH);
 
-    PRINT("0x%08ux\n", H[0]);
-    PRINT("0x%08x\n", H[0]);
     snprintf((char *) *digest, DIGEST_LENGTH, "%08x%08x%08x%08x%08x%08x%08x", H[0], H[1], H[2], H[3], H[4], H[5], H[6]);
 }

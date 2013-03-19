@@ -51,12 +51,12 @@ int main(int argc, char **argv)
         }
         else
         {
-            char * const string = argv[1];
+            char * const msg = argv[1];
 
-            PRINT("Calculating SHA384 for \"%s\"...\n", string);
+            PRINT("Calculating SHA384 for \"%s\"...\n", msg);
             PRINT("Using byte size of %u\n", (unsigned) CHAR_BIT);
 
-            uint8_t *digest = SHA384string(string);
+            uint8_t *digest = SHA384string(msg);
 
             printf("%s\n", digest);
 
@@ -69,10 +69,42 @@ int main(int argc, char **argv)
             rc = EXIT_SUCCESS;
         }
     }
+    else if (argc == 3 && strcmp(argv[1], "-f") == 0)
+    {
+        char * const filename = argv[2];
+
+        PRINT("Calculating SHA384 for \"%s\"...\n", filename);
+        PRINT("Using byte size of %u\n", (unsigned) CHAR_BIT);
+
+        FILE *fp = fopen(filename, "r");
+
+        if (fp)
+        {
+            uint8_t *digest = SHA384file(fp);
+
+            printf("%s\n", (char *) digest);
+
+            /* clean up */
+            PRINT("%s\n", "Cleaning up...");
+            free(digest);
+            fclose(fp);
+
+            digest = NULL;
+            fp = NULL;
+
+            rc = EXIT_SUCCESS;
+        }
+        else
+        {
+            fprintf(stderr, "[ERROR] Could not open %s for reading.", filename);
+        }
+    }
     else
     {
         printf("Usage: %s \"<string>\"\n", argv[0]);
-        puts("  prints the SHA1 hash of <string>\n");
+        puts("  prints the SHA384 hash of <string>\n");
+        printf("Usage: %s -f <filename>\n", argv[0]);
+        puts("  prints the SHA384 hash of the file named <filename>\n");
     }
 
     PRINT("Exiting with status %d\n", rc);

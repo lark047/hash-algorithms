@@ -1,25 +1,67 @@
+#include "sha.h"
+#include "util.h"
+
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <CUnit/Basic.h>
 
-extern char *SHA224string(const char *);
+#if 0
+extern uint8_t *SHA224file(FILE *);
+static void testSHA224file(void);
+#endif
+
+extern uint8_t *SHA224string(const char *);
+
+extern const char *test_msgs[];
+
+static void testSHA224string(void);
 
 void testSHA224(void)
 {
-    const char *msgs[] = {
-        "",
-        "a",
-        "abc",
-        "message digest",
-        "abcdefghijklmnopqrstuvwxyz",
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-        "12345678901234567890123456789012345678901234567890123456789012345678901234567890",
-        "The quick brown fox jumps over the lazy dog",
-        "The quick brown fox jumps over the lazy dog.",
-        0
-    };
+#if 0
+    /* TODO can't find an online generator */
+    testSHA224file();
+#endif
 
+    testSHA224string();
+}
+
+#if 0
+void testSHA224file(void)
+{
+    /* TODO doesn't work with text/lorem-ipsum-with-newline.txt */
+
+    const char *filename = "text/lorem-ipsum.txt"; /* 11417 bytes */
+    FILE *fp = fopen(filename, "r");
+
+    if (fp)
+    {
+        const char *expected = "";
+        const char *actual = (const char *) SHA224file(fp);
+
+        CU_ASSERT_STRING_EQUAL(actual, expected);
+
+        if (strcmp(expected, actual))
+        {
+            fprintf(stderr, "\n");
+            fprintf(stderr, "%s\n", filename);
+            fprintf(stderr, "expected: %s\n", expected);
+            fprintf(stderr, "actual  : %s\n", actual);
+        }
+        else
+        {
+            PRINT("%s\n", actual);
+        }
+
+        fclose(fp);
+    }
+}
+#endif
+
+void testSHA224string(void)
+{
     const char *sha224s[] = {
         "d14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f",
         "abd37534c7d9a2efb9465de931cd7055ffdb8879563ae98078d6d6d5",
@@ -31,21 +73,24 @@ void testSHA224(void)
         "730e109bd7a8a32b1cb9d9a09aa2325d2430587ddbc0c38bad911525",
         "619cba8e8e05826e9b8c519c0a5c68f4fb653e8a3d8aa04bb2c8cd4c"
     };
-    const char *actual, *expected;
 
-    for (uint8_t i = 0; msgs[i]; ++i)
+    for (uint8_t i = 0; test_msgs[i]; ++i)
     {
-        expected = sha224s[i];
-        actual = (const char *) SHA224string(msgs[i]);
+        const char *expected = sha224s[i];
+        const char *actual = (const char *) SHA224string(test_msgs[i]);
 
         CU_ASSERT_STRING_EQUAL(actual, expected);
 
         if (strcmp(expected, actual))
         {
             fprintf(stderr, "\n");
-            fprintf(stderr, "%s\n", msgs[i]);
+            fprintf(stderr, "string  : -->%s<--\n", test_msgs[i]);
             fprintf(stderr, "expected: %s\n", expected);
             fprintf(stderr, "actual  : %s\n", actual);
+        }
+        else
+        {
+            PRINT("%s\n", actual);
         }
     }
 }

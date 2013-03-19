@@ -1,25 +1,58 @@
+#include "sha.h"
+#include "util.h"
+
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <CUnit/Basic.h>
 
-extern char *SHA256string(const char *);
+extern uint8_t *SHA256file(FILE *);
+extern uint8_t *SHA256string(const char *);
+
+extern const char *test_msgs[];
+
+static void testSHA256file(void);
+static void testSHA256string(void);
 
 void testSHA256(void)
 {
-    const char *msgs[] = {
-        "",
-        "a",
-        "abc",
-        "message digest",
-        "abcdefghijklmnopqrstuvwxyz",
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-        "12345678901234567890123456789012345678901234567890123456789012345678901234567890",
-        "The quick brown fox jumps over the lazy dog",
-        "The quick brown fox jumps over the lazy dog.",
-        0
-    };
+    testSHA256file();
+    testSHA256string();
+}
 
+void testSHA256file(void)
+{
+    /* TODO doesn't work with text/lorem-ipsum-with-newline.txt */
+
+    const char *filename = "text/lorem-ipsum.txt"; /* 11417 bytes */
+    FILE *fp = fopen(filename, "r");
+
+    if (fp)
+    {
+        const char *expected = "3433556b9ae140dd3838bc22d269e5cc32714f800a13000e8ba5718a3e564680";
+        const char *actual = (const char *) SHA256file(fp);
+
+        CU_ASSERT_STRING_EQUAL(actual, expected);
+
+        if (strcmp(expected, actual))
+        {
+            fprintf(stderr, "\n");
+            fprintf(stderr, "%s\n", filename);
+            fprintf(stderr, "expected: %s\n", expected);
+            fprintf(stderr, "actual  : %s\n", actual);
+        }
+        else
+        {
+            PRINT("%s\n", actual);
+        }
+
+        fclose(fp);
+    }
+}
+
+void testSHA256string(void)
+{
     const char *sha256s[] = {
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
@@ -31,21 +64,24 @@ void testSHA256(void)
         "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592",
         "ef537f25c895bfa782526529a9b63d97aa631564d5d789c2b765448c8635fb6c"
     };
-    const char *actual, *expected;
 
-    for (uint8_t i = 0; msgs[i]; ++i)
+    for (uint8_t i = 0; test_msgs[i]; ++i)
     {
-        expected = sha256s[i];
-        actual = (const char *) SHA256string(msgs[i]);
+        const char *expected = sha256s[i];
+        const char *actual = (const char *) SHA256string(test_msgs[i]);
 
         CU_ASSERT_STRING_EQUAL(actual, expected);
 
         if (strcmp(expected, actual))
         {
             fprintf(stderr, "\n");
-            fprintf(stderr, "%s\n", msgs[i]);
+            fprintf(stderr, "string  : -->%s<--\n", test_msgs[i]);
             fprintf(stderr, "expected: %s\n", expected);
             fprintf(stderr, "actual  : %s\n", actual);
+        }
+        else
+        {
+            PRINT("%s\n", actual);
         }
     }
 }

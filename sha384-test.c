@@ -1,25 +1,58 @@
+#include "sha.h"
+#include "util.h"
+
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <CUnit/Basic.h>
 
-extern char *SHA384string(const char *);
+extern uint8_t *SHA384file(FILE *);
+extern uint8_t *SHA384string(const char *);
+
+extern const char *test_msgs[];
+
+static void testSHA384file(void);
+static void testSHA384string(void);
 
 void testSHA384(void)
 {
-    const char *msgs[] = {
-        "",
-        "a",
-        "abc",
-        "message digest",
-        "abcdefghijklmnopqrstuvwxyz",
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-        "12345678901234567890123456789012345678901234567890123456789012345678901234567890",
-        "The quick brown fox jumps over the lazy dog",
-        "The quick brown fox jumps over the lazy dog.",
-        0
-    };
+    testSHA384file();
+    testSHA384string();
+}
 
+void testSHA384file(void)
+{
+    /* TODO doesn't work with text/lorem-ipsum-with-newline.txt */
+
+    const char *filename = "text/lorem-ipsum.txt"; /* 11417 bytes */
+    FILE *fp = fopen(filename, "r");
+
+    if (fp)
+    {
+        const char *expected = "01d5721fb074b9e9c00da0fba1469b8920bf46261097a63fb87faf4252ad588dfc81e2b7b0907809c7328233231cdde0";
+        const char *actual = (const char *) SHA384file(fp);
+
+        CU_ASSERT_STRING_EQUAL(actual, expected);
+
+        if (strcmp(expected, actual))
+        {
+            fprintf(stderr, "\n");
+            fprintf(stderr, "%s\n", filename);
+            fprintf(stderr, "expected: %s\n", expected);
+            fprintf(stderr, "actual  : %s\n", actual);
+        }
+        else
+        {
+            PRINT("%s\n", actual);
+        }
+
+        fclose(fp);
+    }
+}
+
+void testSHA384string(void)
+{
     const char *sha384s[] = {
         "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b",
         "54a59b9f22b0b80880d8427e548b7c23abd873486e1f035dce9cd697e85175033caa88e6d57bc35efae0b5afd3145f31",
@@ -31,21 +64,24 @@ void testSHA384(void)
         "ca737f1014a48f4c0b6dd43cb177b0afd9e5169367544c494011e3317dbf9a509cb1e5dc1e85a941bbee3d7f2afbc9b1",
         "ed892481d8272ca6df370bf706e4d7bc1b5739fa2177aae6c50e946678718fc67a7af2819a021c2fc34e91bdb63409d7"
     };
-    const char *actual, *expected;
 
-    for (uint8_t i = 0; msgs[i]; ++i)
+    for (uint8_t i = 0; test_msgs[i]; ++i)
     {
-        expected = sha384s[i];
-        actual = (const char *) SHA384string(msgs[i]);
+        const char *expected = sha384s[i];
+        const char *actual = (const char *) SHA384string(test_msgs[i]);
 
         CU_ASSERT_STRING_EQUAL(actual, expected);
 
         if (strcmp(expected, actual))
         {
             fprintf(stderr, "\n");
-            fprintf(stderr, "string  : -->%s<--\n", msgs[i]);
+            fprintf(stderr, "string  : -->%s<--\n", test_msgs[i]);
             fprintf(stderr, "expected: %s\n", expected);
             fprintf(stderr, "actual  : %s\n", actual);
+        }
+        else
+        {
+            PRINT("%s\n", actual);
         }
     }
 }

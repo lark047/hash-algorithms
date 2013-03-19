@@ -1,22 +1,58 @@
+#include "md5.h"
+#include "util.h"
+
+#include <stdio.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <CUnit/Basic.h>
 
-extern char *MD5string(const char *);
+extern uint8_t *MD5file(FILE *);
+extern uint8_t *MD5string(const char *);
+
+extern const char *test_msgs[];
+
+static void testMD5file(void);
+static void testMD5string(void);
 
 void testMD5(void)
 {
-    const char *msgs[] = {
-        "",
-        "a",
-        "abc",
-        "message digest",
-        "abcdefghijklmnopqrstuvwxyz",
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789",
-        "12345678901234567890123456789012345678901234567890123456789012345678901234567890",
-        "The quick brown fox jumps over the lazy dog",
-        "The quick brown fox jumps over the lazy dog.",
-        0
-    };
+    testMD5file();
+    testMD5string();
+}
 
+void testMD5file(void)
+{
+    /* TODO doesn't work with text/lorem-ipsum-with-newline.txt */
+
+    const char *filename = "text/lorem-ipsum.txt"; /* 11417 bytes */
+    FILE *fp = fopen(filename, "r");
+
+    if (fp)
+    {
+        const char *expected = "6901b58e9fe9368c6b200d5738d64f21";
+        const char *actual = (const char *) MD5file(fp);
+
+        CU_ASSERT_STRING_EQUAL(actual, expected);
+
+        if (strcmp(expected, actual))
+        {
+            fprintf(stderr, "\n");
+            fprintf(stderr, "%s\n", filename);
+            fprintf(stderr, "expected: %s\n", expected);
+            fprintf(stderr, "actual  : %s\n", actual);
+        }
+        else
+        {
+            PRINT("%s\n", actual);
+        }
+
+        fclose(fp);
+    }
+}
+
+void testMD5string(void)
+{
     const char *md5s[] = {
         "d41d8cd98f00b204e9800998ecf8427e",
         "0cc175b9c0f1b6a831c399e269772661",
@@ -28,21 +64,24 @@ void testMD5(void)
         "9e107d9d372bb6826bd81d3542a419d6",
         "e4d909c290d0fb1ca068ffaddf22cbd0"
     };
-    const char *actual, *expected;
 
-    for (uint8_t i = 0; msgs[i]; ++i)
+    for (uint8_t i = 0; test_msgs[i]; ++i)
     {
-        expected = md5s[i];
-        actual = (const char *) MD5string(msgs[i]);
+        const char *expected = md5s[i];
+        const char *actual = (const char *) MD5string(test_msgs[i]);
 
         CU_ASSERT_STRING_EQUAL(actual, expected);
 
         if (strcmp(expected, actual))
         {
             fprintf(stderr, "\n");
-            fprintf(stderr, "%s\n", msgs[i]);
+            fprintf(stderr, "string  : -->%s<--\n", test_msgs[i]);
             fprintf(stderr, "expected: %s\n", expected);
             fprintf(stderr, "actual  : %s\n", actual);
+        }
+        else
+        {
+            PRINT("%s\n", actual);
         }
     }
 }
