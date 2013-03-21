@@ -6,8 +6,11 @@
 #include <string.h>
 #include <limits.h>
 
-/* functions called by SHAstring */
-extern uint32_t append_padding(uint8_t **, const char *, uint32_t *, struct hash_info *);
+/* SHA1 general hash function */
+uint8_t *SHA1(uint8_t *, const uint64_t);
+
+/* functions called by SHA1 */
+extern uint64_t append_padding(uint8_t **, uint8_t *, uint64_t *, struct hash_info *);
 static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
 static void process(uint8_t **, const uint32_t, const uint16_t);
 
@@ -28,14 +31,20 @@ static const uint32_t K[] = {
 /* pointer to 32-bit word blocks */
 static const uint8_t *M;
 
-extern uint8_t *hash_file(FILE *, uint8_t *(*hash)(const char *));
+extern uint8_t *hash_file(FILE *, uint8_t *(*hash)(uint8_t *, const uint64_t));
 
 uint8_t *SHA1file(FILE *fp)
 {
-    return hash_file(fp, SHA1string);
+    return hash_file(fp, SHA1);
 }
 
 uint8_t *SHA1string(const char *msg)
+{
+    PRINT("found newline in msg: %s\n", (strchr(msg, '\n') ? "true" : "false"));
+    return SHA1((uint8_t *) msg, strlen(msg));
+}
+
+uint8_t *SHA1(uint8_t *msg, const uint64_t msg_length)
 {
     struct hash_info *info = malloc(sizeof *info);
 
@@ -46,8 +55,7 @@ uint8_t *SHA1string(const char *msg)
     uint8_t *digest;
 
     /* length in bytes */
-    const uint32_t message_length = strlen(msg);
-    PRINT("Message length: %u bytes\n", message_length);
+    PRINT("Message length: %llu byte%s\n", msg_length, (msg_length == 1 ? "" : "s"));
 
     /**
      * Padding the Message
@@ -58,13 +66,13 @@ uint8_t *SHA1string(const char *msg)
      * l expressed using a binary representation
      */
 
-    const uint64_t l = message_length * CHAR_BIT;
+    const uint64_t l = msg_length * CHAR_BIT;
     PRINT("Message length: %llu bits\n", l);
 
-    uint32_t padded_length = message_length;
-    const uint32_t block_count = append_padding(&digest, msg, &padded_length, info);
+    uint64_t padded_length = msg_length;
+    const uint64_t block_count = append_padding(&digest, msg, &padded_length, info);
 
-    PRINT("padded length = %u\n", padded_length);
+    PRINT("padded length = %llu\n", padded_length);
     append_length(digest, l, padded_length, info->block_size);
 
 #ifdef DEBUG

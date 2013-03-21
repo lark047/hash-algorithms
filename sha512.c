@@ -6,8 +6,11 @@
 #include <string.h>
 #include <limits.h>
 
-/* functions called by SHAstring */
-extern uint32_t append_padding(uint8_t **, const char *, uint32_t *, struct hash_info *);
+/* SHA512 general hash function */
+uint8_t *SHA512(uint8_t *, const uint64_t);
+
+/* functions called by SHA512 */
+extern uint64_t append_padding(uint8_t **, uint8_t *, uint64_t *, struct hash_info *);
 static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
 static void process(uint8_t **, const uint32_t, const uint16_t);
 
@@ -48,9 +51,52 @@ static const uint64_t K[] = {
 /* pointer to 32-bit word blocks */
 static const uint8_t *M;
 
-extern uint8_t *hash_file(FILE *, uint8_t *(*hash)(const char *));
+extern uint8_t *hash_file(FILE *, uint8_t *(*hash)(uint8_t *, const uint64_t));
+uint8_t *SHA512_with_initial_values(uint8_t *, const uint64_t, const uint64_t *);
 
-uint8_t *SHA512string_with_initial_values(const char *msg, const uint64_t *H0)
+uint8_t *SHA512file(FILE *fp)
+{
+    return hash_file(fp, SHA512);
+}
+
+uint8_t *SHA512string(const char *msg)
+{
+    PRINT("found newline in msg: %s\n", (strchr(msg, '\n') ? "true" : "false"));
+    return SHA512((uint8_t *) msg, strlen(msg));
+}
+
+uint8_t *SHA512(uint8_t *msg, uint64_t length)
+{
+    /**
+     * Setting the Initial Hash Value (H(0))
+     *
+     * Before hash computation begins for each of the secure hash algorithms, the initial hash value,
+     * H(0), must be set. The size and number of words in H(0) depends on the message digest size.
+     */
+
+    /* the initial hash value, H(0), shall consist of the following eight 64-bit words, in hex: */
+
+    const uint64_t H0[] = {
+        0x6a09e667f3bcc908,
+        0xbb67ae8584caa73b,
+        0x3c6ef372fe94f82b,
+        0xa54ff53a5f1d36f1,
+        0x510e527fade682d1,
+        0x9b05688c2b3e6c1f,
+        0x1f83d9abfb41bd6b,
+        0x5be0cd19137e2179
+    };
+
+    /**
+     * TODO
+     * These words were obtained by taking the first sixty-four bits of the fractional parts of the square
+     * roots of the first eight prime numbers.
+     */
+
+    return SHA512_with_initial_values(msg, length, H0);
+}
+
+uint8_t *SHA512_with_initial_values(uint8_t *msg, const uint64_t msg_length, const uint64_t *H0)
 {
     struct hash_info *info = malloc(sizeof *info);
 
@@ -61,8 +107,7 @@ uint8_t *SHA512string_with_initial_values(const char *msg, const uint64_t *H0)
     uint8_t *digest;
 
     /* length in bytes */
-    const uint32_t message_length = strlen(msg);
-    PRINT("Message length: %u bytes\n", message_length);
+    PRINT("Message length: %llu byte%s\n", msg_length, (msg_length == 1 ? "" : "s"));
 
     /**
      * Padding the Message
@@ -73,13 +118,13 @@ uint8_t *SHA512string_with_initial_values(const char *msg, const uint64_t *H0)
      * l expressed using a binary representation
      */
 
-    const uint64_t l = message_length * CHAR_BIT;
+    const uint64_t l = msg_length * CHAR_BIT;
     PRINT("Message length: %llu bits\n", l);
 
-    uint32_t padded_length = message_length;
-    const uint32_t block_count = append_padding(&digest, msg, &padded_length, info);
+    uint64_t padded_length = msg_length;
+    const uint64_t block_count = append_padding(&digest, msg, &padded_length, info);
 
-    PRINT("padded length = %u\n", padded_length);
+    PRINT("padded length = %llu\n", padded_length);
     append_length(digest, l, padded_length, info->block_size);
 
 #ifdef DEBUG
@@ -116,42 +161,6 @@ uint8_t *SHA512string_with_initial_values(const char *msg, const uint64_t *H0)
     info = NULL;
 
     return digest;
-}
-
-uint8_t *SHA512file(FILE *fp)
-{
-    return hash_file(fp, SHA512string);
-}
-
-uint8_t *SHA512string(const char *msg)
-{
-    /**
-     * Setting the Initial Hash Value (H(0))
-     *
-     * Before hash computation begins for each of the secure hash algorithms, the initial hash value,
-     * H(0), must be set. The size and number of words in H(0) depends on the message digest size.
-     */
-
-    /* the initial hash value, H(0), shall consist of the following eight 64-bit words, in hex: */
-
-    const uint64_t H0[] = {
-        0x6a09e667f3bcc908,
-        0xbb67ae8584caa73b,
-        0x3c6ef372fe94f82b,
-        0xa54ff53a5f1d36f1,
-        0x510e527fade682d1,
-        0x9b05688c2b3e6c1f,
-        0x1f83d9abfb41bd6b,
-        0x5be0cd19137e2179
-    };
-
-    /**
-     * TODO
-     * These words were obtained by taking the first sixty-four bits of the fractional parts of the square
-     * roots of the first eight prime numbers.
-     */
-
-    return SHA512string_with_initial_values(msg, H0);
 }
 
 void append_length(uint8_t *digest, const uint64_t length, const uint32_t index, const uint16_t block_size)

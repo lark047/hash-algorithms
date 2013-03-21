@@ -6,11 +6,14 @@
 #include <string.h>
 #include <limits.h>
 
-/* SHA512/224 requires SHA512 */
-extern uint8_t *SHA512string_with_initial_values(const char *, const uint64_t *);
+/* SHA512/256 requires SHA512 */
+extern uint8_t *SHA512_with_initial_values(const char *, const uint64_t *);
+
+/* SHA512/256 general hash function */
+uint8_t *SHA512256(uint8_t *, const uint64_t);
 
 /* functions called by SHAstring */
-extern uint32_t append_padding(uint8_t **, const char *, uint32_t *, struct hash_info *);
+extern uint64_t append_padding(uint8_t **, uint8_t *, uint64_t *, struct hash_info *);
 static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
 static void generate_initial_hash_values(uint16_t);
 static void process(uint8_t **, const uint32_t, const uint16_t);
@@ -52,7 +55,20 @@ static const uint64_t K[] = {
 /* pointer to 32-bit word blocks */
 static const uint8_t *M;
 
+extern uint8_t *hash_file(FILE *, uint8_t *(*hash)(uint8_t *, const uint64_t));
+
+uint8_t *SHA512256file(FILE *fp)
+{
+    return hash_file(fp, SHA512256);
+}
+
 uint8_t *SHA512256string(const char *msg)
+{
+    PRINT("found newline in msg: %s\n", (strchr(msg, '\n') ? "true" : "false"));
+    return SHA512256((uint8_t *) msg, strlen(msg));
+}
+
+uint8_t *SHA512256(uint8_t *msg, const uint64_t msg_length)
 {
     struct hash_info *info = malloc(sizeof *info);
 
@@ -63,8 +79,7 @@ uint8_t *SHA512256string(const char *msg)
     uint8_t *digest;
 
     /* length in bytes */
-    const uint32_t message_length = strlen(msg);
-    PRINT("Message length: %u bytes\n", message_length);
+    PRINT("Message length: %llu byte%s\n", msg_length, (msg_length == 1 ? "" : "s"));
 
     /**
      * Padding the Message
@@ -75,13 +90,13 @@ uint8_t *SHA512256string(const char *msg)
      * l expressed using a binary representation
      */
 
-    const uint64_t l = message_length * CHAR_BIT;
+    const uint64_t l = msg_length * CHAR_BIT;
     PRINT("Message length: %llu bits\n", l);
 
-    uint32_t padded_length = message_length;
-    const uint32_t block_count = append_padding(&digest, msg, &padded_length, info);
+    uint64_t padded_length = msg_length;
+    const uint64_t block_count = append_padding(&digest, msg, &padded_length, info);
 
-    PRINT("padded length = %u\n", padded_length);
+    PRINT("padded length = %llu\n", padded_length);
     append_length(digest, l, padded_length, info->block_size);
 
 #ifdef DEBUG
@@ -130,11 +145,11 @@ uint8_t *SHA512256string(const char *msg)
     generate_initial_hash_values(256);
 
     /**
-     * SHA-512/224
+     * SHA-512/256
      *
-     * SHA-512/224 may be used to hash a message, M, having a length of l bits, where 0 <= l < 2^128. The
+     * SHA-512/256 may be used to hash a message, M, having a length of l bits, where 0 <= l < 2^128. The
      * algorithm uses 1) a message schedule of eighty 64-bit words, 2) eight working variables of 64
-     * bits each, and 3) a hash value of eight 64-bit words. The final result of SHA-512/224 is a 224-bit
+     * bits each, and 3) a hash value of eight 64-bit words. The final result of SHA-512/256 is a 256-bit
      * message digest.
      */
 
@@ -185,8 +200,8 @@ void generate_initial_hash_values(uint16_t t)
     sprintf(msg, template, t);
     PRINT("Hashing \"%s\"...\n", msg);
 
-    const char *tmp_digest = (char *) SHA512string_with_initial_values(msg, H0);
-    PRINT("Created hash value: %s\n", tmp_digest);
+    uint8_t *tmp_digest = SHA512_with_initial_values(msg, H0);
+    PRINT("Created hash value: %s\n", (char *) tmp_digest);
 
     free(msg);
 
@@ -199,7 +214,7 @@ void generate_initial_hash_values(uint16_t t)
 #ifdef DEBUG
         n +=
 #endif
-        sscanf(tmp_digest + 16 * i, "%016llx", H + i);
+        sscanf((char *) tmp_digest + 16 * i, "%016llx", H + i);
     }
 
     PRINT("converted %u strings to int\n", n);
@@ -211,6 +226,8 @@ void generate_initial_hash_values(uint16_t t)
     PRINT("h5: 0x%016llx\n", H[5]);
     PRINT("h6: 0x%016llx\n", H[6]);
     PRINT("h7: 0x%016llx\n", H[7]);
+
+    free(tmp_digest);
 }
 
 void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_size)

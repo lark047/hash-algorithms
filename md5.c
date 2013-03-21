@@ -43,15 +43,17 @@
 #include <string.h>
 #include <limits.h>
 #include <math.h>
-#include <stdint.h>
 
 #define BITS_PER_WORD          32
 #define WORDS_PER_BLOCK        16
 #define TSIZE                  64
 #define MD5_LENGTH       (32 + 1)
 
-/* functions called by MD5string */
-extern uint32_t append_padding(uint8_t **, const char *, uint32_t *, struct hash_info *);
+/* MD5 general hash function */
+uint8_t *MD5(uint8_t *, const uint64_t);
+
+/* functions called by MD5 */
+extern uint64_t append_padding(uint8_t **, uint8_t *, uint64_t *, struct hash_info *);
 static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
 static void process(uint8_t **, const uint32_t, const uint16_t);
 
@@ -60,7 +62,7 @@ static uint32_t h(uint8_t, uint32_t, uint32_t, uint32_t);
 static void r(uint32_t *, uint32_t, uint32_t, uint32_t, uint8_t, uint8_t, uint8_t);
 
 /* hash registers */
-static uint32_t h0, h1, h2, h3;
+static uint32_t H[4];
 
 /* values table */
 static uint32_t T[TSIZE] = {0};
@@ -85,14 +87,20 @@ extern uint32_t rotl(const uint32_t, const uint8_t);
 #define S3(x)                                 S(1,(x))
 #define S4(x)                                 S(2,(x))
 
-extern uint8_t *hash_file(FILE *, uint8_t *(*hash)(const char *));
+extern uint8_t *hash_file(FILE *, uint8_t *(*hash)(uint8_t *, const uint64_t));
 
 uint8_t *MD5file(FILE *fp)
 {
-    return hash_file(fp, MD5string);
+    return hash_file(fp, MD5);
 }
 
 uint8_t *MD5string(const char *msg)
+{
+    PRINT("found newline in msg: %s\n", (strchr(msg, '\n') ? "true" : "false"));
+    return MD5((uint8_t *) msg, strlen(msg));
+}
+
+uint8_t *MD5(uint8_t *msg, const uint64_t msg_length)
 {
     struct hash_info *info = malloc(sizeof *info);
 
@@ -103,8 +111,7 @@ uint8_t *MD5string(const char *msg)
     uint8_t *digest;
 
     /* length in bytes */
-    const uint32_t message_length = strlen(msg);
-    PRINT("Message length: %u bytes\n", message_length);
+    PRINT("Message length: %llu byte%s\n", msg_length, (msg_length == 1 ? "" : "s"));
 
     /**
      * We begin by supposing that we have a b-bit message as input, and that
@@ -119,7 +126,7 @@ uint8_t *MD5string(const char *msg)
      * of the message.
      */
 
-    const uint64_t b = message_length * CHAR_BIT;
+    const uint64_t b = msg_length * CHAR_BIT;
     PRINT("Message length: %llu bits\n", b);
 
     /**
@@ -137,8 +144,8 @@ uint8_t *MD5string(const char *msg)
      * least one bit and at most 512 bits are appended.
      */
 
-    uint32_t padded_length = message_length;
-    const uint32_t block_count = append_padding(&digest, msg, &padded_length, info);
+    uint64_t padded_length = msg_length;
+    const uint64_t block_count = append_padding(&digest, msg, &padded_length, info);
 
     /**
      * Step 2. Append Length
@@ -157,7 +164,7 @@ uint8_t *MD5string(const char *msg)
      * where N is a multiple of 16.
      */
 
-    PRINT("padded length = %u\n", padded_length);
+    PRINT("padded length = %llu\n", padded_length);
     append_length(digest, b, padded_length, info->block_size);
 
 #ifdef DEBUG
@@ -178,10 +185,10 @@ uint8_t *MD5string(const char *msg)
      *           word D: 76 54 32 10
      */
 
-    h0 = 0x67452301;
-    h1 = 0xefcdab89;
-    h2 = 0x98badcfe;
-    h3 = 0x10325476;
+    H[0] = 0x67452301;
+    H[1] = 0xefcdab89;
+    H[2] = 0x98badcfe;
+    H[3] = 0x10325476;
 
     /**
      * Step 4. Process Message in 16-Word Blocks
@@ -257,93 +264,93 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
     {
         X = *digest + block * block_size;
 
-        /* Save h0 as $0, h1 as $1, h2 as $2, and h3 as $3. */
-        $0 = h0;
-        $1 = h1;
-        $2 = h2;
-        $3 = h3;
+        /* Save H[0] as $0, H[1] as $1, H[2] as $2, and H[3] as $3. */
+        $0 = H[0];
+        $1 = H[1];
+        $2 = H[2];
+        $3 = H[3];
 
         /* Round 1. */
-        r(&h0, h1, h2, h3, K1(i), S1(i), i); ++i;
-        r(&h3, h0, h1, h2, K1(i), S1(i), i); ++i;
-        r(&h2, h3, h0, h1, K1(i), S1(i), i); ++i;
-        r(&h1, h2, h3, h0, K1(i), S1(i), i); ++i;
-        r(&h0, h1, h2, h3, K1(i), S1(i), i); ++i;
-        r(&h3, h0, h1, h2, K1(i), S1(i), i); ++i;
-        r(&h2, h3, h0, h1, K1(i), S1(i), i); ++i;
-        r(&h1, h2, h3, h0, K1(i), S1(i), i); ++i;
-        r(&h0, h1, h2, h3, K1(i), S1(i), i); ++i;
-        r(&h3, h0, h1, h2, K1(i), S1(i), i); ++i;
-        r(&h2, h3, h0, h1, K1(i), S1(i), i); ++i;
-        r(&h1, h2, h3, h0, K1(i), S1(i), i); ++i;
-        r(&h0, h1, h2, h3, K1(i), S1(i), i); ++i;
-        r(&h3, h0, h1, h2, K1(i), S1(i), i); ++i;
-        r(&h2, h3, h0, h1, K1(i), S1(i), i); ++i;
-        r(&h1, h2, h3, h0, K1(i), S1(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K1(i), S1(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K1(i), S1(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K1(i), S1(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K1(i), S1(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K1(i), S1(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K1(i), S1(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K1(i), S1(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K1(i), S1(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K1(i), S1(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K1(i), S1(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K1(i), S1(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K1(i), S1(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K1(i), S1(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K1(i), S1(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K1(i), S1(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K1(i), S1(i), i); ++i;
 
         /* Round 2. */
-        r(&h0, h1, h2, h3, K2(i), S2(i), i); ++i;
-        r(&h3, h0, h1, h2, K2(i), S2(i), i); ++i;
-        r(&h2, h3, h0, h1, K2(i), S2(i), i); ++i;
-        r(&h1, h2, h3, h0, K2(i), S2(i), i); ++i;
-        r(&h0, h1, h2, h3, K2(i), S2(i), i); ++i;
-        r(&h3, h0, h1, h2, K2(i), S2(i), i); ++i;
-        r(&h2, h3, h0, h1, K2(i), S2(i), i); ++i;
-        r(&h1, h2, h3, h0, K2(i), S2(i), i); ++i;
-        r(&h0, h1, h2, h3, K2(i), S2(i), i); ++i;
-        r(&h3, h0, h1, h2, K2(i), S2(i), i); ++i;
-        r(&h2, h3, h0, h1, K2(i), S2(i), i); ++i;
-        r(&h1, h2, h3, h0, K2(i), S2(i), i); ++i;
-        r(&h0, h1, h2, h3, K2(i), S2(i), i); ++i;
-        r(&h3, h0, h1, h2, K2(i), S2(i), i); ++i;
-        r(&h2, h3, h0, h1, K2(i), S2(i), i); ++i;
-        r(&h1, h2, h3, h0, K2(i), S2(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K2(i), S2(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K2(i), S2(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K2(i), S2(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K2(i), S2(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K2(i), S2(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K2(i), S2(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K2(i), S2(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K2(i), S2(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K2(i), S2(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K2(i), S2(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K2(i), S2(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K2(i), S2(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K2(i), S2(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K2(i), S2(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K2(i), S2(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K2(i), S2(i), i); ++i;
 
         /* Round 3. */
-        r(&h0, h1, h2, h3, K3(i), S3(i), i); ++i;
-        r(&h3, h0, h1, h2, K3(i), S3(i), i); ++i;
-        r(&h2, h3, h0, h1, K3(i), S3(i), i); ++i;
-        r(&h1, h2, h3, h0, K3(i), S3(i), i); ++i;
-        r(&h0, h1, h2, h3, K3(i), S3(i), i); ++i;
-        r(&h3, h0, h1, h2, K3(i), S3(i), i); ++i;
-        r(&h2, h3, h0, h1, K3(i), S3(i), i); ++i;
-        r(&h1, h2, h3, h0, K3(i), S3(i), i); ++i;
-        r(&h0, h1, h2, h3, K3(i), S3(i), i); ++i;
-        r(&h3, h0, h1, h2, K3(i), S3(i), i); ++i;
-        r(&h2, h3, h0, h1, K3(i), S3(i), i); ++i;
-        r(&h1, h2, h3, h0, K3(i), S3(i), i); ++i;
-        r(&h0, h1, h2, h3, K3(i), S3(i), i); ++i;
-        r(&h3, h0, h1, h2, K3(i), S3(i), i); ++i;
-        r(&h2, h3, h0, h1, K3(i), S3(i), i); ++i;
-        r(&h1, h2, h3, h0, K3(i), S3(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K3(i), S3(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K3(i), S3(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K3(i), S3(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K3(i), S3(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K3(i), S3(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K3(i), S3(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K3(i), S3(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K3(i), S3(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K3(i), S3(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K3(i), S3(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K3(i), S3(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K3(i), S3(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K3(i), S3(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K3(i), S3(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K3(i), S3(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K3(i), S3(i), i); ++i;
 
         /* Round 4. */
-        r(&h0, h1, h2, h3, K4(i), S4(i), i); ++i;
-        r(&h3, h0, h1, h2, K4(i), S4(i), i); ++i;
-        r(&h2, h3, h0, h1, K4(i), S4(i), i); ++i;
-        r(&h1, h2, h3, h0, K4(i), S4(i), i); ++i;
-        r(&h0, h1, h2, h3, K4(i), S4(i), i); ++i;
-        r(&h3, h0, h1, h2, K4(i), S4(i), i); ++i;
-        r(&h2, h3, h0, h1, K4(i), S4(i), i); ++i;
-        r(&h1, h2, h3, h0, K4(i), S4(i), i); ++i;
-        r(&h0, h1, h2, h3, K4(i), S4(i), i); ++i;
-        r(&h3, h0, h1, h2, K4(i), S4(i), i); ++i;
-        r(&h2, h3, h0, h1, K4(i), S4(i), i); ++i;
-        r(&h1, h2, h3, h0, K4(i), S4(i), i); ++i;
-        r(&h0, h1, h2, h3, K4(i), S4(i), i); ++i;
-        r(&h3, h0, h1, h2, K4(i), S4(i), i); ++i;
-        r(&h2, h3, h0, h1, K4(i), S4(i), i); ++i;
-        r(&h1, h2, h3, h0, K4(i), S4(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K4(i), S4(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K4(i), S4(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K4(i), S4(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K4(i), S4(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K4(i), S4(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K4(i), S4(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K4(i), S4(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K4(i), S4(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K4(i), S4(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K4(i), S4(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K4(i), S4(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K4(i), S4(i), i); ++i;
+        r(&H[0], H[1], H[2], H[3], K4(i), S4(i), i); ++i;
+        r(&H[3], H[0], H[1], H[2], K4(i), S4(i), i); ++i;
+        r(&H[2], H[3], H[0], H[1], K4(i), S4(i), i); ++i;
+        r(&H[1], H[2], H[3], H[0], K4(i), S4(i), i); ++i;
 
         /*
          * Then perform the following additions. (That is increment each
          * of the four registers by the value it had before this block
          * was started.)
          */
-        h0 += $0;
-        h1 += $1;
-        h2 += $2;
-        h3 += $3;
+        H[0] += $0;
+        H[1] += $1;
+        H[2] += $2;
+        H[3] += $3;
     }
 
     /**
@@ -353,10 +360,10 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
      * order of bytes in a word is LITTLE ENDIAN
      */
 
-    flip(&h0);
-    flip(&h1);
-    flip(&h2);
-    flip(&h3);
+    flip(&H[0]);
+    flip(&H[1]);
+    flip(&H[2]);
+    flip(&H[3]);
 
     /**
      * Step 5. Output
@@ -370,9 +377,9 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
      */
 
     free(*digest);
-    *digest = malloc(MD5_LENGTH);
+    *digest = malloc(DIGEST_LENGTH); PRINT("allocated %u bytes\n", DIGEST_LENGTH);
 
-    snprintf((char *) *digest, MD5_LENGTH, "%08x%08x%08x%08x", h0, h1, h2, h3);
+    snprintf((char *) *digest, DIGEST_LENGTH, "%08x%08x%08x%08x", H[0], H[1], H[2], H[3]);
 }
 
 void flip(uint32_t *value)
