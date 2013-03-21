@@ -13,7 +13,8 @@ util.o: util.c util.h
 util-debug.o: util.c util.h
 	$(CC) $(CFLAGS) $< -c -o $@ $(DEBUG)
 
-main: main.c md5.o md5-test.o \
+main: main.c \
+		md5.o md5-test.o \
 		sha1.o sha1-test.o \
 		sha224.o sha224-test.o \
 		sha256.o sha256-test.o \
@@ -24,11 +25,24 @@ main: main.c md5.o md5-test.o \
 		util.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o hash -l$(LIB-CUNIT)
 
+debug: main.c \
+		md5-debug.o md5-test-debug.o \
+		sha1-debug.o sha1-test-debug.o \
+		sha224.o sha224-test-debug.o \
+		sha256.o sha256-test-debug.o \
+		sha384.o sha384-test-debug.o \
+		sha512.o sha512-test-debug.o \
+		sha512-224-debug.o \
+		sha512-256-debug.o \
+		util-debug.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o hash -l$(LIB-CUNIT) $(DEBUG)
+
+
 #### MD5 ####
 md5: md5-main.c md5.o md5-test.o util.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
 
-md5-debug: md5-main.c md5-debug.o md5-test.o util-debug.o
+md5-debug: md5-main.c md5-debug.o md5-test-debug.o util-debug.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) $(DEBUG)
 
 md5.o: md5.c md5.h
@@ -40,11 +54,14 @@ md5-debug.o: md5.c md5.h
 md5-test.o: md5-test.c md5.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
+md5-test-debug.o: md5-test.c md5-debug.o
+	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
+
 #### SHA1 ####
 sha1: sha1-main.c sha1.o sha1-test.o util.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
 
-sha1-debug: sha1-main.c sha1-debug.o sha1-test.o util-debug.o
+sha1-debug: sha1-main.c sha1-debug.o sha1-test-debug.o util-debug.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) $(DEBUG)
 
 sha1.o: sha1.c sha.h
@@ -55,6 +72,9 @@ sha1-debug.o: sha1.c sha.h
 
 sha1-test.o: sha1-test.c sha1.o
 	$(CC) $(CFLAGS) -c $< -o $@
+
+sha1-test-debug.o: sha1-test.c sha1-debug.o
+	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
 
 #### SHA256 ####
 sha256: sha256-main.c sha256.o sha256-test.o util.o
@@ -72,6 +92,9 @@ sha256-debug.o: sha256.c sha.h
 sha256-test.o: sha256-test.c sha256.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
+sha256-test-debug.o: sha256-test.c sha256-debug.o
+	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
+
 #### SHA224 ####
 sha224: sha224-main.c sha224.o sha224-test.o util.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
@@ -87,6 +110,9 @@ sha224-debug.o: sha224.c sha.h
 
 sha224-test.o: sha224-test.c sha1.o
 	$(CC) $(CFLAGS) -c $< -o $@
+
+sha224-test-debug.o: sha224-test.c sha224-debug.o
+	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
 
 #### SHA384 ####
 sha384: sha384-main.c sha384.o sha384-test.o util.o
@@ -104,6 +130,9 @@ sha384-debug.o: sha384.c sha.h
 sha384-test.o: sha384-test.c sha384.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
+sha384-test-debug.o: sha384-test.c sha384-debug.o
+	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
+
 #### SHA512 ####
 sha512: sha512-main.c sha512.o sha512-test.o util.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
@@ -119,6 +148,9 @@ sha512-debug.o: sha512.c sha.h
 
 sha512-test.o: sha512-test.c sha512.o
 	$(CC) $(CFLAGS) -c $< -o $@
+
+sha512-test-debug.o: sha512-test.c sha512-debug.o
+	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
 
 #### SHA512/224 ####
 sha512-224: sha512-224-main.c sha512-224.o sha512-224-test.o sha512.o util.o
@@ -136,6 +168,9 @@ sha512-224-debug.o: sha512-224.c sha.h
 sha512-224-test.o: sha512-224-test.c sha512-224.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
+sha512-224-test-debug.o: sha512-224-test.c sha512-224-debug.o
+	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
+
 #### SHA512/256 ####
 sha512-256: sha512-256-main.c sha512-256.o sha512-256-test.o sha512.o util.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
@@ -151,6 +186,9 @@ sha512-256-debug.o: sha512-256.c sha.h
 
 sha512-256-test.o: sha512-256-test.c sha512-256.o
 	$(CC) $(CFLAGS) -c $< -o $@
+
+sha512-256-test-debug.o: sha512-256-test.c sha512-256-debug.o
+	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
 
 
 .PHONY: clean nuke
