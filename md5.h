@@ -18,4 +18,6 @@ uint8_t *MD5string(const char *);
 uint8_t *MD5file(FILE *);
 /* ... */
 
+#undef MD5
+
 #endif /* MD5_H_ */
