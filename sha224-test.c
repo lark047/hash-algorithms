@@ -9,36 +9,41 @@
 
 #if 0
 extern uint8_t *SHA224file(FILE *);
-static void testSHA224file(void);
 #endif
-
 extern uint8_t *SHA224string(const char *);
 
+extern const char *test_files[];
 extern const char *test_msgs[];
 
+#if 0
+static void testSHA224file(void);
+#endif
 static void testSHA224string(void);
 
 void testSHA224(void)
 {
+    /* TODO can't find an online SHA224 generator */
 #if 0
-    /* TODO can't find an online generator */
     testSHA224file();
 #endif
-
     testSHA224string();
 }
 
 #if 0
 void testSHA224file(void)
 {
-    /* TODO doesn't work with text/lorem-ipsum-with-newline.txt */
+    const char sha224s[] = {
+        "",
+        ""
+    };
 
-    const char *filename = "text/lorem-ipsum.txt"; /* 11417 bytes */
-    FILE *fp = fopen(filename, "r");
-
-    if (fp)
+    for (uint8_t i = 0; test_files[i]; ++i)
     {
-        const char *expected = "";
+        FILE *fp = fopen(test_files[i], "rb");
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
+
+        const char *expected = sha224s[i];
         const char *actual = (const char *) SHA224file(fp);
 
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -46,7 +51,7 @@ void testSHA224file(void)
         if (strcmp(expected, actual))
         {
             fprintf(stderr, "\n");
-            fprintf(stderr, "%s\n", filename);
+            fprintf(stderr, "file    : %s\n", test_files[i]);
             fprintf(stderr, "expected: %s\n", expected);
             fprintf(stderr, "actual  : %s\n", actual);
         }

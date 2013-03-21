@@ -10,6 +10,7 @@
 extern uint8_t *SHA1file(FILE *);
 extern uint8_t *SHA1string(const char *);
 
+extern const char *test_files[];
 extern const char *test_msgs[];
 
 static void testSHA1file(void);
@@ -23,14 +24,18 @@ void testSHA1(void)
 
 void testSHA1file(void)
 {
-    /* TODO doesn't work with text/lorem-ipsum-with-newline.txt */
+    const char *sha1s[] = {
+        "1f10a1c87261cec87ba9b38e94154dea2a62c4d9",
+        "564663cf03a708201283cfe922bc99cc121988ad"
+    };
 
-    const char *filename = "text/lorem-ipsum.txt"; /* 11417 bytes */
-    FILE *fp = fopen(filename, "r");
-
-    if (fp)
+    for (uint8_t i = 0; test_files[i]; ++i)
     {
-        const char *expected = "1f10a1c87261cec87ba9b38e94154dea2a62c4d9";
+        FILE *fp = fopen(test_files[i], "rb");
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
+
+        const char *expected = sha1s[i];
         const char *actual = (const char *) SHA1file(fp);
 
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -38,7 +43,7 @@ void testSHA1file(void)
         if (strcmp(expected, actual))
         {
             fprintf(stderr, "\n");
-            fprintf(stderr, "%s\n", filename);
+            fprintf(stderr, "file    : %s\n", test_files[i]);
             fprintf(stderr, "expected: %s\n", expected);
             fprintf(stderr, "actual  : %s\n", actual);
         }

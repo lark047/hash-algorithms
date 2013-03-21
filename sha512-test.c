@@ -10,6 +10,7 @@
 extern uint8_t *SHA512file(FILE *);
 extern uint8_t *SHA512string(const char *);
 
+extern const char *test_files[];
 extern const char *test_msgs[];
 
 static void testSHA512file(void);
@@ -23,14 +24,18 @@ void testSHA512(void)
 
 void testSHA512file(void)
 {
-    /* TODO doesn't work with text/lorem-ipsum-with-newline.txt */
+    const char *sha512s[] = {
+        "5380d25153631747975a86cb691432f2e0e2bd906f195414e7bc52d06079a1683af0a892262260d5623d820f20d87033e8b685d1455b17d34c7ee0114892ae8a",
+        "e42e221feea27d17d92b9c0b7a9ae02fcb84d70ddb8acfbd5ce4c2922f23d9d6e73cbb294a41e72228ceac4aba3514d7b2fcde5cb48e63d3aa02eb0112e73f5f"
+    };
 
-    const char *filename = "text/lorem-ipsum.txt"; /* 11417 bytes */
-    FILE *fp = fopen(filename, "r");
-
-    if (fp)
+    for (uint8_t i = 0; test_files[i]; ++i)
     {
-        const char *expected = "5380d25153631747975a86cb691432f2e0e2bd906f195414e7bc52d06079a1683af0a892262260d5623d820f20d87033e8b685d1455b17d34c7ee0114892ae8a";
+        FILE *fp = fopen(test_files[i], "rb");
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
+
+        const char *expected = sha512s[i];
         const char *actual = (const char *) SHA512file(fp);
 
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -38,7 +43,7 @@ void testSHA512file(void)
         if (strcmp(expected, actual))
         {
             fprintf(stderr, "\n");
-            fprintf(stderr, "%s\n", filename);
+            fprintf(stderr, "file    : %s\n", test_files[i]);
             fprintf(stderr, "expected: %s\n", expected);
             fprintf(stderr, "actual  : %s\n", actual);
         }
