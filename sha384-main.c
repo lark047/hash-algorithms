@@ -20,34 +20,19 @@ int main(int argc, char **argv)
         {
             CU_pSuite suite;
 
-            if (CU_initialize_registry() != CUE_SUCCESS)
+            if (CU_initialize_registry() == CUE_SUCCESS)
             {
-                rc = CU_get_error();
-            }
-            else
-            {
-                if ((suite = CU_add_suite("SHA384 Test Suite", NULL, NULL)) == NULL)
+                if ((suite = CU_add_suite("SHA384 Test Suite", NULL, NULL)))
                 {
-                    CU_cleanup_registry();
-                    rc = CU_get_error();
-                }
-                else
-                {
-                    if (CU_ADD_TEST(suite, testSHA384) == NULL)
-                    {
-                        CU_cleanup_registry();
-                        rc = CU_get_error();
-                    }
-                    else
+                    if (CU_ADD_TEST(suite, testSHA384))
                     {
                         CU_basic_set_mode(CU_BRM_VERBOSE);
                         CU_basic_run_tests();
-                        CU_cleanup_registry();
-
-                        rc = CU_get_error();
                     }
                 }
+                CU_cleanup_registry();
             }
+            rc = CU_get_error();
         }
         else
         {
@@ -76,7 +61,7 @@ int main(int argc, char **argv)
         PRINT("Calculating SHA384 for \"%s\"...\n", filename);
         PRINT("Using byte size of %u\n", (unsigned) CHAR_BIT);
 
-        FILE *fp = fopen(filename, "r");
+        FILE *fp = fopen(filename, "rb");
 
         if (fp)
         {

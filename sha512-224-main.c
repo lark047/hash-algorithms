@@ -20,43 +20,28 @@ int main(int argc, char **argv)
         {
             CU_pSuite suite;
 
-            if (CU_initialize_registry() != CUE_SUCCESS)
+            if (CU_initialize_registry() == CUE_SUCCESS)
             {
-                rc = CU_get_error();
-            }
-            else
-            {
-                if ((suite = CU_add_suite("SHA512/224 Test Suite", NULL, NULL)) == NULL)
+                if ((suite = CU_add_suite("SHA512/224 Test Suite", NULL, NULL)))
                 {
-                    CU_cleanup_registry();
-                    rc = CU_get_error();
-                }
-                else
-                {
-                    if (CU_ADD_TEST(suite, testSHA512224) == NULL)
-                    {
-                        CU_cleanup_registry();
-                        rc = CU_get_error();
-                    }
-                    else
+                    if (CU_ADD_TEST(suite, testSHA512224))
                     {
                         CU_basic_set_mode(CU_BRM_VERBOSE);
                         CU_basic_run_tests();
-                        CU_cleanup_registry();
-
-                        rc = CU_get_error();
                     }
                 }
+                CU_cleanup_registry();
             }
+            rc = CU_get_error();
         }
         else
         {
-            char * const string = argv[1];
+            char * const msg = argv[1];
 
-            PRINT("Calculating SHA512/224 for \"%s\"...\n", string);
+            PRINT("Calculating SHA512/224 for \"%s\"...\n", msg);
             PRINT("Using byte size of %u\n", (unsigned) CHAR_BIT);
 
-            uint8_t *digest = SHA512224string(string);
+            uint8_t *digest = SHA512224string(msg);
 
             printf("%s\n", digest);
 
@@ -69,10 +54,42 @@ int main(int argc, char **argv)
             rc = EXIT_SUCCESS;
         }
     }
+    else if (argc == 3 && strcmp(argv[1], "-f") == 0)
+    {
+        char * const filename = argv[2];
+
+        PRINT("Calculating SHA512/224 for \"%s\"...\n", filename);
+        PRINT("Using byte size of %u\n", (unsigned) CHAR_BIT);
+
+        FILE *fp = fopen(filename, "rb");
+
+        if (fp)
+        {
+            uint8_t *digest = SHA512224file(fp);
+
+            printf("%s\n", (char *) digest);
+
+            /* clean up */
+            PRINT("%s\n", "Cleaning up...");
+            free(digest);
+            fclose(fp);
+
+            digest = NULL;
+            fp = NULL;
+
+            rc = EXIT_SUCCESS;
+        }
+        else
+        {
+            fprintf(stderr, "[ERROR] Could not open %s for reading.", filename);
+        }
+    }
     else
     {
         printf("Usage: %s \"<string>\"\n", argv[0]);
-        puts("  prints the SHA1 hash of <string>\n");
+        puts("  prints the SHA512/224 hash of <string>\n");
+        printf("Usage: %s -f <filename>\n", argv[0]);
+        puts("  prints the SHA512/224 hash of the file named <filename>\n");
     }
 
     PRINT("Exiting with status %d\n", rc);
