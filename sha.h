@@ -137,12 +137,12 @@ uint8_t *SHA512224string(const char *);
 uint8_t *SHA512256string(const char *);
 
 uint8_t *SHA1file(FILE *);
+uint8_t *SHA224file(FILE *);
 uint8_t *SHA256file(FILE *);
 uint8_t *SHA384file(FILE *);
 uint8_t *SHA512file(FILE *);
 
 #if 0
-uint8_t *SHA224file(FILE *);
 uint8_t *SHA512224file(FILE *);
 uint8_t *SHA512256file(FILE *);
 #endif

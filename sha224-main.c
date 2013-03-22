@@ -16,7 +16,7 @@ int main(int argc, char **argv)
 
     if (argc == 2)
     {
-        if (strcmp(argv[1], "-t") == 0)
+        if (STR_EQ(argv[1], "-t"))
         {
             CU_pSuite suite;
 
@@ -54,10 +54,8 @@ int main(int argc, char **argv)
             rc = EXIT_SUCCESS;
         }
     }
-    else if (argc == 3 && strcmp(argv[1], "-f") == 0)
+    else if (argc == 3 && STR_EQ(argv[1], "-f"))
     {
-        /* TODO can't find an online SHA224 generator */
-#if 0
         char * const filename = argv[2];
 
         PRINT("Calculating SHA224 for \"%s\"...\n", filename);
@@ -83,9 +81,8 @@ int main(int argc, char **argv)
         }
         else
         {
-            fprintf(stderr, "[ERROR] Could not open %s for reading.", filename);
+            fprintf(stderr, "Could not open %s for reading.", filename);
         }
-#endif
     }
     else
     {

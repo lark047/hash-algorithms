@@ -7,34 +7,26 @@
 
 #include <CUnit/Basic.h>
 
-#if 0
 extern uint8_t *SHA224file(FILE *);
-#endif
 extern uint8_t *SHA224string(const char *);
 
 extern const char *test_files[];
 extern const char *test_msgs[];
 
-#if 0
 static void testSHA224file(void);
-#endif
 static void testSHA224string(void);
 
 void testSHA224(void)
 {
-    /* TODO can't find an online SHA224 generator */
-#if 0
     testSHA224file();
-#endif
     testSHA224string();
 }
 
-#if 0
 void testSHA224file(void)
 {
-    const char sha224s[] = {
-        "",
-        ""
+    const char *sha224s[] = {
+        "15466c1039f59bb6be71a39bd532c58784bf1bb16d75f6b0c8decb8c",
+        "e8c15d187727485006a83b38577d4a6dd7d6426461ac74d1bb6f6a76"
     };
 
     for (uint8_t i = 0; test_files[i]; ++i)
@@ -63,7 +55,6 @@ void testSHA224file(void)
         fclose(fp);
     }
 }
-#endif
 
 void testSHA224string(void)
 {
