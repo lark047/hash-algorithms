@@ -76,7 +76,8 @@ uint64_t append_padding(uint8_t **digest_ref, uint8_t *msg, uint64_t *length, st
     const uint64_t total_length = *length + 1 + nils + info->block_size / CHAR_BIT;
     const uint64_t block_count = total_length / info->block_size;
 
-    PRINT("total_length / 64 = %llu (%llu) <== should be 0\n", block_count, total_length % info->block_size);
+    PRINT("total_length = %llu + %d + %u + %u = %llu\n", *length, 1, nils, info->block_size / CHAR_BIT, total_length);
+    PRINT("%llu / 64 = %llu (%llu) <== should be 0\n", total_length, block_count, total_length % info->block_size);
     PRINT("allocating %llu block%s of %u bits...\n", block_count, (block_count == 1 ? "" : "s"), info->digest_length);
 
     (*digest_ref) = malloc(total_length * sizeof *(*digest_ref));
