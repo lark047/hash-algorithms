@@ -133,8 +133,11 @@ uint8_t *SHA224string(const char *);
 uint8_t *SHA256string(const char *);
 uint8_t *SHA384string(const char *);
 uint8_t *SHA512string(const char *);
+
+#if 0
 uint8_t *SHA512224string(const char *);
 uint8_t *SHA512256string(const char *);
+#endif
 
 uint8_t *SHA1file(FILE *);
 uint8_t *SHA224file(FILE *);

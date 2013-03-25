@@ -26,13 +26,13 @@ int main(int argc, char **argv)
 
     const char *labels[] = {
         "MD5",
-        "SHA1",
-        "SHA224",
-        "SHA256",
-        "SHA384",
-        "SHA512",
-        "SHA512/224",
-        "SHA512/256",
+        "SHA-1",
+        "SHA-224",
+        "SHA-256",
+        "SHA-384",
+        "SHA-512",
+        "SHA-512/224",
+        "SHA-512/256",
         0
     };
 
@@ -44,14 +44,17 @@ int main(int argc, char **argv)
         {
             if ((suite = CU_add_suite("Cryptography Test Suite", NULL, NULL)))
             {
-                if (CU_ADD_TEST(suite, testMD5) &&
-                    CU_ADD_TEST(suite, testSHA1) &&
-                    CU_ADD_TEST(suite, testSHA224) &&
-                    CU_ADD_TEST(suite, testSHA256) &&
-                    CU_ADD_TEST(suite, testSHA384) &&
-                    CU_ADD_TEST(suite, testSHA512) /* &&
-                    CU_ADD_TEST(suite, testSHA512224) &&
-                    CU_ADD_TEST(suite, testSHA512256) */)
+                if (CU_ADD_TEST(suite, testMD5)
+                 && CU_ADD_TEST(suite, testSHA1)
+                 && CU_ADD_TEST(suite, testSHA224)
+                 && CU_ADD_TEST(suite, testSHA256)
+                 && CU_ADD_TEST(suite, testSHA384)
+                 && CU_ADD_TEST(suite, testSHA512)
+#if 0
+                 && CU_ADD_TEST(suite, testSHA512224)
+                 && CU_ADD_TEST(suite, testSHA512256)
+#endif
+                 )
                 {
                     CU_basic_set_mode(CU_BRM_VERBOSE);
                     CU_basic_run_tests();
@@ -70,14 +73,16 @@ int main(int argc, char **argv)
             SHA256string,
             SHA384string,
             SHA512string,
+#if 0
             SHA512224string,
             SHA512256string
+#endif
         };
 
         for (uint8_t i = 0; i < SIZE(hashes); ++i)
         {
             uint8_t *digest = hashes[i](argv[1]);
-            printf("%10s: %s\n", labels[i], (char *) digest);
+            printf("%7s: %s\n", labels[i], (char *) digest);
             free(digest);
         }
 
@@ -88,7 +93,7 @@ int main(int argc, char **argv)
         uint8_t *(*hashes[])(FILE *) = {
             MD5file,
             SHA1file,
-            /* SHA224file, */ NULL,
+            SHA224file,
             SHA256file,
             SHA384file,
             SHA512file,
@@ -136,12 +141,14 @@ int main(int argc, char **argv)
             case 5:
                 hash = SHA512string;
                 break;
+#if 0
             case 6:
                 hash = SHA512224string;
                 break;
             case 7:
                 hash = SHA512256string;
                 break;
+#endif
             default:
                 hash = NULL;
                 break;
@@ -179,11 +186,9 @@ int main(int argc, char **argv)
             case 1:
                 hash = SHA1file;
                 break;
-#if 0
             case 2:
                 hash = SHA224file;
                 break;
-#endif
             case 3:
                 hash = SHA256file;
                 break;

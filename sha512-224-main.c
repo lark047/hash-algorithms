@@ -10,10 +10,11 @@
 
 extern void testSHA512224(void);
 
-int main(int argc, char **argv)
+int main(/* int argc, char **argv */ void)
 {
     int rc = EXIT_FAILURE;
 
+#if 0
     if (argc == 2)
     {
         if (strcmp(argv[1], "-t") == 0)
@@ -91,6 +92,9 @@ int main(int argc, char **argv)
         printf("Usage: %s -f <filename>\n", argv[0]);
         puts("  prints the SHA512/224 hash of the file named <filename>\n");
     }
+#endif
+
+    printf("SHA-512/224 is not yet implemented. No suitable generator could be found.\n");
 
     PRINT("Exiting with status %d\n", rc);
     return rc;
