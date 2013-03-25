@@ -35,7 +35,7 @@
  * should have type NULL.
  */
 
-#include "md5.h"
+#include "md.h"
 #include "util.h"
 
 #include <stdio.h>

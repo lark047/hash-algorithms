@@ -7,26 +7,28 @@
 
 #include <CUnit/Basic.h>
 
-extern uint8_t *MD5file(FILE *);
-extern uint8_t *MD5string(const char *);
+extern uint8_t *MD4file(FILE *);
+extern uint8_t *MD4string(const char *);
 
 extern const char *test_files[];
 extern const char *test_msgs[];
 
-static void testMD5file(void);
-static void testMD5string(void);
+static void testMD4file(void);
+static void testMD4string(void);
 
-void testMD5(void)
+void testMD4(void)
 {
-    testMD5file();
-    testMD5string();
+#if 0
+    testMD4file();
+#endif
+    testMD4string();
 }
 
-void testMD5file(void)
+void testMD4file(void)
 {
-    const char *md5s[] = {
-        "6901b58e9fe9368c6b200d5738d64f21",
-        "b777bb64154defc9bb2602753c3ea8a6"
+    const char *md4s[] = {
+        "",
+        ""
     };
 
     for (uint8_t i = 0; test_files[i]; ++i)
@@ -35,8 +37,8 @@ void testMD5file(void)
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
 
-        const char *expected = md5s[i];
-        const char *actual = (const char *) MD5file(fp);
+        const char *expected = md4s[i];
+        const char *actual = (const char *) MD4file(fp);
 
         CU_ASSERT_STRING_EQUAL(actual, expected);
 
@@ -56,24 +58,24 @@ void testMD5file(void)
     }
 }
 
-void testMD5string(void)
+void testMD4string(void)
 {
-    const char *md5s[] = {
-        "d41d8cd98f00b204e9800998ecf8427e",
-        "0cc175b9c0f1b6a831c399e269772661",
-        "900150983cd24fb0d6963f7d28e17f72",
-        "f96b697d7cb7938d525a2f31aaf161d0",
-        "c3fcd3d76192e4007dfb496cca67e13b",
-        "d174ab98d277d9f5a5611c2c9f419d9f",
-        "57edf4a22be3c955ac49da2e2107b67a",
-        "9e107d9d372bb6826bd81d3542a419d6",
-        "e4d909c290d0fb1ca068ffaddf22cbd0"
+    const char *md4s[] = {
+        "31d6cfe0d16ae931b73c59d7e0c089c0",
+        "bde52cb31de33e46245e05fbdbd6fb24",
+        "a448017aaf21d8525fc10ae87aa6729d",
+        "d9130a8164549fe818874806e1c7014b",
+        "d79e1c308aa5bbcdeea8ed63df412da9",
+        "043f8582f241db351ce627e153e7f0e4",
+        "e33b4ddc9c38f2199c3e7b164fcc0536",
+        "1bee69a46ba811185c194762abaeae90",
+        "2812c6c7136898c51f6f6739ad08750e"
     };
 
     for (uint8_t i = 0; test_msgs[i]; ++i)
     {
-        const char *expected = md5s[i];
-        const char *actual = (const char *) MD5string(test_msgs[i]);
+        const char *expected = md4s[i];
+        const char *actual = (const char *) MD4string(test_msgs[i]);
 
         CU_ASSERT_STRING_EQUAL(actual, expected);
 

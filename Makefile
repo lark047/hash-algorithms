@@ -37,6 +37,24 @@ debug: main.c \
 		util-debug.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o hash -l$(LIB-CUNIT) $(DEBUG)
 
+#### MD4 ####
+md4: md4-main.c md4.o md4-test.o util.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
+
+md4-debug: md4-main.c md4-debug.o md4-test-debug.o util-debug.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) $(DEBUG)
+
+md4.o: md4.c md.h
+	$(CC) $(CFLAGS) -c $< -o $@ -DMD4
+
+md4-debug.o: md4.c md.h
+	$(CC) $(CFLAGS) -c $< -o $@ -DMD4 $(DEBUG)
+
+md4-test.o: md4-test.c md4.o
+	$(CC) $(CFLAGS) -c $< -o $@
+
+md4-test-debug.o: md4-test.c md4-debug.o
+	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
 
 #### MD5 ####
 md5: md5-main.c md5.o md5-test.o util.o
@@ -45,10 +63,10 @@ md5: md5-main.c md5.o md5-test.o util.o
 md5-debug: md5-main.c md5-debug.o md5-test-debug.o util-debug.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) $(DEBUG)
 
-md5.o: md5.c md5.h
+md5.o: md5.c md.h
 	$(CC) $(CFLAGS) -c $< -o $@ -DMD5
 
-md5-debug.o: md5.c md5.h
+md5-debug.o: md5.c md.h
 	$(CC) $(CFLAGS) -c $< -o $@ -DMD5 $(DEBUG)
 
 md5-test.o: md5-test.c md5.o
