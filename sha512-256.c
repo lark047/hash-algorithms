@@ -7,7 +7,7 @@
 #include <limits.h>
 
 /* SHA512/256 requires SHA512 */
-extern uint8_t *SHA512_with_initial_values(const char *, const uint64_t *);
+extern uint8_t *SHA512_with_initial_values(uint8_t *, const uint64_t, const uint64_t *);
 
 /* SHA512/256 general hash function */
 uint8_t *SHA512256(uint8_t *, const uint64_t);
@@ -200,7 +200,8 @@ void generate_initial_hash_values(uint16_t t)
     sprintf(msg, template, t);
     PRINT("Hashing \"%s\"...\n", msg);
 
-    uint8_t *tmp_digest = SHA512_with_initial_values(msg, H0);
+    /* TODO need general SHA512/256 function? */
+    uint8_t *tmp_digest = SHA512_with_initial_values((uint8_t *) msg, strlen(msg), H0);
     PRINT("Created hash value: %s\n", (char *) tmp_digest);
 
     free(msg);
