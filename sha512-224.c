@@ -1,10 +1,11 @@
 #include "sha.h"
 #include "util.h"
 
+#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 
 /* SHA512/224 requires SHA512 */
 extern uint8_t *SHA512_with_initial_values(uint8_t *, const uint64_t, const uint64_t *);
@@ -13,7 +14,6 @@ extern uint8_t *SHA512_with_initial_values(uint8_t *, const uint64_t, const uint
 uint8_t *SHA512224(uint8_t *, const uint64_t);
 
 /* functions called by SHAstring */
-extern uint64_t append_padding(uint8_t **, uint8_t *, uint64_t *, struct hash_info *);
 static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
 static void generate_initial_hash_values(uint16_t);
 static void process(uint8_t **, const uint32_t, const uint16_t);
@@ -54,8 +54,6 @@ static const uint64_t K[] = {
 
 /* pointer to 32-bit word blocks */
 static const uint8_t *M;
-
-extern uint8_t *hash_file(FILE *, uint8_t *(*hash)(uint8_t *, const uint64_t));
 
 uint8_t *SHA512224file(FILE *fp)
 {

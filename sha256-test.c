@@ -1,17 +1,12 @@
 #include "sha.h"
 #include "util.h"
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <CUnit/Basic.h>
-
-extern uint8_t *SHA256file(FILE *);
-extern uint8_t *SHA256string(const char *);
-
-extern const char *test_files[];
-extern const char *test_msgs[];
 
 static void testSHA256file(void);
 static void testSHA256string(void);
@@ -38,20 +33,22 @@ void testSHA256file(void)
         const char *expected = sha256s[i];
         const char *actual = (const char *) SHA256file(fp);
 
+        CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
 
-        if (strcmp(expected, actual))
+        if (STR_EQ(expected, actual))
+        {
+            PRINT("%s\n", actual);
+        }
+        else
         {
             fprintf(stderr, "\n");
             fprintf(stderr, "file    : %s\n", test_files[i]);
             fprintf(stderr, "expected: %s\n", expected);
             fprintf(stderr, "actual  : %s\n", actual);
         }
-        else
-        {
-            PRINT("%s\n", actual);
-        }
 
+        free((void *) actual);
         fclose(fp);
     }
 }
@@ -75,18 +72,21 @@ void testSHA256string(void)
         const char *expected = sha256s[i];
         const char *actual = (const char *) SHA256string(test_msgs[i]);
 
+        CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
 
-        if (strcmp(expected, actual))
+        if (STR_EQ(expected, actual))
+        {
+            PRINT("%s\n", actual);
+        }
+        else
         {
             fprintf(stderr, "\n");
             fprintf(stderr, "string  : -->%s<--\n", test_msgs[i]);
             fprintf(stderr, "expected: %s\n", expected);
             fprintf(stderr, "actual  : %s\n", actual);
         }
-        else
-        {
-            PRINT("%s\n", actual);
-        }
+
+        free((void *) actual);
     }
 }

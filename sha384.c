@@ -1,16 +1,16 @@
 #include "sha.h"
 #include "util.h"
 
+#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <limits.h>
 
 /* SHA384 general hash function */
 uint8_t *SHA384(uint8_t *, const uint64_t);
 
 /* functions called by SHA384 */
-extern uint64_t append_padding(uint8_t **, uint8_t *, uint64_t *, struct hash_info *);
 static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
 static void process(uint8_t **, const uint32_t, const uint16_t);
 
@@ -50,8 +50,6 @@ static const uint64_t K[] = {
 
 /* pointer to 32-bit word blocks */
 static const uint8_t *M;
-
-extern uint8_t *hash_file(FILE *, uint8_t *(*hash)(uint8_t *, const uint64_t));
 
 uint8_t *SHA384file(FILE *fp)
 {
