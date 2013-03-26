@@ -14,6 +14,7 @@ util-debug.o: util.c util.h
 	$(CC) $(CFLAGS) $< -c -o $@ $(DEBUG)
 
 main: main.c \
+		md4.o md4-test.o \
 		md5.o md5-test.o \
 		sha1.o sha1-test.o \
 		sha224.o sha224-test.o \
@@ -26,6 +27,7 @@ main: main.c \
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o hash -l$(LIB-CUNIT)
 
 debug: main.c \
+		md4-debug.o md5-test-debug.o \
 		md5-debug.o md5-test-debug.o \
 		sha1-debug.o sha1-test-debug.o \
 		sha224.o sha224-test-debug.o \
