@@ -126,6 +126,14 @@
 
 #endif
 
+#undef SHA1
+#undef SHA224
+#undef SHA256
+#undef SHA384
+#undef SHA512
+#undef SHA512224
+#undef SHA512256
+
 /* public interface */
 
 uint8_t *SHA1string(const char *);
@@ -149,13 +157,5 @@ uint8_t *SHA512file(FILE *);
 uint8_t *SHA512224file(FILE *);
 uint8_t *SHA512256file(FILE *);
 #endif
-
-#undef SHA1
-#undef SHA224
-#undef SHA256
-#undef SHA384
-#undef SHA512
-#undef SHA512224
-#undef SHA512256
 
 #endif /* SHA_H_ */
