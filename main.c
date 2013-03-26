@@ -9,6 +9,7 @@
 
 #include <CUnit/Basic.h>
 
+extern void testMD4(void);
 extern void testMD5(void);
 extern void testSHA1(void);
 extern void testSHA224(void);
@@ -21,13 +22,14 @@ extern void testSHA512224(void);
 extern void testSHA512256(void);
 #endif
 
-static size_t index_of(const char *, const char *[]);
+static short index_of(const char *, const char *[]);
 
 int main(int argc, char **argv)
 {
     int rc = EXIT_FAILURE;
 
     const char *labels[] = {
+        "MD4",
         "MD5",
         "SHA-1",
         "SHA-224",
@@ -39,6 +41,30 @@ int main(int argc, char **argv)
         0
     };
 
+    uint8_t *(*hash_strings[])(const char *) = {
+        MD4string,
+        MD5string,
+        SHA1string,
+        SHA224string,
+        SHA256string,
+        SHA384string,
+        SHA512string,
+        /* SHA512224string */ NULL,
+        /* SHA512256string */ NULL
+    };
+
+    uint8_t *(*hash_files[])(FILE *) = {
+        MD4file,
+        MD5file,
+        SHA1file,
+        SHA224file,
+        SHA256file,
+        SHA384file,
+        SHA512file,
+        /* SHA512224file */ NULL,
+        /* SHA512256file */ NULL
+    };
+
     if (argc == 2 && STR_EQ(argv[1], "-t"))
     {
         CU_pSuite suite;
@@ -47,7 +73,8 @@ int main(int argc, char **argv)
         {
             if ((suite = CU_add_suite("Cryptography Test Suite", NULL, NULL)))
             {
-                if (CU_ADD_TEST(suite, testMD5)
+                if (CU_ADD_TEST(suite, testMD4)
+                 && CU_ADD_TEST(suite, testMD5)
                  && CU_ADD_TEST(suite, testSHA1)
                  && CU_ADD_TEST(suite, testSHA224)
                  && CU_ADD_TEST(suite, testSHA256)
@@ -69,29 +96,14 @@ int main(int argc, char **argv)
     }
     else if (argc == 2)
     {
-        uint8_t *(*hashes[])(const char *) = {
-            MD5string,
-            SHA1string,
-            SHA224string,
-            SHA256string,
-            SHA384string,
-            SHA512string,
-#if 0
-            SHA512224string,
-            SHA512256string
-#else
-            NULL,
-            NULL
-#endif
-        };
-
-        for (uint8_t i = 0; i < SIZE(hashes); ++i)
+        for (uint8_t i = 0; i < SIZE(hash_strings); ++i)
         {
-            uint8_t *digest = /* TODO */ hashes[i] ? hashes[i](argv[1]) : (uint8_t *) "(not yet implemented)";
+            uint8_t *digest = /* TODO */ hash_strings[i] ? hash_strings[i](argv[1]) : (uint8_t *) "(not yet implemented)";
 
             printf("%11s: %s\n", labels[i], (char *) digest);
 
-            if (hashes[i])
+            /* TODO error handling */
+            if (hash_strings[i])
             {
                 free(digest);
             }
@@ -101,26 +113,15 @@ int main(int argc, char **argv)
     }
     else if (argc == 3 && STR_EQ(argv[1], "--file"))
     {
-        uint8_t *(*hashes[])(FILE *) = {
-            MD5file,
-            SHA1file,
-            SHA224file,
-            SHA256file,
-            SHA384file,
-            SHA512file,
-            /* SHA512224file */ NULL,
-            /* SHA512256file */ NULL
-        };
-
-        for (uint8_t i = 0; i < SIZE(hashes); ++i)
+        for (uint8_t i = 0; i < SIZE(hash_files); ++i)
         {
-            FILE *fp =        /* TODO */ hashes[i] ? fopen(argv[2], "rb") : NULL;
-            uint8_t *digest = /* TODO */ hashes[i] ? hashes[i](fp) : (uint8_t *) "(not yet implemented)";
+            FILE *fp =        /* TODO */ hash_files[i] ? fopen(argv[2], "rb") : NULL;
+            uint8_t *digest = /* TODO */ hash_files[i] ? hash_files[i](fp) : (uint8_t *) "(not yet implemented)";
 
             /* TODO error handling */
             printf("%11s: %s\n", labels[i], (char *) digest);
 
-            if (hashes[i]) {
+            if (hash_files[i]) {
                 fclose(fp);
                 free(digest);
             }
@@ -130,51 +131,19 @@ int main(int argc, char **argv)
     }
     else if (argc == 4 && STR_EQ(argv[1], "--function"))
     {
-        uint8_t *(*hash)(const char *);
+        const short index = index_of(argv[2], labels);
 
-        switch (index_of(argv[2], labels))
+        if (index == -1)
         {
-            case 0:
-                hash = MD5string;
-                break;
-            case 1:
-                hash = SHA1string;
-                break;
-            case 2:
-                hash = SHA224string;
-                break;
-            case 3:
-                hash = SHA256string;
-                break;
-            case 4:
-                hash = SHA384string;
-                break;
-            case 5:
-                hash = SHA512string;
-                break;
-#if 0
-            case 6:
-                hash = SHA512224string;
-                break;
-            case 7:
-                hash = SHA512256string;
-                break;
-#endif
-            default:
-                hash = NULL;
-                break;
-        }
-
-        if (hash)
-        {
-            uint8_t *digest = hash(argv[3]);
-            printf("%s\n", (char *) digest);
-            free(digest);
-            rc = EXIT_SUCCESS;
+            fprintf(stderr, "Hash function \"%s\" not supported\n", argv[2]);
         }
         else
         {
-            fprintf(stderr, "Hash function \"%s\" not supported\n", argv[2]);
+            uint8_t *digest = hash_strings[index](argv[3]);
+            /* TODO error handling */
+            printf("%s\n", (char *) digest);
+            free(digest);
+            rc = EXIT_SUCCESS;
         }
     }
     else if (argc == 5 &&
@@ -187,48 +156,20 @@ int main(int argc, char **argv)
 #define HASHNAME argv[hindex]
 #define FILENAME argv[findex]
 
-        uint8_t *(*hash)(FILE *);
+        const short index = index_of(HASHNAME, labels);
 
-        switch (index_of(HASHNAME, labels))
+        if (index == -1)
         {
-            case 0:
-                hash = MD5file;
-                break;
-            case 1:
-                hash = SHA1file;
-                break;
-            case 2:
-                hash = SHA224file;
-                break;
-            case 3:
-                hash = SHA256file;
-                break;
-            case 4:
-                hash = SHA384file;
-                break;
-            case 5:
-                hash = SHA512file;
-                break;
-#if 0
-            case 6:
-                hash = SHA512224file;
-                break;
-            case 7:
-                hash = SHA512256file;
-                break;
-#endif
-            default:
-                hash = NULL;
-                break;
+            fprintf(stderr, "Hash function \"%s\" not supported\n", HASHNAME);
         }
-
-        if (hash)
+        else
         {
             FILE *fp = fopen(FILENAME, "rb");
 
             if (fp)
             {
-                uint8_t *digest = hash(fp);
+                uint8_t *digest = hash_files[index](fp);
+                /* TODO error handling */
                 printf("%s\n", (char *) digest);
                 free(digest);
                 rc = EXIT_SUCCESS;
@@ -237,10 +178,6 @@ int main(int argc, char **argv)
             {
                 fprintf(stderr, "Could not open \"%s\"\n", FILENAME);
             }
-        }
-        else
-        {
-            fprintf(stderr, "Hash function \"%s\" not supported\n", HASHNAME);
         }
 #undef HASHNAME
 #undef FILENAME
@@ -262,7 +199,7 @@ int main(int argc, char **argv)
     return rc;
 }
 
-size_t index_of(const char *needle, const char *haystack[])
+short index_of(const char *needle, const char *haystack[])
 {
     for (size_t i = 0; haystack[i]; ++i)
     {
