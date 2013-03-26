@@ -1,4 +1,4 @@
-#include "md5.h"
+#include "md.h"
 #include "sha.h"
 #include "util.h"
 
@@ -15,8 +15,11 @@ extern void testSHA224(void);
 extern void testSHA256(void);
 extern void testSHA384(void);
 extern void testSHA512(void);
-/* extern void testSHA512224(void); */
-/* extern void testSHA512256(void); */
+
+#if 0
+extern void testSHA512224(void);
+extern void testSHA512256(void);
+#endif
 
 static size_t index_of(const char *, const char *[]);
 
@@ -76,14 +79,22 @@ int main(int argc, char **argv)
 #if 0
             SHA512224string,
             SHA512256string
+#else
+            NULL,
+            NULL
 #endif
         };
 
         for (uint8_t i = 0; i < SIZE(hashes); ++i)
         {
-            uint8_t *digest = hashes[i](argv[1]);
-            printf("%7s: %s\n", labels[i], (char *) digest);
-            free(digest);
+            uint8_t *digest = /* TODO */ hashes[i] ? hashes[i](argv[1]) : (uint8_t *) "(not yet implemented)";
+
+            printf("%11s: %s\n", labels[i], (char *) digest);
+
+            if (hashes[i])
+            {
+                free(digest);
+            }
         }
 
         rc = EXIT_SUCCESS;
@@ -107,7 +118,7 @@ int main(int argc, char **argv)
             uint8_t *digest = /* TODO */ hashes[i] ? hashes[i](fp) : (uint8_t *) "(not yet implemented)";
 
             /* TODO error handling */
-            printf("%10s: %s\n", labels[i], (char *) digest);
+            printf("%11s: %s\n", labels[i], (char *) digest);
 
             if (hashes[i]) {
                 fclose(fp);
