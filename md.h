@@ -12,7 +12,14 @@
 # define DIGEST_LENGTH_BITS  512
 #endif
 
+#undef MD4
+#undef MD5
+
 /* public interface */
+
+uint8_t *MD4(uint8_t *, uint64_t);
+uint8_t *MD5(uint8_t *, uint64_t);
+/* ... */
 
 uint8_t *MD4file(FILE *);
 uint8_t *MD5file(FILE *);
@@ -21,8 +28,5 @@ uint8_t *MD5file(FILE *);
 uint8_t *MD4string(const char *);
 uint8_t *MD5string(const char *);
 /* ... */
-
-#undef MD4
-#undef MD5
 
 #endif /* MD_H_ */

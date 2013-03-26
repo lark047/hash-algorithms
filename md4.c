@@ -35,41 +35,22 @@
 
 #include <limits.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#define K1(x)                 (x)
-
-#define S(x,i)  (s[(x)][(i) % 4])
-#define S1(x)            S(0,(x))
-#define S2(x)            S(1,(x))
-#define S3(x)            S(2,(x))
 
 /* MD4 general hash function */
 uint8_t *MD4(uint8_t *, const uint64_t);
 
 /* functions called by MD4 */
-// extern uint64_t append_padding(uint8_t **, uint8_t *, uint64_t *, struct hash_info *);
 static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
 static void process(uint8_t **, const uint32_t, const uint16_t);
-static void r(uint32_t *, uint32_t, uint32_t, uint32_t, uint8_t, uint8_t, uint32_t);
+
+/* hash function */
+static void r(uint32_t *, uint32_t, uint32_t, uint32_t, uint8_t, uint8_t, uint8_t);
 
 /* hash registers */
 static uint32_t H[4];
-
-/* pointer to 32-bit word blocks */
-static const uint8_t *X;
-
-#if 0
-#include <stdio.h>
-#include <math.h>
-
-#define BITS_PER_WORD          32
-#define WORDS_PER_BLOCK        16
-#define MD4_LENGTH       (32 + 1)
-
-/* hash functions */
-static uint32_t h(uint8_t, uint32_t, uint32_t, uint32_t);
 
 /* values table */
 static const uint32_t T[] = {
@@ -78,14 +59,20 @@ static const uint32_t T[] = {
     0x6ed9eba1
 };
 
+/* pointer to 32-bit word blocks */
+static const uint8_t *X;
+
 /* helper functions */
 static void flip(uint32_t *);
-extern uint32_t rotl(const uint32_t, const uint8_t);
 
-#define K(x,m,a) (((x) * (m) + (a)) % WORDS_PER_BLOCK)
-#define K2(x)                               K((x),5,1)
-#define K3(x)                               K((x),3,5)
+#define K1                       (i)
+#define K2 (4 * (i % 4 - 1) + i / 4)
+#define K3                 /* ??? */
 
+#define S(x)         (s[(x)][i % 4])
+#define S1                      S(0)
+#define S2                      S(1)
+#define S3                      S(2)
 
 extern uint8_t *hash_file(FILE *, uint8_t *(*hash)(uint8_t *, const uint64_t));
 
@@ -93,7 +80,6 @@ uint8_t *MD4file(FILE *fp)
 {
     return hash_file(fp, MD4);
 }
-#endif
 
 uint8_t *MD4string(const char *msg)
 {
@@ -232,9 +218,9 @@ void append_length(uint8_t *digest, const uint64_t length, const uint32_t index,
 void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_size)
 {
     const uint8_t s[][4] = {
-        { 3,  7, 11, 19 },
-        { 3,  5,  9, 13 },
-        { 6, 10, 15, 21 }
+        { 3, 7, 11, 19 },
+        { 3, 5,  9, 13 },
+        { 3, 9, 11, 15 }
     };
 
     /* temporary registers */
@@ -252,58 +238,58 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
         $3 = H[3];
 
         /* Round 1. */
-        r(&H[0], H[1], H[2], H[3],  0,  3, 0); ++i;
-        r(&H[3], H[0], H[1], H[2],  1,  7, 0); ++i;
-        r(&H[2], H[3], H[0], H[1],  2, 11, 0); ++i;
-        r(&H[1], H[2], H[3], H[0],  3, 19, 0); ++i;
-        r(&H[0], H[1], H[2], H[3],  4,  3, 0); ++i;
-        r(&H[3], H[0], H[1], H[2],  5,  7, 0); ++i;
-        r(&H[2], H[3], H[0], H[1],  6, 11, 0); ++i;
-        r(&H[1], H[2], H[3], H[0],  7, 19, 0); ++i;
-        r(&H[0], H[1], H[2], H[3],  8,  3, 0); ++i;
-        r(&H[3], H[0], H[1], H[2],  9,  7, 0); ++i;
-        r(&H[2], H[3], H[0], H[1], 10, 11, 0); ++i;
-        r(&H[1], H[2], H[3], H[0], 11, 19, 0); ++i;
-        r(&H[0], H[1], H[2], H[3], 12,  3, 0); ++i;
-        r(&H[3], H[0], H[1], H[2], 13,  7, 0); ++i;
-        r(&H[2], H[3], H[0], H[1], 14, 11, 0); ++i;
-        r(&H[1], H[2], H[3], H[0], 15, 19, 0); ++i;
+        r(&H[0], H[1], H[2], H[3], K1, S1, i); ++i;
+        r(&H[3], H[0], H[1], H[2], K1, S1, i); ++i;
+        r(&H[2], H[3], H[0], H[1], K1, S1, i); ++i;
+        r(&H[1], H[2], H[3], H[0], K1, S1, i); ++i;
+        r(&H[0], H[1], H[2], H[3], K1, S1, i); ++i;
+        r(&H[3], H[0], H[1], H[2], K1, S1, i); ++i;
+        r(&H[2], H[3], H[0], H[1], K1, S1, i); ++i;
+        r(&H[1], H[2], H[3], H[0], K1, S1, i); ++i;
+        r(&H[0], H[1], H[2], H[3], K1, S1, i); ++i;
+        r(&H[3], H[0], H[1], H[2], K1, S1, i); ++i;
+        r(&H[2], H[3], H[0], H[1], K1, S1, i); ++i;
+        r(&H[1], H[2], H[3], H[0], K1, S1, i); ++i;
+        r(&H[0], H[1], H[2], H[3], K1, S1, i); ++i;
+        r(&H[3], H[0], H[1], H[2], K1, S1, i); ++i;
+        r(&H[2], H[3], H[0], H[1], K1, S1, i); ++i;
+        r(&H[1], H[2], H[3], H[0], K1, S1, i); ++i;
 
         /* Round 2. */
-        r(&H[0], H[1], H[2], H[3],  0,  3, 1); ++i;
-        r(&H[3], H[0], H[1], H[2],  4,  5, 1); ++i;
-        r(&H[2], H[3], H[0], H[1],  8,  9, 1); ++i;
-        r(&H[1], H[2], H[3], H[0], 12, 13, 1); ++i;
-        r(&H[0], H[1], H[2], H[3],  1,  3, 1); ++i;
-        r(&H[3], H[0], H[1], H[2],  5,  5, 1); ++i;
-        r(&H[2], H[3], H[0], H[1],  9,  9, 1); ++i;
-        r(&H[1], H[2], H[3], H[0], 13, 13, 1); ++i;
-        r(&H[0], H[1], H[2], H[3],  2,  3, 1); ++i;
-        r(&H[3], H[0], H[1], H[2],  6,  5, 1); ++i;
-        r(&H[2], H[3], H[0], H[1], 10,  9, 1); ++i;
-        r(&H[1], H[2], H[3], H[0], 14, 13, 1); ++i;
-        r(&H[0], H[1], H[2], H[3],  3,  3, 1); ++i;
-        r(&H[3], H[0], H[1], H[2],  7,  5, 1); ++i;
-        r(&H[2], H[3], H[0], H[1], 11,  9, 1); ++i;
-        r(&H[1], H[2], H[3], H[0], 15, 13, 1); ++i;
+        r(&H[0], H[1], H[2], H[3], K2, S2, i); ++i;
+        r(&H[3], H[0], H[1], H[2], K2, S2, i); ++i;
+        r(&H[2], H[3], H[0], H[1], K2, S2, i); ++i;
+        r(&H[1], H[2], H[3], H[0], K2, S2, i); ++i;
+        r(&H[0], H[1], H[2], H[3], K2, S2, i); ++i;
+        r(&H[3], H[0], H[1], H[2], K2, S2, i); ++i;
+        r(&H[2], H[3], H[0], H[1], K2, S2, i); ++i;
+        r(&H[1], H[2], H[3], H[0], K2, S2, i); ++i;
+        r(&H[0], H[1], H[2], H[3], K2, S2, i); ++i;
+        r(&H[3], H[0], H[1], H[2], K2, S2, i); ++i;
+        r(&H[2], H[3], H[0], H[1], K2, S2, i); ++i;
+        r(&H[1], H[2], H[3], H[0], K2, S2, i); ++i;
+        r(&H[0], H[1], H[2], H[3], K2, S2, i); ++i;
+        r(&H[3], H[0], H[1], H[2], K2, S2, i); ++i;
+        r(&H[2], H[3], H[0], H[1], K2, S2, i); ++i;
+        r(&H[1], H[2], H[3], H[0], K2, S2, i); ++i;
 
         /* Round 3. */
-        r(&H[0], H[1], H[2], H[3], ,  0, 2); ++i;
-        r(&H[3], H[0], H[1], H[2], ,  8, 2); ++i;
-        r(&H[2], H[3], H[0], H[1], ,  4, 2); ++i;
-        r(&H[1], H[2], H[3], H[0], , 12, 2); ++i;
-        r(&H[0], H[1], H[2], H[3], ,  2, 2); ++i;
-        r(&H[3], H[0], H[1], H[2], , 10, 2); ++i;
-        r(&H[2], H[3], H[0], H[1], ,  6, 2); ++i;
-        r(&H[1], H[2], H[3], H[0], , 14, 2); ++i;
-        r(&H[0], H[1], H[2], H[3], ,  1, 2); ++i;
-        r(&H[3], H[0], H[1], H[2], ,  9, 2); ++i;
-        r(&H[2], H[3], H[0], H[1], ,  5, 2); ++i;
-        r(&H[1], H[2], H[3], H[0], , 13, 2); ++i;
-        r(&H[0], H[1], H[2], H[3], ,  3, 2); ++i;
-        r(&H[3], H[0], H[1], H[2], , 11, 2); ++i;
-        r(&H[2], H[3], H[0], H[1], ,  7, 2); ++i;
-        r(&H[1], H[2], H[3], H[0], , 15, 2); ++i;
+        r(&H[0], H[1], H[2], H[3],  0, S3, i); ++i;
+        r(&H[3], H[0], H[1], H[2],  8, S3, i); ++i;
+        r(&H[2], H[3], H[0], H[1],  4, S3, i); ++i;
+        r(&H[1], H[2], H[3], H[0], 12, S3, i); ++i;
+        r(&H[0], H[1], H[2], H[3],  2, S3, i); ++i;
+        r(&H[3], H[0], H[1], H[2], 10, S3, i); ++i;
+        r(&H[2], H[3], H[0], H[1],  6, S3, i); ++i;
+        r(&H[1], H[2], H[3], H[0], 14, S3, i); ++i;
+        r(&H[0], H[1], H[2], H[3],  1, S3, i); ++i;
+        r(&H[3], H[0], H[1], H[2],  9, S3, i); ++i;
+        r(&H[2], H[3], H[0], H[1],  5, S3, i); ++i;
+        r(&H[1], H[2], H[3], H[0], 13, S3, i); ++i;
+        r(&H[0], H[1], H[2], H[3],  3, S3, i); ++i;
+        r(&H[3], H[0], H[1], H[2], 11, S3, i); ++i;
+        r(&H[2], H[3], H[0], H[1],  7, S3, i); ++i;
+        r(&H[1], H[2], H[3], H[0], 15, S3, i); ++i;
 
         /*
          * Then perform the following additions. (That is increment each
@@ -354,25 +340,24 @@ void flip(uint32_t *value)
            | ((*value << 24) & 0xff000000); /* move byte 0 to byte 3 */
 }
 
-uint32_t h(uint8_t i, uint32_t x, uint32_t y, uint32_t z)
+static uint32_t h(uint8_t i, uint32_t x, uint32_t y, uint32_t z)
 {
-    switch (i)
+    switch ((uint8_t) (i / 16))
     {
         case 0: /*  0 <= i < 16 */ return (x & y) | (~x & z);
-        case 1: /* 16 <= i < 32 */ return (x & z) | (x & z) | (y & z);
+        case 1: /* 16 <= i < 32 */ return (x & y) | (x & z) | (y & z);
         case 2: /* 32 <= i < 48 */ return x ^ y ^ z;
     }
 
-    PRINT("uhh... returning %d?\n", 0);
     return 0;
 }
 
-void r(uint32_t *a, uint32_t b, uint32_t c, uint32_t d, uint8_t k, uint8_t s, uint32_t i)
+void r(uint32_t *a, uint32_t b, uint32_t c, uint32_t d, uint8_t k, uint8_t s, uint8_t i)
 {
     uint32_t x = (X[4 * k + 0] <<  0)
                + (X[4 * k + 1] <<  8)
                + (X[4 * k + 2] << 16)
                + (X[4 * k + 3] << 24);
 
-    *a = ROTL(*a + h(i, b, c, d) + x + T[i], s);
+    *a = ROTL(*a + h(i, b, c, d) + x + T[i / 16], s);
 }
