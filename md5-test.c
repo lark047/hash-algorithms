@@ -1,17 +1,12 @@
 #include "md.h"
 #include "util.h"
 
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <CUnit/Basic.h>
-
-extern uint8_t *MD5file(FILE *);
-extern uint8_t *MD5string(const char *);
-
-extern const char *test_files[];
-extern const char *test_msgs[];
 
 static void testMD5file(void);
 static void testMD5string(void);
@@ -38,20 +33,22 @@ void testMD5file(void)
         const char *expected = md5s[i];
         const char *actual = (const char *) MD5file(fp);
 
+        CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
 
-        if (strcmp(expected, actual))
+        if (STR_EQ(expected, actual))
+        {
+            PRINT("%s\n", actual);
+        }
+        else
         {
             fprintf(stderr, "\n");
             fprintf(stderr, "file    : %s\n", test_files[i]);
             fprintf(stderr, "expected: %s\n", expected);
             fprintf(stderr, "actual  : %s\n", actual);
         }
-        else
-        {
-            PRINT("%s\n", actual);
-        }
 
+        free((void *) actual);
         fclose(fp);
     }
 }
@@ -75,18 +72,21 @@ void testMD5string(void)
         const char *expected = md5s[i];
         const char *actual = (const char *) MD5string(test_msgs[i]);
 
+        CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
 
-        if (strcmp(expected, actual))
+        if (STR_EQ(expected, actual))
+        {
+            PRINT("%s\n", actual);
+        }
+        else
         {
             fprintf(stderr, "\n");
             fprintf(stderr, "string  : -->%s<--\n", test_msgs[i]);
             fprintf(stderr, "expected: %s\n", expected);
             fprintf(stderr, "actual  : %s\n", actual);
         }
-        else
-        {
-            PRINT("%s\n", actual);
-        }
+
+        free((void *) actual);
     }
 }
