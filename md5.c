@@ -83,8 +83,6 @@ static void flip(uint32_t *);
 #define S3                                    S(1)
 #define S4                                    S(2)
 
-extern uint8_t *hash_file(FILE *, uint8_t *(*hash)(uint8_t *, const uint64_t));
-
 uint8_t *MD5file(FILE *fp)
 {
     return hash_file(fp, MD5);
