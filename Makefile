@@ -14,6 +14,7 @@ util-debug.o: util.c util.h
 	$(CC) $(CFLAGS) $< -c -o $@ $(DEBUG)
 
 main: main.c \
+		md2.o md2-test.o \
 		md4.o md4-test.o \
 		md5.o md5-test.o \
 		sha1.o sha1-test.o \
@@ -27,17 +28,37 @@ main: main.c \
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o hash -l$(LIB-CUNIT)
 
 debug: main.c \
+		md2-debug.o md2-test-debug.o \
 		md4-debug.o md5-test-debug.o \
 		md5-debug.o md5-test-debug.o \
 		sha1-debug.o sha1-test-debug.o \
-		sha224.o sha224-test-debug.o \
-		sha256.o sha256-test-debug.o \
-		sha384.o sha384-test-debug.o \
-		sha512.o sha512-test-debug.o \
+		sha224-debug.o sha224-test-debug.o \
+		sha256-debug.o sha256-test-debug.o \
+		sha384-debug.o sha384-test-debug.o \
+		sha512-debug.o sha512-test-debug.o \
 		sha512-224-debug.o \
 		sha512-256-debug.o \
 		util-debug.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o hash -l$(LIB-CUNIT) $(DEBUG)
+	
+#### MD2 ####
+md2: md2-main.c md2.o md2-test.o util.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
+
+md2-debug: md2-main.c md2-debug.o md2-test-debug.o util-debug.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) $(DEBUG)
+
+md2.o: md2.c md.h
+	$(CC) $(CFLAGS) -c $< -o $@ -DMD2
+
+md2-debug.o: md2.c md.h
+	$(CC) $(CFLAGS) -c $< -o $@ -DMD2 $(DEBUG)
+
+md2-test.o: md2-test.c md2.o
+	$(CC) $(CFLAGS) -c $< -o $@
+
+md2-test-debug.o: md2-test.c md2-debug.o
+	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
 
 #### MD4 ####
 md4: md4-main.c md4.o md4-test.o util.o
