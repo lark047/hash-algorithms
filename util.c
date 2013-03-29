@@ -57,19 +57,19 @@ uint8_t *hash_file(FILE *fp, uint8_t *(*hash)(uint8_t *, uint64_t))
     return digest;
 }
 
-uint64_t append_padding(uint8_t **digest_ref, uint8_t *msg, uint64_t *length, struct hash_info *info)
+uint64_t append_padding(uint8_t **digest_ref, uint8_t *msg, uint64_t *length, const struct hash_info *info)
 {
     /* TODO what if the length in bits isn't a multiple of CHAR_BIT? */
 
     uint32_t nils = 0;
 
     /* +1 for 0x80 */
-    while (((*length + 1) * CHAR_BIT + nils) % info->digest_length != info->padded_length)
+    do
     {
         ++nils;
     }
+    while (((*length + 1) * CHAR_BIT + nils) % info->digest_length != info->padded_length);
 
-    PRINT("adding %u 0x0 bits\n", nils);
     nils /= CHAR_BIT;
     PRINT("adding %u 0x0 bytes\n", nils);
 
@@ -110,7 +110,7 @@ void print_d(const uint8_t *data, uint64_t block_count, const struct hash_info *
     const uint64_t length = block_count * info->digest_length / CHAR_BIT;
     PRINT("printing %llu bytes...\n", length);
     PRINT("printing %llu bits...\n", length * CHAR_BIT);
-    const uint8_t block_size = info->block_size / CHAR_BIT;
+    const uint8_t block_size = info->block_size / (info->block_size > 32 ? CHAR_BIT : 1);
 
     for (uint64_t i = 0; i < length; ++i)
     {
