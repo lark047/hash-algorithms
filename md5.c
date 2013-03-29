@@ -53,7 +53,7 @@ uint8_t *MD5(uint8_t *, const uint64_t);
 
 /* functions called by MD5 */
 static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
-static void process(uint8_t **, const uint32_t, const uint16_t);
+static void process(uint8_t *, const uint32_t, const uint16_t);
 
 /* hash function */
 static void r(uint32_t *, uint32_t, uint32_t, uint32_t, uint8_t, uint8_t, uint8_t);
@@ -96,13 +96,13 @@ uint8_t *MD5string(const char *msg)
 
 uint8_t *MD5(uint8_t *msg, const uint64_t msg_length)
 {
-    struct hash_info *info = malloc(sizeof *info);
+    const struct hash_info info = {
+        BLOCK_SIZE_BITS,
+        PADDED_LENGTH_BITS,
+        DIGEST_LENGTH_BITS
+    };
 
-    info->block_size = BLOCK_SIZE_BITS;
-    info->padded_length = PADDED_LENGTH_BITS;
-    info->digest_length = DIGEST_LENGTH_BITS;
-
-    uint8_t *digest;
+    uint8_t *buffer;
 
     /* length in bytes */
     PRINT("Message length: %llu byte%s\n", msg_length, (msg_length == 1 ? "" : "s"));
@@ -139,7 +139,7 @@ uint8_t *MD5(uint8_t *msg, const uint64_t msg_length)
      */
 
     uint64_t padded_length = msg_length;
-    const uint64_t block_count = append_padding(&digest, msg, &padded_length, info);
+    const uint64_t block_count = append_padding(&buffer, msg, &padded_length, &info);
 
     /**
      * Step 2. Append Length
@@ -159,10 +159,10 @@ uint8_t *MD5(uint8_t *msg, const uint64_t msg_length)
      */
 
     PRINT("padded length = %llu\n", padded_length);
-    append_length(digest, b, padded_length, info->block_size);
+    append_length(buffer, b, padded_length, info.block_size);
 
 #ifdef DEBUG
-    print_d(digest, block_count, info);
+    print_d(buffer, block_count, &info);
 #endif
 
     /**
@@ -216,7 +216,24 @@ uint8_t *MD5(uint8_t *msg, const uint64_t msg_length)
      * is in radians. The elements of the table are given in the appendix.
      */
 
-    process(&digest, block_count, info->block_size);
+    process(buffer, block_count, info.block_size);
+    free(buffer);
+
+    /**
+     * Step 5. Output
+     *
+     * The message digest produced as output is A, B, C, D. That is, we
+     * begin with the low-order byte of A, and end with the high-order byte
+     * of D.
+     *
+     * This completes the description of MD5. A reference implementation in
+     * C is given in the appendix.
+     */
+
+    uint8_t *digest = malloc(DIGEST_LENGTH * sizeof *digest);
+    PRINT("allocated %u bytes\n", DIGEST_LENGTH);
+
+    snprintf((char *) digest, DIGEST_LENGTH, "%08x%08x%08x%08x", H[0], H[1], H[2], H[3]);
 
     return digest;
 }
@@ -229,18 +246,18 @@ void init_table()
     }
 }
 
-void append_length(uint8_t *digest, const uint64_t length, const uint32_t index, const uint16_t block_size)
+void append_length(uint8_t *buffer, const uint64_t length, const uint32_t index, const uint16_t block_size)
 {
     const uint8_t len_bytes = block_size / CHAR_BIT;
 
     /* assume length < 2^64 */
     for (uint8_t i = 0; i < len_bytes; ++i)
     {
-        digest[index - len_bytes + i] = (length >> (CHAR_BIT * i)) & 0xff;
+        buffer[index - len_bytes + i] = (length >> (CHAR_BIT * i)) & 0xff;
     }
 }
 
-void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_size)
+void process(uint8_t *buffer, const uint32_t block_count, const uint16_t block_size)
 {
     init_table();
 
@@ -256,7 +273,7 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
     /* Process each 16-word block. */
     for (uint32_t block = 0, i = 0; block < block_count; ++block, i = 0)
     {
-        X = *digest + block * block_size;
+        X = buffer + block * block_size;
 
         /* Save H[0] as $0, H[1] as $1, H[2] as $2, and H[3] as $3. */
         $0 = H[0];
@@ -358,22 +375,6 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
     flip(&H[1]);
     flip(&H[2]);
     flip(&H[3]);
-
-    /**
-     * Step 5. Output
-     *
-     * The message digest produced as output is A, B, C, D. That is, we
-     * begin with the low-order byte of A, and end with the high-order byte
-     * of D.
-     *
-     * This completes the description of MD5. A reference implementation in
-     * C is given in the appendix.
-     */
-
-    free(*digest);
-    *digest = malloc(DIGEST_LENGTH); PRINT("allocated %u bytes\n", DIGEST_LENGTH);
-
-    snprintf((char *) *digest, DIGEST_LENGTH, "%08x%08x%08x%08x", H[0], H[1], H[2], H[3]);
 }
 
 void flip(uint32_t *value)

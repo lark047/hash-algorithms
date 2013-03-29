@@ -12,7 +12,7 @@ uint8_t *SHA224(uint8_t *, const uint64_t);
 
 /* functions called by SHA224 */
 static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
-static void process(uint8_t **, const uint32_t, const uint16_t);
+static void process(uint8_t *, const uint32_t, const uint16_t);
 
 /* hash functions defined in sha.h */
 
@@ -52,13 +52,13 @@ uint8_t *SHA224string(const char *msg)
 
 uint8_t *SHA224(uint8_t *msg, const uint64_t msg_length)
 {
-    struct hash_info *info = malloc(sizeof *info);
+    struct hash_info info = {
+        BLOCK_SIZE_BITS,
+        PADDED_LENGTH_BITS,
+        DIGEST_LENGTH_BITS
+    };
 
-    info->block_size = BLOCK_SIZE_BITS;
-    info->padded_length = PADDED_LENGTH_BITS;
-    info->digest_length = DIGEST_LENGTH_BITS;
-
-    uint8_t *digest;
+    uint8_t *buffer;
 
     /* length in bytes */
     PRINT("Message length: %llu byte%s\n", msg_length, (msg_length == 1 ? "" : "s"));
@@ -76,13 +76,13 @@ uint8_t *SHA224(uint8_t *msg, const uint64_t msg_length)
     PRINT("Message length: %llu bits\n", l);
 
     uint64_t padded_length = msg_length;
-    const uint64_t block_count = append_padding(&digest, msg, &padded_length, info);
+    const uint64_t block_count = append_padding(&buffer, msg, &padded_length, &info);
 
     PRINT("padded length = %llu\n", padded_length);
-    append_length(digest, l, padded_length, info->block_size);
+    append_length(buffer, l, padded_length, info.block_size);
 
 #ifdef DEBUG
-    print_d(digest, block_count, info);
+    print_d(buffer, block_count, &info);
 #endif
 
     /**
@@ -137,27 +137,29 @@ uint8_t *SHA224(uint8_t *msg, const uint64_t msg_length)
      *            left most 224 bits.
      */
 
-    process(&digest, block_count, info->block_size);
+    process(buffer, block_count, info.block_size);
+    free(buffer);
 
-    /* clean up */
-    free(info);
-    info = NULL;
+    uint8_t *digest = malloc(DIGEST_LENGTH * sizeof *digest);
+    PRINT("allocated %u bytes\n", DIGEST_LENGTH);
+
+    snprintf((char *) digest, DIGEST_LENGTH, "%08x%08x%08x%08x%08x%08x%08x", H[0], H[1], H[2], H[3], H[4], H[5], H[6]);
 
     return digest;
 }
 
-void append_length(uint8_t *digest, const uint64_t length, const uint32_t index, const uint16_t block_size)
+void append_length(uint8_t *buffer, const uint64_t length, const uint32_t index, const uint16_t block_size)
 {
     const uint8_t len_bytes = block_size / CHAR_BIT;
 
     /* assume length < 2^64 */
     for (uint8_t i = len_bytes; i > 0; --i)
     {
-        digest[index - i] = (length >> (CHAR_BIT * (i - 1))) & 0xff;
+        buffer[index - i] = (length >> (CHAR_BIT * (i - 1))) & 0xff;
     }
 }
 
-void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_size)
+void process(uint8_t *buffer, const uint32_t block_count, const uint16_t block_size)
 {
     uint32_t W[ROUNDS];
 
@@ -166,7 +168,7 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
 
     for (uint32_t block = 0; block < block_count; ++block)
     {
-        M = *digest + block * block_size;
+        M = buffer + block * block_size;
 
         for (uint8_t t = 0; t < ROUNDS; ++t)
         {
@@ -213,9 +215,4 @@ void process(uint8_t **digest, const uint32_t block_count, const uint16_t block_
         H[6] += $6;
         H[7] += $7;
     }
-
-    free(*digest);
-    *digest = malloc(DIGEST_LENGTH);
-
-    snprintf((char *) *digest, DIGEST_LENGTH, "%08x%08x%08x%08x%08x%08x%08x", H[0], H[1], H[2], H[3], H[4], H[5], H[6]);
 }
