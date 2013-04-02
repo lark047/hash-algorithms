@@ -8,7 +8,7 @@
 
 # undef BIT_STRENGTH
 # define BIT_STRENGTH        128
-# define BLOCK_SIZE_BITS     128
+# define BLOCK_SIZE_BITS      16
 # define PADDED_LENGTH_BITS    0
 # define DIGEST_LENGTH_BITS  128
 

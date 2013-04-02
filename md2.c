@@ -40,10 +40,9 @@
 uint8_t *MD2(uint8_t *, const uint64_t);
 
 /* functions called by MD2 */
-static uint64_t append_padding$(uint8_t **, uint8_t *, uint64_t *, struct hash_info *);
-static void calc_checksum(uint8_t *, uint8_t *, uint64_t, uint8_t);
-static void append_checksum(uint8_t *, uint8_t *, const uint64_t, const uint16_t);
-static void process(uint8_t **, uint8_t *, const uint32_t, const uint16_t);
+static uint64_t append_padding$(uint8_t **, uint8_t *, const uint64_t, const struct hash_info *);
+static void calc_checksum(uint8_t *, uint8_t *, const uint64_t, uint8_t);
+static void process(uint8_t *, uint8_t *, const uint64_t, const uint8_t);
 
 /* Permutation of 0..255 constructed from the digits of pi. It gives a
    "random" nonlinear byte substitution operation.
@@ -80,13 +79,13 @@ uint8_t *MD2string(const char *msg)
 
 uint8_t *MD2(uint8_t *msg, const uint64_t msg_length)
 {
-    struct hash_info info = {
+    const struct hash_info info = {
         BLOCK_SIZE_BITS,
         PADDED_LENGTH_BITS,
         DIGEST_LENGTH_BITS
     };
 
-    uint8_t *digest;
+    uint8_t *buffer;
 
     /* length in bytes */
     PRINT("Message length: %llu byte%s\n", msg_length, (msg_length == 1 ? "" : "s"));
@@ -103,8 +102,10 @@ uint8_t *MD2(uint8_t *msg, const uint64_t msg_length)
       * of the message.
       */
 
+#ifdef DEBUG
     const uint64_t b = msg_length * CHAR_BIT;
     PRINT("Message length: %llu bits\n", b);
+#endif
 
     /**
      * Step 1. Append Padding Bits
@@ -116,7 +117,7 @@ uint8_t *MD2(uint8_t *msg, const uint64_t msg_length)
      *
      * Padding is performed as follows: "i" bytes of value "i" are appended
      * to the message so that the length in bytes of the padded message
-     * becomes congruent to 0, modulo 16. At least one byte and at most 16
+     * becomes congruent to 0, modulo 16. At least one byte and at most
      * 16 bytes are appended.
      *
      * At this point the resulting message (after padding with bytes) has a
@@ -124,8 +125,10 @@ uint8_t *MD2(uint8_t *msg, const uint64_t msg_length)
      * the bytes of the resulting message, where N is a multiple of 16.
      */
 
-    uint64_t padded_length = msg_length;
-    const uint64_t block_count = append_padding$(&digest, msg, &padded_length, &info);
+    const uint64_t N = append_padding$(&buffer, msg, msg_length, &info);
+
+    PRINT("block count (before checksum): %llu\n", N / info.block_size);
+    PRINT("msg + padding = %llu bytes (%llu) <== should be 0\n", N, N % 16);
 
     /**
      * Step 2. Append Checksum
@@ -137,20 +140,33 @@ uint8_t *MD2(uint8_t *msg, const uint64_t msg_length)
      * digits of pi. Let S[i] denote the i-th element of this table. The
      * table is given in the appendix.
      *
-     * The 16-byte checksum C[0 ... 15] is appended to the message. Let M[0
-     * with checksum), where N' = N + 16.
+     * The 16-byte checksum C[0 ... 15] is appended to the (padded)
+     * message. Let M[0..N'-1] be the message with padding and checksum
+     * appended, where N' = N + 16.
      */
 
     uint8_t C[16] = {0};
 
-    /* -1 for checksum block */
-    calc_checksum(msg, C, block_count - 1, info.block_size / CHAR_BIT);
+    calc_checksum(buffer, C, N, info.block_size);
 
-    PRINT("padded length = %llu\n", padded_length);
-    append_checksum(digest, C, padded_length, info.block_size);
+    PRINT("%s: ", "checksum");
+#ifdef DEBUG
+    fflush(stdout);
+    for (uint8_t i = 0; i < 16; ++i)
+    {
+        printf("%02x", C[i]);
+        fflush(stdout);
+    }
+    printf("\n");
+#endif
+
+    /* append checksum */
+    memcpy(buffer + N, C, info.block_size);
+
+    const uint64_t N_prime = N + info.block_size;
 
 #ifdef DEBUG
-    print_d(digest, block_count, &info);
+    print_d(buffer, N_prime / info.block_size, &info);
 #endif
 
     /**
@@ -163,136 +179,20 @@ uint8_t *MD2(uint8_t *msg, const uint64_t msg_length)
     uint8_t X[48] = {0};
 
     /**
-     * Step 4. Process Message in 16-Word Blocks
+     * Step 4. Process Message in 16-Byte Blocks
      *
-     * We first define four auxiliary functions that each take as input
-     * three 32-bit words and produce as output one 32-bit word.
+     * This step uses the same 256-byte permutation S as step 2 does.
      *
-     *        F(X,Y,Z) = XY v not(X) Z
-     *        G(X,Y,Z) = XY v XZ v YZ
-     *        H(X,Y,Z) = X xor Y xor Z
-     *
-     * In each bit position F acts as a conditional: if X then Y else Z.
-     * The function F could have been defined using + instead of v since XY
-     * and not(X)Z will never have "1" bits in the same bit position.)  In
-     * each bit position G acts as a majority function: if at least two of
-     * X, Y, Z are on, then G has a "1" bit in that bit position, else G has
-     * a "0" bit. It is interesting to note that if the bits of X, Y, and Z
-     * are independent and unbiased, the each bit of f(X,Y,Z) will be
-     * independent and unbiased, and similarly each bit of g(X,Y,Z) will be
-     * independent and unbiased. The function H is the bit-wise XOR or
-     * parity" function; it has properties similar to those of F and G.
+     * Do the following:
+     *    (algorithm description follows)
      */
 
-    process(&digest, X, block_count, info.block_size / CHAR_BIT);
-
-    return digest;
-}
-
-uint64_t append_padding$(uint8_t **digest_ref, uint8_t *msg, uint64_t *length, struct hash_info *info)
-{
-    /* TODO what if the length in bits isn't a multiple of CHAR_BIT? */
-    /* TODO use general one in util.c */
-
-    uint32_t nils = 0;
-
-    do
-    {
-        ++nils;
-    }
-    while ((*length * CHAR_BIT + nils) % info->digest_length != info->padded_length);
-
-    nils /= CHAR_BIT;
-    PRINT("adding %u 0x%02x bytes\n", nils, nils);
-
-    const uint64_t total_length = *length + nils + info->block_size / CHAR_BIT;
-    const uint64_t block_count = total_length * CHAR_BIT / info->block_size;
-
-    PRINT("total_length = %llu + %u + %u = %llu\n", *length, nils, info->block_size / CHAR_BIT, total_length);
-    PRINT("%llu / 64 = %llu (%llu) <== should be 0\n", total_length * CHAR_BIT, block_count, (total_length * CHAR_BIT) % info->block_size);
-    PRINT("allocating %llu block%s of %u bits...\n", block_count, (block_count == 1 ? "" : "s"), info->digest_length);
-
-    (*digest_ref) = malloc(total_length * sizeof **digest_ref);
-    PRINT("allocated %llu bytes\n", total_length * sizeof **digest_ref);
-
-    /* set non-checksum bytes to nils */
-    memset(*digest_ref, nils, total_length - 16);
-    PRINT("set %llu bytes to 0x%02x\n", total_length - 16, nils);
-
-    /* copy the message in */
-    memcpy(*digest_ref, msg, *length);
-
-    *length += nils;
-
-    PRINT("block count: %llu\n", block_count);
-    PRINT("length     : %llu\n", *length);
-
-    return block_count;
-}
-
-void calc_checksum(uint8_t *msg, uint8_t *C, uint64_t block_count, uint8_t block_size)
-{
-    /* done at declaration */
-    /* memset(C, 0x0, 16); */
-
-    uint8_t L, c;
-
-    for (uint8_t i = 0; i < block_count; ++i)
-    {
-        for (uint8_t j = 0; j < 16; ++j)
-        {
-            c = msg[i * block_size + j];
-            C[j] = S[c ^ L];
-            L = C[j];
-        }
-    }
+    process(buffer, X, N_prime, info.block_size);
+    free(buffer);
 
 #ifdef DEBUG
-    printf("checksum: ");
-    fflush(stdout);
-    for (uint8_t i = 0; i < 16; ++i)
-    {
-        printf("%02x ", C[i]);
-        fflush(stdout);
-    }
-    printf("\n");
+    print_d(X, N / info.block_size, &info);
 #endif
-}
-
-void append_checksum(uint8_t *digest, uint8_t *C, const uint64_t index, const uint16_t block_size)
-{
-    const uint8_t len_bytes = block_size / CHAR_BIT;
-
-    /* assume length < 2^64 */
-    memcpy(digest + index, C, len_bytes);
-}
-
-void process(uint8_t **digest, uint8_t *X, const uint32_t block_count, const uint16_t block_size)
-{
-    /* Process each 16-word block. */
-    for (uint32_t i = 0; i < block_count; ++i)
-    {
-        /* can replace first loop assignment */
-        /* memcpy(X + 16, *digest + i * block_size, 16); */
-
-        for (uint8_t j = 0; j < 16; ++j)
-        {
-            X[j + 16] = (*digest)[j + i * block_size];
-            X[j + 32] = X[j + 16] ^ X[j];
-        }
-
-        uint16_t t = 0;
-
-        for (uint8_t j = 0; j < 18; ++j)
-        {
-            for (uint8_t k = 0; k < 48; ++k)
-            {
-                t = X[k] ^= S[t];
-            }
-
-            t = (t + j) % 256;
-        }
-    }
 
     /**
      * Step 5. Output
@@ -304,11 +204,106 @@ void process(uint8_t **digest, uint8_t *X, const uint32_t block_count, const uin
      * C is given in the appendix.
      */
 
-    free(*digest);
-    *digest = malloc(DIGEST_LENGTH); PRINT("allocated %u bytes\n", DIGEST_LENGTH);
+    uint8_t *digest = malloc(DIGEST_LENGTH * sizeof *digest);
+    PRINT("allocated %u bytes\n", DIGEST_LENGTH);
 
     for (uint8_t i = 0, bytes = DIGEST_LENGTH / 16; i < 16; ++i)
     {
-        snprintf((char *) *digest + i * bytes, bytes + 1, "%02x", X[i * bytes]);
+        snprintf((char *) digest + i * bytes, bytes + 1, "%02x", X[i]);
+    }
+
+    return digest;
+}
+
+uint64_t append_padding$(uint8_t **buffer_ref, uint8_t *msg, const uint64_t length, const struct hash_info *info)
+{
+    /* TODO what if the length in bits isn't a multiple of CHAR_BIT? */
+    /* TODO use general one in util.c */
+
+    uint32_t bytes = 0;
+
+    do
+    {
+        ++bytes;
+    }
+    while ((length * CHAR_BIT + bytes) % info->digest_length != info->padded_length);
+
+    bytes /= CHAR_BIT;
+    PRINT("adding %u 0x%02x bytes\n", bytes, bytes);
+
+    const uint64_t padded_length = length + bytes;
+    const uint64_t total_length = padded_length + info->block_size;
+
+#ifdef DEBUG
+    const uint64_t block_count = total_length / info->block_size;
+#endif
+
+    PRINT("total_length = %llu + %u + %u = %llu\n", length, bytes, info->block_size, total_length);
+    PRINT("%llu / 64 = %llu (%llu) <== should be 0\n", total_length * CHAR_BIT, block_count, total_length % info->block_size);
+    PRINT("allocating %llu block%s of %u bits...\n", block_count, (block_count == 1 ? "" : "s"), info->digest_length);
+
+    /* allocate space for msg + padding + checksum */
+    (*buffer_ref) = malloc(total_length * sizeof **buffer_ref);
+    PRINT("allocated %llu bytes\n", total_length * sizeof **buffer_ref);
+
+    /* set non-checksum bytes to the value of bytes */
+    memset(*buffer_ref, bytes, padded_length);
+    PRINT("set %llu bytes to 0x%02x\n", padded_length, bytes);
+
+    /* copy the message in */
+    memcpy(*buffer_ref, msg, length);
+
+    return padded_length;
+}
+
+void calc_checksum(uint8_t *M, uint8_t *C, const uint64_t N, const uint8_t block_size)
+{
+    uint8_t L = 0;
+
+    PRINT("calculating checksum from %llu blocks\n", N / block_size);
+
+    /* Process each 16-byte block. */
+    for (uint64_t i = 0; i < N / block_size; ++i)
+    {
+        /* Checksum block i. */
+        for (uint8_t j = 0, c; j < block_size; ++j)
+        {
+            c = M[i * block_size + j];
+            C[j] ^= S[c ^ L];
+            L = C[j];
+        }
+    }
+}
+
+void process(uint8_t *M, uint8_t *X, const uint64_t N_prime, const uint8_t block_size)
+{
+    /* Process each 16-byte block. */
+    for (uint32_t i = 0; i < N_prime / block_size; ++i)
+    {
+#if 0
+        /* can replace first loop assignment */
+        memcpy(X + 16, M + i * block_size, block_size);
+#endif
+
+        /* Copy block i into X. */
+        for (uint8_t j = 0; j < block_size; ++j)
+        {
+            X[j + 16] = M[j + i * block_size];
+            X[j + 32] = X[j + 16] ^ X[j];
+        }
+
+        uint16_t t = 0;
+
+        /* Do 18 rounds. */
+        for (uint8_t j = 0; j < 18; ++j)
+        {
+            /* Round j. */
+            for (uint8_t k = 0; k < 48; ++k)
+            {
+                t = X[k] ^= S[t];
+            }
+
+            t = (t + j) % 256;
+        }
     }
 }

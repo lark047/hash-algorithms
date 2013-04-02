@@ -9,6 +9,7 @@
 
 #include <CUnit/Basic.h>
 
+extern void testMD2(void);
 extern void testMD4(void);
 extern void testMD5(void);
 extern void testSHA1(void);
@@ -29,6 +30,7 @@ int main(int argc, char **argv)
     int rc = EXIT_FAILURE;
 
     const char *labels[] = {
+        "MD2",
         "MD4",
         "MD5",
         "SHA-1",
@@ -42,6 +44,7 @@ int main(int argc, char **argv)
     };
 
     uint8_t *(*hash_strings[])(const char *) = {
+        MD2string,
         MD4string,
         MD5string,
         SHA1string,
@@ -54,6 +57,7 @@ int main(int argc, char **argv)
     };
 
     uint8_t *(*hash_files[])(FILE *) = {
+        /* MD2file */ NULL,
         MD4file,
         MD5file,
         SHA1file,
@@ -73,7 +77,8 @@ int main(int argc, char **argv)
         {
             if ((suite = CU_add_suite("Cryptography Test Suite", NULL, NULL)))
             {
-                if (CU_ADD_TEST(suite, testMD4)
+                if (CU_ADD_TEST(suite, testMD2)
+                 && CU_ADD_TEST(suite, testMD4)
                  && CU_ADD_TEST(suite, testMD5)
                  && CU_ADD_TEST(suite, testSHA1)
                  && CU_ADD_TEST(suite, testSHA224)

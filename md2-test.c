@@ -8,19 +8,24 @@
 
 #include <CUnit/Basic.h>
 
-static void testMD2file(void);
 static void testMD2string(void);
-// static void testMD2string_collision(void);
+
+#if 0
+static void testMD2file(void);
+static void testMD2string_collision(void);
+#endif
 
 void testMD2(void)
 {
-    testMD2file();
+    /* testMD2file(); */
     testMD2string();
-    // testMD2string_collision();
+    /* testMD2string_collision(); */
 }
 
+#if 0
 void testMD2file(void)
 {
+    /* TODO find an MD2 file generator */
     char *md2s[] = {
         "",
         ""
@@ -54,6 +59,7 @@ void testMD2file(void)
         fclose(fp);
     }
 }
+#endif
 
 void testMD2string(void)
 {
@@ -96,6 +102,8 @@ void testMD2string(void)
 #if 0
 void testMD2string_collision(void)
 {
+    /* TODO find some MD2 collision examples */
+
     /**
      * taken from Wikipedia: http://en.wikipedia.org/wiki/MD2
      *
@@ -126,28 +134,12 @@ void testMD2string_collision(void)
      * diff:        ^       ^                                                                                  ^
      */
 
-#if 0 /* TODO produces incorrect hash value */
-    uint8_t msgs_iacr1[][64] = {
-        {
-            0x4d,0x7a,0x9c,0x83,0x56,0xcb,0x92,0x7a,0xb9,0xd5,0xa5,0x78,0x57,0xa7,0xa5,0xee,
-            0xde,0x74,0x8a,0x3c,0xdc,0xc3,0x66,0xb3,0xb6,0x83,0xa0,0x20,0x3b,0x2a,0x5d,0x9f,
-            0xc6,0x9d,0x71,0xb3,0xf9,0xe9,0x91,0x98,0xd7,0x9f,0x80,0x5e,0xa6,0x3b,0xb2,0xe8,
-            0x45,0xdd,0x8e,0x31,0x97,0xe3,0x1f,0xe5,0x27,0x94,0xbf,0x08,0xb9,0xe8,0xc3,0xe9
-        }, {
-            0x4d,0x7a,0x9c,0x83,0xd6,0xcb,0x92,0x7a,0x29,0xd5,0xa5,0x78,0x57,0xa7,0xa5,0xee,
-            0xde,0x74,0x8a,0x3c,0xdc,0xc3,0x66,0xb3,0xb6,0x83,0xa0,0x20,0x3b,0x2a,0x5d,0x9f,
-            0xc6,0x9d,0x71,0xb3,0xf9,0xe9,0x91,0x98,0xd7,0x9f,0x80,0x5e,0xa6,0x3b,0xb2,0xe8,
-            0x45,0xdc,0x8e,0x31,0x97,0xe3,0x1f,0xe5,0x27,0x94,0xbf,0x08,0xb9,0xe8,0xc3,0xe9
-        }
-    };
-#endif
-
     /**
      * taken from http://www.iacr.org/archive/fse2007/45930311/45930311.pdf
      *
      *      42792d65f0f84fd8d57d86bf78549d673fb38caa
      *      42792d65f0f84fd8d57d86bf78549d673fb38cac
-     * diff:                                        ^
+     * diff:                                       ^
      */
 
     uint8_t msgs_iacr2[][20] = {
@@ -157,18 +149,12 @@ void testMD2string_collision(void)
 
     uint8_t *msgs[] = {
         msgs_wiki[0], msgs_wiki[1],
-#if 0
-        msgs_iacr1[0], msgs_iacr1[1],
-#endif
         msgs_iacr2[0], msgs_iacr2[1],
         0
     };
 
     const uint8_t lengths[] = {
         SIZE(msgs_wiki[0]),
-#if 0
-        SIZE(msgs_iacr1[0]),
-#endif
         SIZE(msgs_iacr2[0])
     };
 
