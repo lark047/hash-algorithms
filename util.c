@@ -57,42 +57,45 @@ uint8_t *hash_file(FILE *fp, uint8_t *(*hash)(uint8_t *, uint64_t))
     return digest;
 }
 
-uint64_t append_padding(uint8_t **digest_ref, uint8_t *msg, uint64_t *length, const struct hash_info *info)
+uint64_t append_padding(uint8_t **buffer_ref, uint8_t *msg, uint64_t *length, const struct hash_info *info)
 {
     /* TODO what if the length in bits isn't a multiple of CHAR_BIT? */
 
-    uint32_t nils = 0;
+    uint32_t bytes = 0;
 
-    /* +1 for 0x80 */
     do
     {
-        ++nils;
+        ++bytes;
     }
-    while (((*length + 1) * CHAR_BIT + nils) % info->digest_length != info->padded_length);
+    while ((*length * CHAR_BIT + bytes) % info->digest_length != info->padded_length);
 
-    nils /= CHAR_BIT;
-    PRINT("adding %u 0x0 bytes\n", nils);
+    bytes /= CHAR_BIT;
 
-    const uint64_t total_length = *length + 1 + nils + info->block_size / CHAR_BIT;
+    /* +1 for 0x80 */
+    bytes -= 1;
+
+    PRINT("adding %u 0x%02x bytes\n", bytes, 0);
+
+    const uint64_t total_length = *length + 1 + bytes + info->block_size / CHAR_BIT;
     const uint64_t block_count = total_length / info->block_size;
 
-    PRINT("total_length = %llu + %d + %u + %u = %llu\n", *length, 1, nils, info->block_size / CHAR_BIT, total_length);
+    PRINT("total_length = %llu + %d + %u + %u = %llu\n", *length, 1, bytes, info->block_size / CHAR_BIT, total_length);
     PRINT("%llu / 64 = %llu (%llu) <== should be 0\n", total_length, block_count, total_length % info->block_size);
     PRINT("allocating %llu block%s of %u bits...\n", block_count, (block_count == 1 ? "" : "s"), info->digest_length);
 
-    (*digest_ref) = malloc(total_length * sizeof *(*digest_ref));
-    PRINT("allocated %llu bytes\n", total_length * sizeof *(*digest_ref));
+    (*buffer_ref) = malloc(total_length * sizeof *(*buffer_ref));
+    PRINT("allocated %llu bytes\n", total_length * sizeof *(*buffer_ref));
 
     /* set all bytes to 0x0 */
-    memset(*digest_ref, 0x0, total_length);
+    memset(*buffer_ref, 0x0, total_length);
     PRINT("set %llu bytes to 0x0\n", total_length);
 
     /* copy the message in */
-    memcpy(*digest_ref, msg, *length);
+    memcpy(*buffer_ref, msg, *length);
 
     /* a single "1" bit is appended to the message... */
     PRINT("adding 0x%x byte...\n", 0x80);
-    (*digest_ref)[*length] = 0x80;
+    (*buffer_ref)[*length] = 0x80;
 
     *length = total_length;
 
