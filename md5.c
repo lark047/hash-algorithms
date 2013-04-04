@@ -46,14 +46,13 @@
 #include <string.h>
 
 #define WORDS_PER_BLOCK        16
-#define TSIZE                  64
 
 /* MD5 general hash function */
-uint8_t *MD5(uint8_t *, const uint64_t);
+uint8_t *MD5(const uint8_t *, uint64_t);
 
 /* functions called by MD5 */
-static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
-static void process(uint8_t *, const uint32_t, const uint16_t);
+static void append_length(uint8_t *, uint64_t, uint64_t, uint8_t);
+static void process(const uint8_t *, uint64_t, uint8_t);
 
 /* hash function */
 static void r(uint32_t *, uint32_t, uint32_t, uint32_t, uint8_t, uint8_t, uint8_t);
@@ -62,13 +61,29 @@ static void r(uint32_t *, uint32_t, uint32_t, uint32_t, uint8_t, uint8_t, uint8_
 static uint32_t H[4];
 
 /* values table */
-static uint32_t T[TSIZE] = {0};
+static const uint32_t T[] = {
+    0xd76aa478, 0xe8c7b756, 0x242070db, 0xc1bdceee,
+    0xf57c0faf, 0x4787c62a, 0xa8304613, 0xfd469501,
+    0x698098d8, 0x8b44f7af, 0xffff5bb1, 0x895cd7be,
+    0x6b901122, 0xfd987193, 0xa679438e, 0x49b40821,
+    0xf61e2562, 0xc040b340, 0x265e5a51, 0xe9b6c7aa,
+    0xd62f105d, 0x02441453, 0xd8a1e681, 0xe7d3fbc8,
+    0x21e1cde6, 0xc33707d6, 0xf4d50d87, 0x455a14ed,
+    0xa9e3e905, 0xfcefa3f8, 0x676f02d9, 0x8d2a4c8a,
+    0xfffa3942, 0x8771f681, 0x6d9d6122, 0xfde5380c,
+    0xa4beea44, 0x4bdecfa9, 0xf6bb4b60, 0xbebfbc70,
+    0x289b7ec6, 0xeaa127fa, 0xd4ef3085, 0x04881d05,
+    0xd9d4d039, 0xe6db99e5, 0x1fa27cf8, 0xc4ac5665,
+    0xf4292244, 0x432aff97, 0xab9423a7, 0xfc93a039,
+    0x655b59c3, 0x8f0ccc92, 0xffeff47d, 0x85845dd1,
+    0x6fa87e4f, 0xfe2ce6e0, 0xa3014314, 0x4e0811a1,
+    0xf7537e82, 0xbd3af235, 0x2ad7d2bb, 0xeb86d391
+};
 
 /* pointer to 32-bit word blocks */
 static const uint8_t *X;
 
 /* helper functions */
-static void init_table(void);
 static void flip(uint32_t *);
 
 #define K(m,a) ((i * (m) + (a)) % WORDS_PER_BLOCK)
@@ -94,11 +109,11 @@ uint8_t *MD5string(const char *msg)
     return MD5((uint8_t *) msg, strlen(msg));
 }
 
-uint8_t *MD5(uint8_t *msg, const uint64_t msg_length)
+uint8_t *MD5(const uint8_t *msg, uint64_t msg_length)
 {
     const struct hash_info info = {
-        BLOCK_SIZE_BITS,
-        PADDED_LENGTH_BITS,
+        BLOCK_LENGTH_BITS,
+        PAD_MSG_TO_LENGTH_BITS,
         DIGEST_LENGTH_BITS
     };
 
@@ -138,8 +153,7 @@ uint8_t *MD5(uint8_t *msg, const uint64_t msg_length)
      * least one bit and at most 512 bits are appended.
      */
 
-    uint64_t padded_length = msg_length;
-    const uint64_t block_count = append_padding(&buffer, msg, &padded_length, &info);
+    const uint64_t padded_length = append_padding(&buffer, msg, msg_length, &info);
 
     /**
      * Step 2. Append Length
@@ -158,11 +172,12 @@ uint8_t *MD5(uint8_t *msg, const uint64_t msg_length)
      * where N is a multiple of 16.
      */
 
-    PRINT("padded length = %llu\n", padded_length);
-    append_length(buffer, b, padded_length, info.block_size);
+    append_length(buffer, b, padded_length, info.block_length / CHAR_BIT);
+    const uint64_t N = padded_length + (info.digest_length - info.pad_msg_to_length) / CHAR_BIT;
+    PRINT("buffer is %llu bytes long\n", N);
 
 #ifdef DEBUG
-    print_d(buffer, block_count, &info);
+    print_d(buffer, N / info.block_length, &info);
 #endif
 
     /**
@@ -216,7 +231,7 @@ uint8_t *MD5(uint8_t *msg, const uint64_t msg_length)
      * is in radians. The elements of the table are given in the appendix.
      */
 
-    process(buffer, block_count, info.block_size);
+    process(buffer, N, info.block_length);
     free(buffer);
 
     /**
@@ -233,34 +248,25 @@ uint8_t *MD5(uint8_t *msg, const uint64_t msg_length)
     uint8_t *digest = malloc(DIGEST_LENGTH * sizeof *digest);
     PRINT("allocated %u bytes\n", DIGEST_LENGTH);
 
-    snprintf((char *) digest, DIGEST_LENGTH, "%08x%08x%08x%08x", H[0], H[1], H[2], H[3]);
+    for (uint8_t i = 0, bytes = DIGEST_LENGTH / 4; i < 4; ++i)
+    {
+        snprintf((char *) digest + i * bytes, bytes + 1, "%08x", H[i]);
+    }
 
     return digest;
 }
 
-void init_table()
+void append_length(uint8_t *buffer, uint64_t length, uint64_t padded_index, uint8_t block_length)
 {
-    for (int i = 0; i < TSIZE; ++i)
-    {
-        T[i] = (1ULL << 32) * fabs(sin(i + 1));
-    }
-}
-
-void append_length(uint8_t *buffer, const uint64_t length, const uint32_t index, const uint16_t block_size)
-{
-    const uint8_t len_bytes = block_size / CHAR_BIT;
-
     /* assume length < 2^64 */
-    for (uint8_t i = 0; i < len_bytes; ++i)
+    for (uint8_t i = 0; i < block_length; ++i)
     {
-        buffer[index - len_bytes + i] = (length >> (CHAR_BIT * i)) & 0xff;
+        buffer[padded_index + i] = (length >> (CHAR_BIT * i)) & 0xff;
     }
 }
 
-void process(uint8_t *buffer, const uint32_t block_count, const uint16_t block_size)
+void process(const uint8_t *M, uint64_t N, uint8_t block_length)
 {
-    init_table();
-
     const uint8_t s[][4] = {
         { 5,  9, 14, 20 },
         { 4, 11, 16, 23 },
@@ -271,9 +277,9 @@ void process(uint8_t *buffer, const uint32_t block_count, const uint16_t block_s
     uint32_t $0, $1, $2, $3;
 
     /* Process each 16-word block. */
-    for (uint32_t block = 0, i = 0; block < block_count; ++block, i = 0)
+    for (uint64_t b = 0, i = 0; b < N / block_length; ++b, i = 0)
     {
-        X = buffer + block * block_size;
+        X = M + b * block_length;
 
         /* Save H[0] as $0, H[1] as $1, H[2] as $2, and H[3] as $3. */
         $0 = H[0];

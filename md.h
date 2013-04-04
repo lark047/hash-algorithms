@@ -7,18 +7,18 @@
 #if defined MD2
 
 # undef BIT_STRENGTH
-# define BIT_STRENGTH        128
-# define BLOCK_SIZE_BITS      16
-# define PADDED_LENGTH_BITS    0
-# define DIGEST_LENGTH_BITS  128
+# define BIT_STRENGTH             128
+# define BLOCK_LENGTH_BYTES        16
+# define PAD_MSG_TO_LENGTH_BYTES    0
+# define DIGEST_LENGTH_BITS       128
 
 #elif defined MD4 || defined MD5
 
 # undef BIT_STRENGTH
-# define BIT_STRENGTH        128
-# define BLOCK_SIZE_BITS      64
-# define PADDED_LENGTH_BITS  448
-# define DIGEST_LENGTH_BITS  512
+# define BIT_STRENGTH            128
+# define BLOCK_LENGTH_BITS        64
+# define PAD_MSG_TO_LENGTH_BITS  448
+# define DIGEST_LENGTH_BITS      512
 
 #endif
 
@@ -28,9 +28,9 @@
 
 /* public interface */
 
-uint8_t *MD2(uint8_t *, uint64_t);
-uint8_t *MD4(uint8_t *, uint64_t);
-uint8_t *MD5(uint8_t *, uint64_t);
+uint8_t *MD2(const uint8_t *, uint64_t);
+uint8_t *MD4(const uint8_t *, uint64_t);
+uint8_t *MD5(const uint8_t *, uint64_t);
 /* ... */
 
 uint8_t *MD2file(FILE *);
