@@ -6,14 +6,13 @@
 
 struct hash_info
 {
-    /* in bits */
-    uint8_t   block_size;
-    uint16_t  padded_length;
+    uint8_t   block_length;
+    uint16_t  pad_msg_to_length;
     uint16_t  digest_length;
 };
 
-uint64_t append_padding(uint8_t **, uint8_t *, uint64_t *, const struct hash_info *);
-uint8_t *hash_file(FILE *, uint8_t *(*)(uint8_t *, const uint64_t));
+uint64_t append_padding(uint8_t **, const uint8_t *, uint64_t, const struct hash_info *);
+uint8_t *hash_file(FILE *, uint8_t *(*)(const uint8_t *, uint64_t));
 
 # define ROTL(v,s) (((v) << (s)) | ((v) >> (sizeof(v) * CHAR_BIT - (s))))
 # define ROTR(v,s) (((v) >> (s)) | ((v) << (sizeof(v) * CHAR_BIT - (s))))
