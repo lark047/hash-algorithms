@@ -10,20 +10,21 @@
 
 static void testMD4file(void);
 static void testMD4string(void);
-static void testMD4string_collision(void);
+static void testMD4_collision(void);
 
 void testMD4(void)
 {
     testMD4file();
     testMD4string();
-    testMD4string_collision();
+    testMD4_collision();
 }
 
-void testMD4file(void)
+static void testMD4file(void)
 {
     char *md4s[] = {
         "cd8da0e8bcacf00b60c020b464457b97",
-        "5a75565375c0d0a824fdfcab492fa780"
+        "5a75565375c0d0a824fdfcab492fa780",
+        "cedb29adda93253432f5812b4f628946"
     };
 
     for (uint8_t i = 0; test_files[i]; ++i)
@@ -55,7 +56,7 @@ void testMD4file(void)
     }
 }
 
-void testMD4string(void)
+static void testMD4string(void)
 {
     char *md4s[] = {
         "31d6cfe0d16ae931b73c59d7e0c089c0",
@@ -93,7 +94,7 @@ void testMD4string(void)
     }
 }
 
-void testMD4string_collision(void)
+static void testMD4_collision(void)
 {
     /**
      * taken from Wikipedia: http://en.wikipedia.org/wiki/MD4
@@ -163,7 +164,7 @@ void testMD4string_collision(void)
         0
     };
 
-    const uint8_t lengths[] = {
+    uint8_t lengths[] = {
         SIZE(msgs_wiki[0]),
 #if 0
         SIZE(msgs_iacr1[0]),
