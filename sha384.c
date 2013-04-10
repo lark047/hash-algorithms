@@ -8,11 +8,11 @@
 #include <string.h>
 
 /* SHA384 general hash function */
-uint8_t *SHA384(uint8_t *, const uint64_t);
+uint8_t *SHA384(const uint8_t *, uint64_t);
 
 /* functions called by SHA384 */
-static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
-static void process(uint8_t *, const uint32_t, const uint16_t);
+static void append_length(uint8_t *, uint64_t, uint64_t, uint8_t);
+static void process(const uint8_t *, uint64_t, uint8_t);
 
 /* hash functions defined in sha.h */
 
@@ -62,11 +62,11 @@ uint8_t *SHA384string(const char *msg)
     return SHA384((uint8_t *) msg, strlen(msg));
 }
 
-uint8_t *SHA384(uint8_t *msg, const uint64_t msg_length)
+uint8_t *SHA384(const uint8_t *msg, uint64_t msg_length)
 {
     struct hash_info info = {
-        BLOCK_SIZE_BITS,
-        PADDED_LENGTH_BITS,
+        BLOCK_LENGTH_BITS,
+        PAD_MSG_TO_LENGTH_BITS,
         DIGEST_LENGTH_BITS
     };
 
@@ -87,14 +87,14 @@ uint8_t *SHA384(uint8_t *msg, const uint64_t msg_length)
     const uint64_t l = msg_length * CHAR_BIT;
     PRINT("Message length: %llu bits\n", l);
 
-    uint64_t padded_length = msg_length;
-    const uint64_t block_count = append_padding(&buffer, msg, &padded_length, &info);
+    const uint64_t padded_length = append_padding(&buffer, msg, msg_length, &info);
 
-    PRINT("padded length = %llu\n", padded_length);
-    append_length(buffer, l, padded_length, info.block_size);
+    append_length(buffer, l, padded_length, info.block_length / CHAR_BIT);
+    const uint64_t N = padded_length + (info.digest_length - info.pad_msg_to_length) / CHAR_BIT;
+    PRINT("buffer is %llu bytes long\n", N);
 
 #ifdef DEBUG
-    print_d(buffer, block_count, &info);
+    print_d(buffer, N / info.block_length, &info);
 #endif
 
     /**
@@ -150,45 +150,43 @@ uint8_t *SHA384(uint8_t *msg, const uint64_t msg_length)
      *            left most 384 bits.
      */
 
-    process(buffer, block_count, info.block_size);
+    process(buffer, N, info.block_length);
     free(buffer);
 
     uint8_t *digest = malloc(DIGEST_LENGTH * sizeof *digest);
     PRINT("allocated %u bytes\n", DIGEST_LENGTH);
 
-    snprintf((char *) digest, DIGEST_LENGTH, "%016llx%016llx%016llx%016llx%016llx%016llx", H[0], H[1], H[2], H[3], H[4], H[5]);
+    for (uint8_t i = 0, bytes = DIGEST_LENGTH / 6; i < 6; ++i)
+    {
+        snprintf((char *) digest + i * bytes, bytes + 1, "%016llx", H[i]);
+    }
 
     return digest;
 }
 
-void append_length(uint8_t *buffer, const uint64_t length, const uint32_t index, const uint16_t block_size)
+void append_length(uint8_t *buffer, uint64_t length, uint64_t padded_index, uint8_t block_length)
 {
-    const uint8_t len_bytes = block_size / CHAR_BIT;
-    const uint64_t lengths[] = {
-        (length >>  0), /* upper 32 bits */
-        (length >> 32)  /* lower 32 bits */
-    };
+    /* can't shift right >= 64 so just set the first 8 bytes to 0 */
+    memset(buffer + padded_index, 0x0, 8);
 
     /* assume length < 2^128 */
-    for (uint8_t i = len_bytes; i > 8; --i)
+    /* TODO use some bigint library to enable message length >= 2^64 */
+    for (uint8_t i = 8; i < block_length; ++i)
     {
-        buffer[index - i + 8] = (lengths[0] >> (CHAR_BIT * (i - 1))) & 0xff;
-        buffer[index - i + 0] = (lengths[1] >> (CHAR_BIT * (i - 1))) & 0xff;
-        PRINT("buffer[%u] = 0x%02x\n", index - i + 0, buffer[index - i + 0]);
-        PRINT("buffer[%u] = 0x%02x\n", index - i + 8, buffer[index - i + 8]);
+        buffer[padded_index + i] = (length >> (CHAR_BIT * (15 - i))) & 0xff;
     }
 }
 
-void process(uint8_t *buffer, const uint32_t block_count, const uint16_t block_size)
+void process(const uint8_t *buffer, uint64_t N, uint8_t block_length)
 {
     uint64_t W[ROUNDS];
 
     /* temporary registers */
     uint64_t $0, $1, $2, $3, $4, $5, $6, $7, T[2];
 
-    for (uint32_t block = 0; block < block_count; ++block)
+    for (uint32_t b = 0; b < N / block_length; ++b)
     {
-        M = buffer + block * block_size;
+        M = buffer + b * block_length;
 
         for (uint8_t t = 0; t < ROUNDS; ++t)
         {

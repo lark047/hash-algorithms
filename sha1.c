@@ -8,11 +8,11 @@
 #include <string.h>
 
 /* SHA1 general hash function */
-uint8_t *SHA1(uint8_t *, const uint64_t);
+uint8_t *SHA1(const uint8_t *, uint64_t);
 
 /* functions called by SHA1 */
-static void append_length(uint8_t *, const uint64_t, const uint32_t, const uint16_t);
-static void process(uint8_t *, const uint32_t, const uint16_t);
+static void append_length(uint8_t *, uint64_t, uint64_t, uint8_t);
+static void process(const uint8_t *, uint64_t, uint8_t);
 
 /* hash function */
 static uint32_t h(uint8_t, uint32_t, uint32_t, uint32_t);
@@ -42,11 +42,11 @@ uint8_t *SHA1string(const char *msg)
     return SHA1((uint8_t *) msg, strlen(msg));
 }
 
-uint8_t *SHA1(uint8_t *msg, const uint64_t msg_length)
+uint8_t *SHA1(const uint8_t *msg, uint64_t msg_length)
 {
     struct hash_info info = {
-        BLOCK_SIZE_BITS,
-        PADDED_LENGTH_BITS,
+        BLOCK_LENGTH_BITS,
+        PAD_MSG_TO_LENGTH_BITS,
         DIGEST_LENGTH_BITS
     };
 
@@ -67,14 +67,14 @@ uint8_t *SHA1(uint8_t *msg, const uint64_t msg_length)
     const uint64_t l = msg_length * CHAR_BIT;
     PRINT("Message length: %llu bits\n", l);
 
-    uint64_t padded_length = msg_length;
-    const uint64_t block_count = append_padding(&buffer, msg, &padded_length, &info);
+    const uint64_t padded_length = append_padding(&buffer, msg, msg_length, &info);
 
-    PRINT("padded length = %llu\n", padded_length);
-    append_length(buffer, l, padded_length, info.block_size);
+    append_length(buffer, l, padded_length, info.block_length / CHAR_BIT);
+    const uint64_t N = padded_length + (info.digest_length - info.pad_msg_to_length) / CHAR_BIT;
+    PRINT("buffer is %llu bytes long\n", N);
 
 #ifdef DEBUG
-    print_d(buffer, block_count, &info);
+    print_d(buffer, N / info.block_length, &info);
 #endif
 
     /**
@@ -116,38 +116,39 @@ uint8_t *SHA1(uint8_t *msg, const uint64_t msg_length)
      * digest.
      */
 
-    process(buffer, block_count, info.block_size);
+    process(buffer, N, info.block_length);
     free(buffer);
 
     uint8_t *digest = malloc(DIGEST_LENGTH * sizeof *digest);
     PRINT("allocated %u bytes\n", DIGEST_LENGTH);
 
-    snprintf((char *) digest, DIGEST_LENGTH, "%08x%08x%08x%08x%08x", H[0], H[1], H[2], H[3], H[4]);
+    for (uint8_t i = 0, bytes = DIGEST_LENGTH / 5; i < 5; ++i)
+    {
+        snprintf((char *) digest + i * bytes, bytes + 1, "%08x", H[i]);
+    }
 
     return digest;
 }
 
-void append_length(uint8_t *buffer, const uint64_t length, const uint32_t index, const uint16_t block_size)
+void append_length(uint8_t *buffer, uint64_t length, uint64_t padded_index, uint8_t block_length)
 {
-    const uint8_t len_bytes = block_size / CHAR_BIT;
-
     /* assume length < 2^64 */
-    for (uint8_t i = len_bytes; i > 0; --i)
+    for (uint8_t i = 0; i < block_length; ++i)
     {
-        buffer[index - i] = (length >> (CHAR_BIT * (i - 1))) & 0xff;
+        buffer[padded_index + i] = (length >> (CHAR_BIT * (7 - i))) & 0xff;
     }
 }
 
-void process(uint8_t *buffer, const uint32_t block_count, const uint16_t block_size)
+void process(const uint8_t *buffer, uint64_t N, uint8_t block_length)
 {
     uint32_t W[ROUNDS];
 
     /* temporary registers */
     uint32_t $0, $1, $2, $3, $4, T;
 
-    for (uint32_t block = 0; block < block_count; ++block)
+    for (uint64_t b = 0; b < N / block_length; ++b)
     {
-        M = buffer + block * block_size;
+        M = buffer + b * block_length;
 
         for (uint8_t t = 0; t < ROUNDS; ++t)
         {

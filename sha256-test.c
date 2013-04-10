@@ -19,9 +19,10 @@ void testSHA256(void)
 
 void testSHA256file(void)
 {
-    const char *sha256s[] = {
+    char *sha256s[] = {
         "3433556b9ae140dd3838bc22d269e5cc32714f800a13000e8ba5718a3e564680",
-        "f3c1ff464194ac239bb7bb5e17868be1145a262813bb293aeb211c5aa81ec649"
+        "f3c1ff464194ac239bb7bb5e17868be1145a262813bb293aeb211c5aa81ec649",
+        "c56c0acdfa4bec2d222527f99d015e26bcc3e897315690ec124d6372a197947d"
     };
 
     for (uint8_t i = 0; test_files[i]; ++i)
@@ -30,8 +31,8 @@ void testSHA256file(void)
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
 
-        const char *expected = sha256s[i];
-        const char *actual = (const char *) SHA256file(fp);
+        char *expected = sha256s[i];
+        char *actual = (char *) SHA256file(fp);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -48,14 +49,14 @@ void testSHA256file(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free((void *) actual);
+        free(actual);
         fclose(fp);
     }
 }
 
 void testSHA256string(void)
 {
-    const char *sha256s[] = {
+    char *sha256s[] = {
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
         "ca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb",
         "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
@@ -69,8 +70,8 @@ void testSHA256string(void)
 
     for (uint8_t i = 0; test_msgs[i]; ++i)
     {
-        const char *expected = sha256s[i];
-        const char *actual = (const char *) SHA256string(test_msgs[i]);
+        char *expected = sha256s[i];
+        char *actual = (char *) SHA256string(test_msgs[i]);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -87,6 +88,6 @@ void testSHA256string(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free((void *) actual);
+        free(actual);
     }
 }

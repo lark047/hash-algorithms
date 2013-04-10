@@ -19,9 +19,10 @@ void testSHA384(void)
 
 void testSHA384file(void)
 {
-    const char *sha384s[] = {
+    char *sha384s[] = {
         "01d5721fb074b9e9c00da0fba1469b8920bf46261097a63fb87faf4252ad588dfc81e2b7b0907809c7328233231cdde0",
-        "85d454a3ef93dadb8af9450e5d4421b9517a9a31582cd4974ab45f8907d2508463189fedfbf0f962ded1015ebf8fe6fc"
+        "85d454a3ef93dadb8af9450e5d4421b9517a9a31582cd4974ab45f8907d2508463189fedfbf0f962ded1015ebf8fe6fc",
+        "7ff3700354d8ef45ec18b45bbd27b60cf3587506d433ccc0ea767f1ec83029aea72e97046249bc2a071a023b3ae5e487"
     };
 
     for (uint8_t i = 0; test_files[i]; ++i)
@@ -30,8 +31,8 @@ void testSHA384file(void)
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
 
-        const char *expected = sha384s[i];
-        const char *actual = (const char *) SHA384file(fp);
+        char *expected = sha384s[i];
+        char *actual = (char *) SHA384file(fp);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -48,14 +49,14 @@ void testSHA384file(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free((void *) actual);
+        free(actual);
         fclose(fp);
     }
 }
 
 void testSHA384string(void)
 {
-    const char *sha384s[] = {
+    char *sha384s[] = {
         "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b",
         "54a59b9f22b0b80880d8427e548b7c23abd873486e1f035dce9cd697e85175033caa88e6d57bc35efae0b5afd3145f31",
         "cb00753f45a35e8bb5a03d699ac65007272c32ab0eded1631a8b605a43ff5bed8086072ba1e7cc2358baeca134c825a7",
@@ -69,8 +70,8 @@ void testSHA384string(void)
 
     for (uint8_t i = 0; test_msgs[i]; ++i)
     {
-        const char *expected = sha384s[i];
-        const char *actual = (const char *) SHA384string(test_msgs[i]);
+        char *expected = sha384s[i];
+        char *actual = (char *) SHA384string(test_msgs[i]);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -87,6 +88,6 @@ void testSHA384string(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free((void *) actual);
+        free(actual);
     }
 }

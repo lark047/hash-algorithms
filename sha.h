@@ -51,78 +51,83 @@
 #include <stdio.h>
 
 #if defined SHA1
-# undef BIT_STRENGTH
-# define BIT_STRENGTH 160
+#  undef BIT_STRENGTH
+#  define BIT_STRENGTH 160
 #elif defined SHA224 || defined SHA512224
-# undef BIT_STRENGTH
-# define BIT_STRENGTH 224
+#  undef BIT_STRENGTH
+#  define BIT_STRENGTH 224
 #elif defined SHA256 || defined SHA512256
-# undef BIT_STRENGTH
-# define BIT_STRENGTH 256
+#  undef BIT_STRENGTH
+#  define BIT_STRENGTH 256
 #elif defined SHA384
-# undef BIT_STRENGTH
-# define BIT_STRENGTH 384
+#  undef BIT_STRENGTH
+#  define BIT_STRENGTH 384
 #elif defined SHA512
-# undef BIT_STRENGTH
-# define BIT_STRENGTH 512
+#  undef BIT_STRENGTH
+#  define BIT_STRENGTH 512
 #endif
 
-#if defined SHA224 || defined SHA256 || defined SHA384 || \
-    defined SHA512 || defined SHA512224 || defined SHA512256
+#if defined SHA224 || defined SHA256 || defined SHA384 || defined SHA512 || defined SHA512224 || defined SHA512256
 
-# define CH(x,y,z)                (((x) & (y)) ^ (~(x) & (z)))
-# define MAJ(x,y,z)  (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
+#  define CH(x,y,z)                (((x) & (y)) ^ (~(x) & (z)))
+#  define MAJ(x,y,z)  (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
 
 #endif
-
-#if defined SHA1 || defined SHA224 || defined SHA256
 
 /* constants */
-# define BLOCK_SIZE_BITS      64
-# define PADDED_LENGTH_BITS  448
-# define DIGEST_LENGTH_BITS  512
+#if defined SHA1 || defined SHA224 || defined SHA256
 
-#define PREPARE(msg, i) ((uint32_t) msg[4 * (i) + 0] << 24) | \
-                        ((uint32_t) msg[4 * (i) + 1] << 16) | \
-                        ((uint32_t) msg[4 * (i) + 2] <<  8) | \
-                        ((uint32_t) msg[4 * (i) + 3] <<  0)
+#  define BLOCK_LENGTH_BITS         64
+#  define PAD_MSG_TO_LENGTH_BITS   448
+#  define DIGEST_LENGTH_BITS       512
+
+#  if defined SHA1
+
+#    define ROUNDS                  80
+
+#  elif defined SHA224 || defined SHA256
+
+#    define ROUNDS                  64
+
+#  endif
+
+#  define PREPARE(msg, i) (((uint32_t) msg[4 * (i) + 0] << 24) | \
+                           ((uint32_t) msg[4 * (i) + 1] << 16) | \
+                           ((uint32_t) msg[4 * (i) + 2] <<  8) | \
+                           ((uint32_t) msg[4 * (i) + 3] <<  0))
+
+#elif defined SHA384 || defined SHA512 || defined SHA512224 || defined SHA512256
+
+#  define BLOCK_LENGTH_BITS        128
+#  define PAD_MSG_TO_LENGTH_BITS   896
+#  define DIGEST_LENGTH_BITS      1024
+#  define ROUNDS                    80
+
+#  define PREPARE(msg, i) (((uint64_t) M[8 * (i) + 0] << 56) | \
+                           ((uint64_t) M[8 * (i) + 1] << 48) | \
+                           ((uint64_t) M[8 * (i) + 2] << 40) | \
+                           ((uint64_t) M[8 * (i) + 3] << 32) | \
+                           ((uint64_t) M[8 * (i) + 4] << 24) | \
+                           ((uint64_t) M[8 * (i) + 5] << 16) | \
+                           ((uint64_t) M[8 * (i) + 6] <<  8) | \
+                           ((uint64_t) M[8 * (i) + 7] <<  0))
 
 #endif
 
 /* hash functions */
-#if defined SHA1
+#if defined SHA224 || defined SHA256
 
-# define ROUNDS 80
-
-#elif defined SHA224 || defined SHA256
-
-# define ROUNDS 64
-
-# define SIGMA0(x)  (ROTR((x),  2) ^ ROTR((x), 13) ^ ROTR((x), 22))
-# define SIGMA1(x)  (ROTR((x),  6) ^ ROTR((x), 11) ^ ROTR((x), 25))
-# define sigma0(x)  (ROTR((x),  7) ^ ROTR((x), 18) ^  SHR((x),  3))
-# define sigma1(x)  (ROTR((x), 17) ^ ROTR((x), 19) ^  SHR((x), 10))
+#  define SIGMA0(x)  (ROTR((x),  2) ^ ROTR((x), 13) ^ ROTR((x), 22))
+#  define SIGMA1(x)  (ROTR((x),  6) ^ ROTR((x), 11) ^ ROTR((x), 25))
+#  define sigma0(x)  (ROTR((x),  7) ^ ROTR((x), 18) ^  SHR((x),  3))
+#  define sigma1(x)  (ROTR((x), 17) ^ ROTR((x), 19) ^  SHR((x), 10))
 
 #elif defined SHA384 || defined SHA512 || defined SHA512224 || defined SHA512256
 
-# define ROUNDS                80
-# define BLOCK_SIZE_BITS      128
-# define PADDED_LENGTH_BITS   896
-# define DIGEST_LENGTH_BITS  1024
-
-#define PREPARE(msg, i) ((uint64_t) M[8 * (i) + 0] << 56) | \
-                        ((uint64_t) M[8 * (i) + 1] << 48) | \
-                        ((uint64_t) M[8 * (i) + 2] << 40) | \
-                        ((uint64_t) M[8 * (i) + 3] << 32) | \
-                        ((uint64_t) M[8 * (i) + 4] << 24) | \
-                        ((uint64_t) M[8 * (i) + 5] << 16) | \
-                        ((uint64_t) M[8 * (i) + 6] <<  8) | \
-                        ((uint64_t) M[8 * (i) + 7] <<  0);
-
-# define SIGMA0(x)  (ROTR((x), 28) ^ ROTR((x), 34) ^ ROTR((x), 39))
-# define SIGMA1(x)  (ROTR((x), 14) ^ ROTR((x), 18) ^ ROTR((x), 41))
-# define sigma0(x)  (ROTR((x),  1) ^ ROTR((x),  8) ^  SHR((x),  7))
-# define sigma1(x)  (ROTR((x), 19) ^ ROTR((x), 61) ^  SHR((x),  6))
+#  define SIGMA0(x)  (ROTR((x), 28) ^ ROTR((x), 34) ^ ROTR((x), 39))
+#  define SIGMA1(x)  (ROTR((x), 14) ^ ROTR((x), 18) ^ ROTR((x), 41))
+#  define sigma0(x)  (ROTR((x),  1) ^ ROTR((x),  8) ^  SHR((x),  7))
+#  define sigma1(x)  (ROTR((x), 19) ^ ROTR((x), 61) ^  SHR((x),  6))
 
 #endif
 

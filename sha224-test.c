@@ -19,9 +19,10 @@ void testSHA224(void)
 
 void testSHA224file(void)
 {
-    const char *sha224s[] = {
+    char *sha224s[] = {
         "15466c1039f59bb6be71a39bd532c58784bf1bb16d75f6b0c8decb8c",
-        "e8c15d187727485006a83b38577d4a6dd7d6426461ac74d1bb6f6a76"
+        "e8c15d187727485006a83b38577d4a6dd7d6426461ac74d1bb6f6a76",
+        "c84a6a460c52b0c66a0379a05f8b91012ac841d433c0634f02595848"
     };
 
     for (uint8_t i = 0; test_files[i]; ++i)
@@ -30,8 +31,8 @@ void testSHA224file(void)
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
 
-        const char *expected = sha224s[i];
-        const char *actual = (const char *) SHA224file(fp);
+        char *expected = sha224s[i];
+        char *actual = (char *) SHA224file(fp);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -48,14 +49,14 @@ void testSHA224file(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free((void *) actual);
+        free(actual);
         fclose(fp);
     }
 }
 
 void testSHA224string(void)
 {
-    const char *sha224s[] = {
+    char *sha224s[] = {
         "d14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f",
         "abd37534c7d9a2efb9465de931cd7055ffdb8879563ae98078d6d6d5",
         "23097d223405d8228642a477bda255b32aadbce4bda0b3f7e36c9da7",
@@ -69,8 +70,8 @@ void testSHA224string(void)
 
     for (uint8_t i = 0; test_msgs[i]; ++i)
     {
-        const char *expected = sha224s[i];
-        const char *actual = (const char *) SHA224string(test_msgs[i]);
+        char *expected = sha224s[i];
+        char *actual = (char *) SHA224string(test_msgs[i]);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -87,6 +88,6 @@ void testSHA224string(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free((void *) actual);
+        free(actual);
     }
 }

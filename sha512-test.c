@@ -19,9 +19,10 @@ void testSHA512(void)
 
 void testSHA512file(void)
 {
-    const char *sha512s[] = {
+    char *sha512s[] = {
         "5380d25153631747975a86cb691432f2e0e2bd906f195414e7bc52d06079a1683af0a892262260d5623d820f20d87033e8b685d1455b17d34c7ee0114892ae8a",
-        "e42e221feea27d17d92b9c0b7a9ae02fcb84d70ddb8acfbd5ce4c2922f23d9d6e73cbb294a41e72228ceac4aba3514d7b2fcde5cb48e63d3aa02eb0112e73f5f"
+        "e42e221feea27d17d92b9c0b7a9ae02fcb84d70ddb8acfbd5ce4c2922f23d9d6e73cbb294a41e72228ceac4aba3514d7b2fcde5cb48e63d3aa02eb0112e73f5f",
+        "19c1cbb3e16c3e3f6fe4b5adca71dfc7ad20cc345380a1fe5e173253d087730ffca0cc152235b5d4de7d27982633d5254a2ebe4dbd7a61a71be97aa9fbca4ccb"
     };
 
     for (uint8_t i = 0; test_files[i]; ++i)
@@ -30,8 +31,8 @@ void testSHA512file(void)
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
 
-        const char *expected = sha512s[i];
-        const char *actual = (const char *) SHA512file(fp);
+        char *expected = sha512s[i];
+        char *actual = (char *) SHA512file(fp);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -48,14 +49,14 @@ void testSHA512file(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free((void *) actual);
+        free(actual);
         fclose(fp);
     }
 }
 
 void testSHA512string(void)
 {
-    const char *sha512s[] = {
+    char *sha512s[] = {
         "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
         "1f40fc92da241694750979ee6cf582f2d5d7d28e18335de05abc54d0560e0f5302860c652bf08d560252aa5e74210546f369fbbbce8c12cfc7957b2652fe9a75",
         "ddaf35a193617abacc417349ae20413112e6fa4e89a97ea20a9eeee64b55d39a2192992a274fc1a836ba3c23a3feebbd454d4423643ce80e2a9ac94fa54ca49f",
@@ -69,8 +70,8 @@ void testSHA512string(void)
 
     for (uint8_t i = 0; test_msgs[i]; ++i)
     {
-        const char *expected = sha512s[i];
-        const char *actual = (const char *) SHA512string(test_msgs[i]);
+        char *expected = sha512s[i];
+        char *actual = (char *) SHA512string(test_msgs[i]);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -87,6 +88,6 @@ void testSHA512string(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free((void *) actual);
+        free(actual);
     }
 }

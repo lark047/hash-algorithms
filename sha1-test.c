@@ -19,9 +19,10 @@ void testSHA1(void)
 
 void testSHA1file(void)
 {
-    const char *sha1s[] = {
+    char *sha1s[] = {
         "1f10a1c87261cec87ba9b38e94154dea2a62c4d9",
-        "564663cf03a708201283cfe922bc99cc121988ad"
+        "564663cf03a708201283cfe922bc99cc121988ad",
+        "13436f8528bf39679646a6d7a77ffeaee25afef1"
     };
 
     for (uint8_t i = 0; test_files[i]; ++i)
@@ -30,8 +31,8 @@ void testSHA1file(void)
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
 
-        const char *expected = sha1s[i];
-        const char *actual = (const char *) SHA1file(fp);
+        char *expected = sha1s[i];
+        char *actual = (char *) SHA1file(fp);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -48,14 +49,14 @@ void testSHA1file(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free((void *) actual);
+        free(actual);
         fclose(fp);
     }
 }
 
 void testSHA1string(void)
 {
-    const char *sha1s[] = {
+    char *sha1s[] = {
         "da39a3ee5e6b4b0d3255bfef95601890afd80709",
         "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8",
         "a9993e364706816aba3e25717850c26c9cd0d89d",
@@ -69,8 +70,8 @@ void testSHA1string(void)
 
     for (uint8_t i = 0; test_msgs[i]; ++i)
     {
-        const char *expected = sha1s[i];
-        const char *actual = (const char *) SHA1string(test_msgs[i]);
+        char *expected = sha1s[i];
+        char *actual = (char *) SHA1string(test_msgs[i]);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -87,6 +88,6 @@ void testSHA1string(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free((void *) actual);
+        free(actual);
     }
 }

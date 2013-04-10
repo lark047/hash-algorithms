@@ -24,8 +24,8 @@ void testSHA512256(void)
 #if 0
 void testSHA512256file(void)
 {
-    /* TODO i can't find a generator */
-    const char *sha512256s[] = {
+    /* TODO i can't find a generator for SHA-512/256 */
+    char *sha512256s[] = {
         "",
         ""
     };
@@ -36,8 +36,8 @@ void testSHA512256file(void)
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
 
-        const char *expected = sha512256s[i];
-        const char *actual = (const char *) SHA512256file(fp);
+        char *expected = sha512256s[i];
+        char *actual = (char *) SHA512256file(fp);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -54,15 +54,15 @@ void testSHA512256file(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free((void *) actual);
+        free(actual);
         fclose(fp);
     }
 }
 
 void testSHA512256string(void)
 {
-    /* TODO i can't find a generator */
-    const char *sha512256s[] = {
+    /* TODO i can't find a generator for SHA-512/256 */
+    char *sha512256s[] = {
         "",
         "",
         "",
@@ -76,8 +76,8 @@ void testSHA512256string(void)
 
     for (uint8_t i = 0; test_msgs[i]; ++i)
     {
-        const char *expected = sha512256s[i];
-        const char *actual = (const char *) SHA512256string(test_msgs[i]);
+        char *expected = sha512256s[i];
+        char *actual = (char *) SHA512256string(test_msgs[i]);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -94,7 +94,7 @@ void testSHA512256string(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free((void *) actual);
+        free(actual);
     }
 }
 
