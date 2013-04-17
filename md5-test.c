@@ -1,5 +1,6 @@
 #include "md.h"
 #include "util.h"
+#include "hmac.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -12,13 +13,17 @@ static void testMD5file(void);
 static void testMD5string(void);
 static void testMD5_collision(void);
 static void testMD5file_collision(void);
+static void testMD5_HMAC(void);
 
 void testMD5(void)
 {
+#if 0
     testMD5file();
     testMD5string();
     testMD5_collision();
     testMD5file_collision();
+#endif
+    testMD5_HMAC();
 }
 
 static void testMD5file(void)
@@ -185,4 +190,63 @@ static void testMD5file_collision(void)
         fclose(f1);
         fclose(f2);
     }
+}
+
+static void testMD5_HMAC(void)
+{
+    char *keys[] = {
+        "",
+        "key",
+        "==8utHoe30ASpIEmIe5Roa3#*e1$l7v8a1IeGi!gIu2OUr&$do++hiAjlAH_eTRi_Wi4dOu+l!2hiuThl7frIaclUswiuFI*GluSwiA*?ug@ASi$swOatR8A3Las0ia5",
+        0
+    };
+
+    char *md5s[][3] = {
+        {
+            "74e6f7298a9c2d168935f58c001bad88", "63530468a04e386459855da0063b6596", "c7dd61a377879126bc0d229aff0ff24a"
+        }, {
+            "3673438f11d71c21a9b8b59232a3dd61", "80ea44ccea14cc2263889567cfacccd7", "db2e0480cd24bd920cb7e5db6bc9da00"
+        }, {
+            "dd2701993d29fdd0b032c233cec63403", "d2fe98063f876b03193afb49b4979591", "c600cb3b71f529f810260bffc0dffda4"
+        }, {
+            "3ba8be08caf4c56ce9568a981f366f70", "73aec30615dd8f88e38a672a9d758788", "7616fc2a059fc6ba9a188eec22b7ca17"
+        }, {
+            "3d7e2530f66f8541361aed88603dd77a", "14fe9f9a654e250f7d7532ca3633c067", "9e2deccbb4557dfc311063ab1ac4a94f"
+        }, {
+            "d59789e1172d0ac210a5ad40182fa661", "e8ade536d6eb223c43e1b45fb28ad3c8", "5f996e5b68bb57d5a1ca66c2be29d841"
+        }, {
+            "19ff30ad2150544df4eeb994348c8242", "40cdfa72ad545a6258a13d4ce5e6e2df", "3ae00877a414f0d144d61c82652a1a35"
+        }, {
+            "ad262969c53bc16032f160081c4a07a0", "80070713463e7749b90c2dc24911e275", "3a1b7a14594a06c8dba868c3c97418f0"
+        }, {
+            "41ecaa288efe0daa720c7bbcf4e5f3c8", "120a17985a1e97bf8f0e38a52fb9fe79", "c4573d4fb4a694e249eb364dc5e15e43"
+        }
+    };
+
+    for (uint8_t i = 0; test_msgs[i]; ++i)
+    {
+        for (uint8_t j = 0; keys[j]; ++j)
+        {
+            char *expected = md5s[i][j];
+            char *actual = (char *) HMAC_MD5(keys[j], test_msgs[i]);
+
+            CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
+            CU_ASSERT_STRING_EQUAL(actual, expected);
+
+            if (STR_EQ(expected, actual))
+            {
+                PRINT("%s\n", actual);
+            }
+            else
+            {
+                fprintf(stderr, "\n");
+                fprintf(stderr, "string  : -->%s<--\n", test_msgs[i]);
+                fprintf(stderr, "expected: %s\n", expected);
+                fprintf(stderr, "actual  : %s\n", actual);
+            }
+
+            free(actual);
+        }
+    }
+
 }

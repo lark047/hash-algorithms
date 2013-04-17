@@ -13,6 +13,12 @@ util.o: util.c util.h
 util-debug.o: util.c util.h
 	$(CC) $(CFLAGS) $< -c -o $@ $(DEBUG)
 
+hmac.o: hmac.c hmac.h
+	$(CC) $(CFLAGS) $< -c -o $@
+
+hmac-debug.o: hmac.c hmac.h
+	$(CC) $(CFLAGS) $< -c -o $@ $(DEBUG)
+
 main: main.c \
 		md2.o md2-test.o \
 		md4.o md4-test.o \
@@ -80,10 +86,10 @@ md4-test-debug.o: md4-test.c md4-debug.o
 	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
 
 #### MD5 ####
-md5: md5-main.c md5.o md5-test.o util.o
+md5: md5-main.c md5.o md5-test.o util.o hmac.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
 
-md5-debug: md5-main.c md5-debug.o md5-test-debug.o util-debug.o
+md5-debug: md5-main.c md5-debug.o md5-test-debug.o util-debug.o hmac-debug.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) $(DEBUG)
 
 md5.o: md5.c md.h
@@ -92,10 +98,10 @@ md5.o: md5.c md.h
 md5-debug.o: md5.c md.h
 	$(CC) $(CFLAGS) -c $< -o $@ -DMD5 $(DEBUG)
 
-md5-test.o: md5-test.c md5.o
+md5-test.o: md5-test.c md5.o hmac.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
-md5-test-debug.o: md5-test.c md5-debug.o
+md5-test-debug.o: md5-test.c md5-debug.o hmac-debug.o
 	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
 
 #### SHA1 ####
