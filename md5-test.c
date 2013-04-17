@@ -17,12 +17,10 @@ static void testMD5_HMAC(void);
 
 void testMD5(void)
 {
-#if 0
     testMD5file();
     testMD5string();
     testMD5_collision();
     testMD5file_collision();
-#endif
     testMD5_HMAC();
 }
 
