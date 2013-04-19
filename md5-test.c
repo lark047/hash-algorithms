@@ -246,5 +246,4 @@ static void testMD5_HMAC(void)
             free(actual);
         }
     }
-
 }
