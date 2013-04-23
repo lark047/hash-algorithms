@@ -6,16 +6,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define B 64
-
-#define HMAC_MD5(k, m) (HMACstring(k, m, MD5))
-
-uint8_t *HMACstring(const char *K, const char *msg, uint8_t *(*H)(const uint8_t *, uint64_t))
+uint8_t *HMACstring(const char *K, const char *msg, uint8_t *(*H)(const uint8_t *, uint64_t), uint8_t B)
 {
-    return HMAC((uint8_t *) K, strlen(K), (uint8_t *) msg, strlen(msg), H);
+    return HMAC((uint8_t *) K, strlen(K), (uint8_t *) msg, strlen(msg), H, B);
 }
 
-uint8_t *HMAC(const uint8_t *K, uint64_t key_length, const uint8_t *msg, uint64_t msg_length, uint8_t *(*H)(const uint8_t *, uint64_t))
+uint8_t *HMAC(const uint8_t *K, uint64_t key_length, const uint8_t *msg, uint64_t msg_length, uint8_t *(*H)(const uint8_t *, uint64_t), uint8_t B)
 {
     uint8_t *key = NULL;
     PRINT("key length = %u\n", key_length);
