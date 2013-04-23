@@ -1,5 +1,6 @@
 #include "md.h"
 #include "util.h"
+#include "hmac.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -9,6 +10,7 @@
 #include <CUnit/Basic.h>
 
 static void testMD2string(void);
+static void testMD2_HMAC(void);
 
 #if 0
 static void testMD2file(void);
@@ -20,6 +22,7 @@ void testMD2(void)
     /* testMD2file(); */
     testMD2string();
     /* testMD2string_collision(); */
+    testMD2_HMAC();
 }
 
 #if 0
@@ -105,29 +108,21 @@ void testMD2string_collision(void)
     /* TODO find some MD2 collision examples */
 
     /**
-     * taken from Wikipedia: http://en.wikipedia.org/wiki/MD2
+     * taken from
      *
      *      839c7a4d7a92cb5678a5d5b9eea5a7573c8a74deb366c3dc20a083b69f5d2a3bb3719dc69891e9f95e809fd7e8b23ba6318edd45e51fe39708bf9427e9c3e8b9
      *      839c7a4d7a92cbd678a5d529eea5a7573c8a74deb366c3dc20a083b69f5d2a3bb3719dc69891e9f95e809fd7e8b23ba6318edc45e51fe39708bf9427e9c3e8b9
      * diff:               ^       ^                                                                              ^
      */
 
-    uint8_t msgs_wiki[][64] = {
+    uint8_t msgs_wiki[][] = {
         {
-            0x83,0x9c,0x7a,0x4d,0x7a,0x92,0xcb,0x56,0x78,0xa5,0xd5,0xb9,0xee,0xa5,0xa7,0x57,
-            0x3c,0x8a,0x74,0xde,0xb3,0x66,0xc3,0xdc,0x20,0xa0,0x83,0xb6,0x9f,0x5d,0x2a,0x3b,
-            0xb3,0x71,0x9d,0xc6,0x98,0x91,0xe9,0xf9,0x5e,0x80,0x9f,0xd7,0xe8,0xb2,0x3b,0xa6,
-            0x31,0x8e,0xdd,0x45,0xe5,0x1f,0xe3,0x97,0x08,0xbf,0x94,0x27,0xe9,0xc3,0xe8,0xb9
         }, {
-            0x83,0x9c,0x7a,0x4d,0x7a,0x92,0xcb,0xd6,0x78,0xa5,0xd5,0x29,0xee,0xa5,0xa7,0x57,
-            0x3c,0x8a,0x74,0xde,0xb3,0x66,0xc3,0xdc,0x20,0xa0,0x83,0xb6,0x9f,0x5d,0x2a,0x3b,
-            0xb3,0x71,0x9d,0xc6,0x98,0x91,0xe9,0xf9,0x5e,0x80,0x9f,0xd7,0xe8,0xb2,0x3b,0xa6,
-            0x31,0x8e,0xdc,0x45,0xe5,0x1f,0xe3,0x97,0x08,0xbf,0x94,0x27,0xe9,0xc3,0xe8,0xb9
         }
     };
 
     /**
-     * taken from http://eprint.iacr.org/2004/199.pdf
+     * taken from
      *
      *      4d7a9c8356cb927ab9d5a57857a7a5eede748a3cdcc366b3b683a0203b2a5d9fc69d71b3f9e99198d79f805ea63bb2e845dd8e3197e31fe52794bf08b9e8c3e9
      *      4d7a9c83d6cb927a29d5a57857a7a5eede748a3cdcc366b3b683a0203b2a5d9fc69d71b3f9e99198d79f805ea63bb2e845dc8e3197e31fe52794bf08b9e8c3e9
@@ -135,16 +130,14 @@ void testMD2string_collision(void)
      */
 
     /**
-     * taken from http://www.iacr.org/archive/fse2007/45930311/45930311.pdf
+     * taken from
      *
      *      42792d65f0f84fd8d57d86bf78549d673fb38caa
      *      42792d65f0f84fd8d57d86bf78549d673fb38cac
      * diff:                                       ^
      */
 
-    uint8_t msgs_iacr2[][20] = {
-        { 0x42,0x79,0x2d,0x65,0xf0,0xf8,0x4f,0xd8,0xd5,0x7d,0x86,0xbf,0x78,0x54,0x9d,0x67,0x3f,0xb3,0x8c,0xaa },
-        { 0x42,0x79,0x2d,0x65,0xf0,0xf8,0x4f,0xd8,0xd5,0x7d,0x86,0xbf,0x78,0x54,0x9d,0x67,0x3f,0xb3,0x8c,0xac }
+    uint8_t msgs_iacr2[][] = {
     };
 
     uint8_t *msgs[] = {
@@ -153,7 +146,7 @@ void testMD2string_collision(void)
         0
     };
 
-    const uint8_t lengths[] = {
+    uint8_t lengths[] = {
         SIZE(msgs_wiki[0]),
         SIZE(msgs_iacr2[0])
     };
@@ -179,3 +172,62 @@ void testMD2string_collision(void)
     }
 }
 #endif
+
+static void testMD2_HMAC(void)
+{
+    char *keys[] = {
+        "",
+        "key",
+        /* TODO 64-byte key */
+        "==8utHoe30ASpIEmIe5Roa3#*e1$l7v8a1IeGi!gIu2OUr&$do++hiAjlAH_eTRi_Wi4dOu+l!2hiuThl7frIaclUswiuFI*GluSwiA*?ug@ASi$swOatR8A3Las0ia5",
+        0,
+    };
+
+    char *md2s[][3] = {
+        {
+            "6f6e031223b36cd2a997787a03d16bf5", "7bf1ff992bec5708c70f0db5d5054486", "dd91b79e9947cef2d2a015b83c344c57"
+        }, {
+            "c732ea04ad1a795c6f9d60db270f1425", "3602aada95845349eae2474f7944f3c6", "d300a02026e817a09581eb46f8a9f7b3"
+        }, {
+            "17b0f48a8ee89e4c7748890ea9d31b90", "d3f42db81f8a7e379cc87e187fba861b", "fefe253fd12626ad7cc15c41ba137824"
+        }, {
+            "458a33dc7169121c602ac71a6f44e95c", "e596a93a225fdcfc2c8af61ff1d1d119", "41d5f3aa3f9ca86c0a7b6170a777c1e5"
+        }, {
+            "dd13f3165c4d29c3b75f789523b1ef8f", "d0df8523efa5b6a9fe099c10209e8d84", "160858784cf404f28665161b8c9811ae"
+        }, {
+            "7416b7925d545e7849b982e6c0323e72", "25fd227415bf7436b4f1673ed7790d07", "f115d2e131e0d6f43acdbaa490cacd24"
+        }, {
+            "daa525e74f2019d91bf6933d13fa9850", "654b38351a6af480c4ef9eb8fb637f67", "ae011a519550aff337110e484eef2a9a"
+        }, {
+            "6e0e1a43d01c170ab9da7794c0130934", "13758b9534bfb38d850457814613b0c1", "d91be2a92401be5e909659b6a14aeba3"
+        }, {
+            "58117bd5463a565a22f7f85dddeb2089", "a162a4059188270346f1addb5259f9e5", "dd9db032cd815ad58055c12574251bb8"
+        }
+    };
+
+    for (uint8_t i = 0; test_msgs[i]; ++i)
+    {
+        for (uint8_t j = 0; keys[j]; ++j)
+        {
+            char *expected = md2s[i][j];
+            char *actual = (char *) HMAC_MD2(keys[j], test_msgs[i]);
+
+            CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
+            CU_ASSERT_STRING_EQUAL(actual, expected);
+
+            if (STR_EQ(expected, actual))
+            {
+                PRINT("%s\n", actual);
+            }
+            else
+            {
+                fprintf(stderr, "\n");
+                fprintf(stderr, "string  : -->%s<--\n", test_msgs[i]);
+                fprintf(stderr, "expected: %s\n", expected);
+                fprintf(stderr, "actual  : %s\n", actual);
+            }
+
+            free(actual);
+        }
+    }
+}

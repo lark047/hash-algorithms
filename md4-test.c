@@ -1,5 +1,6 @@
 #include "md.h"
 #include "util.h"
+#include "hmac.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -11,12 +12,14 @@
 static void testMD4file(void);
 static void testMD4string(void);
 static void testMD4_collision(void);
+static void testMD4_HMAC(void);
 
 void testMD4(void)
 {
     testMD4file();
     testMD4string();
     testMD4_collision();
+    testMD4_HMAC();
 }
 
 static void testMD4file(void)
@@ -190,5 +193,64 @@ static void testMD4_collision(void)
 
         free(d1);
         free(d2);
+    }
+}
+
+static void testMD4_HMAC(void)
+{
+    char *keys[] = {
+        "",
+        "key",
+        /* TODO 64-byte key */
+        "==8utHoe30ASpIEmIe5Roa3#*e1$l7v8a1IeGi!gIu2OUr&$do++hiAjlAH_eTRi_Wi4dOu+l!2hiuThl7frIaclUswiuFI*GluSwiA*?ug@ASi$swOatR8A3Las0ia5",
+        0,
+    };
+
+    char *md4s[][3] = {
+        {
+            "c8d444e3153b538850e7850fa84bb247", "1d31e4a9de766cd2d5bbcb2a54ba57ee", "ca19a2f7cd9a18d64e36e7f7fef72b62"
+        }, {
+            "a0f0057303393f643a09d7db430b9fe1", "1ab9f07fde61706f98695d380ec3c0f2", "af6cd64bf7b00648e6756a310a94530e"
+        }, {
+            "98444df21715fe461af8e4f8d5eaa5cf", "32c43d6d6eda7f1e464711473b956b68", "1712e3d7ed130fb6ff95dfefa43f36f2"
+        }, {
+            "68d2822a0c1ad73a6cf0fa20aae5f3db", "97a65177e9ba1529caf3f2080143f90d", "42f666eff272cd623f6bcb67e5e9c6a3"
+        }, {
+            "e6f5f02572d8ed6d823d4da41750d1fe", "691319fa060c56f8908279e0fa51a163", "679b50bf334c10ad6a8241f0b022edf5"
+        }, {
+            "d83c7f703ff9c95f8a23ecb612652580", "ebfef56fa58b27ae67744fb6188d382a", "853d11ee026f23ece2a90a7120d6a1b1"
+        }, {
+            "3f465756987d04623320ccb56333b0eb", "9185d7c935c580a942ed0246242b9d32", "7c5c22601814335a9e4c48d9914f84a4"
+        }, {
+            "6551fa20232180780756f5abd434dac3", "8d3366c440a9c65124ab0b5f4ca27338", "1a1735d030a71a6cd892c7037d2399cc"
+        }, {
+            "da0942edbe811eb5461473b9ddf66c33", "03dcb12befa0c989ae12839b35e2ab35", "0dbbfbc9894bcfe61c1acce7a495a0bc"
+        }
+    };
+
+    for (uint8_t i = 0; test_msgs[i]; ++i)
+    {
+        for (uint8_t j = 0; keys[j]; ++j)
+        {
+            char *expected = md4s[i][j];
+            char *actual = (char *) HMAC_MD4(keys[j], test_msgs[i]);
+
+            CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
+            CU_ASSERT_STRING_EQUAL(actual, expected);
+
+            if (STR_EQ(expected, actual))
+            {
+                PRINT("%s\n", actual);
+            }
+            else
+            {
+                fprintf(stderr, "\n");
+                fprintf(stderr, "string  : -->%s<--\n", test_msgs[i]);
+                fprintf(stderr, "expected: %s\n", expected);
+                fprintf(stderr, "actual  : %s\n", actual);
+            }
+
+            free(actual);
+        }
     }
 }
