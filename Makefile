@@ -183,10 +183,10 @@ sha384-test-debug.o: sha384-test.c sha384-debug.o hmac-debug.o
 	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
 
 #### SHA512 ####
-sha512: sha512-main.c sha512.o sha512-test.o util.o
+sha512: sha512-main.c sha512.o sha512-test.o util.o hmac.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
 
-sha512-debug: sha512-main.c sha512-debug.o sha512-test-debug.o util-debug.o
+sha512-debug: sha512-main.c sha512-debug.o sha512-test-debug.o util-debug.o hmac-debug.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) $(DEBUG)
 
 sha512.o: sha512.c sha.h
@@ -195,10 +195,10 @@ sha512.o: sha512.c sha.h
 sha512-debug.o: sha512.c sha.h
 	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512 $(DEBUG)
 
-sha512-test.o: sha512-test.c sha512.o
+sha512-test.o: sha512-test.c sha512.o hmac.o
 	$(CC) $(CFLAGS) -c $< -o $@
 
-sha512-test-debug.o: sha512-test.c sha512-debug.o
+sha512-test-debug.o: sha512-test.c sha512-debug.o hmac-debug.o
 	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
 
 #### SHA512/224 ####
