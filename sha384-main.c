@@ -1,5 +1,6 @@
 #include "sha.h"
 #include "util.h"
+#include "hmac.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +17,7 @@ int main(int argc, char **argv)
 
     if (argc == 2)
     {
-        if (strcmp(argv[1], "-t") == 0)
+        if (STR_EQ(argv[1], "-t"))
         {
             CU_pSuite suite;
 
@@ -43,7 +44,7 @@ int main(int argc, char **argv)
 
             uint8_t *digest = SHA384string(msg);
 
-            printf("%s\n", digest);
+            printf("%s\n", (char *) digest);
 
             /* clean up */
             PRINT("%s\n", "Cleaning up...");
@@ -54,7 +55,7 @@ int main(int argc, char **argv)
             rc = EXIT_SUCCESS;
         }
     }
-    else if (argc == 3 && strcmp(argv[1], "-f") == 0)
+    else if (argc == 3 && STR_EQ(argv[1], "-f"))
     {
         char * const filename = argv[2];
 
@@ -84,12 +85,27 @@ int main(int argc, char **argv)
             fprintf(stderr, "[ERROR] Could not open %s for reading.", filename);
         }
     }
+    else if (argc == 4 && STR_EQ(argv[1], "-h"))
+    {
+        uint8_t *digest = HMAC_SHA384(argv[2], argv[3]);
+
+        /* TODO return the actual bytes and add function for printing */
+        printf("%s\n", (char *) digest);
+
+        /* clean up */
+        free(digest);
+        digest = NULL;
+
+        rc = EXIT_SUCCESS;
+    }
     else
     {
-        printf("Usage: %s \"<string>\"\n", argv[0]);
-        puts("  prints the SHA384 hash of <string>\n");
+        printf("Usage: %s \"<message>\"\n", argv[0]);
+        puts("  prints the SHA384 hash of <message>\n");
         printf("Usage: %s -f <filename>\n", argv[0]);
         puts("  prints the SHA384 hash of the file named <filename>\n");
+        printf("Usage: %s -h \"<key>\" \"<message>\"\n", argv[0]);
+        puts("  prints the SHA384 HMAC hash of <message> using <key>\n");
     }
 
     PRINT("Exiting with status %d\n", rc);

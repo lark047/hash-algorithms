@@ -143,6 +143,7 @@
 
 uint8_t *SHA1(const uint8_t *, uint64_t);
 uint8_t *SHA256(const uint8_t *, uint64_t);
+uint8_t *SHA384(const uint8_t *, uint64_t);
 
 #if 0
 uint8_t *SHA224(const uint8_t *, uint64_t);
