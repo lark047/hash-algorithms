@@ -8,13 +8,15 @@
 
 uint8_t *HMACstring(const char *K, const char *msg, uint8_t *(*H)(const uint8_t *, uint64_t), uint8_t B)
 {
+    PRINT("key (length): \"%s\" (%u)\n", K, strlen(K));
+    PRINT("msg (length): \"%s\" (%u)\n", msg, strlen(msg));
     return HMAC((uint8_t *) K, strlen(K), (uint8_t *) msg, strlen(msg), H, B);
 }
 
 uint8_t *HMAC(const uint8_t *K, uint64_t key_length, const uint8_t *msg, uint64_t msg_length, uint8_t *(*H)(const uint8_t *, uint64_t), uint8_t B)
 {
-    uint8_t *key = NULL;
-    PRINT("key length = %u\n", key_length);
+    uint8_t *key = (uint8_t *) K;
+    PRINT("key length = %llu\n", key_length);
 
     if (key_length > B)
     {
@@ -24,7 +26,7 @@ uint8_t *HMAC(const uint8_t *K, uint64_t key_length, const uint8_t *msg, uint64_
 
         key = malloc(key_length);
         PRINT("key digest: %s\n", (char *) digest);
-        PRINT("key length: %u\n", key_length);
+        PRINT("key length: %llu\n", key_length);
         for (uint8_t i = 0; i < key_length; ++i)
         {
             unsigned x;
@@ -38,10 +40,8 @@ uint8_t *HMAC(const uint8_t *K, uint64_t key_length, const uint8_t *msg, uint64_
 
     if (key_length < B)
     {
-        key = key ? key : (uint8_t *) K;
-
         /* append zeroes to the end of K to create a B byte string */
-        PRINT("padding key with %u 0x0 bytes...\n", B - key_length);
+        PRINT("padding key with %llu 0x0 bytes...\n", B - key_length);
     }
 
     uint8_t *buffer = malloc(B + msg_length);
