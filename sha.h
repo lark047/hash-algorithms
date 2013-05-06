@@ -51,19 +51,14 @@
 #include <stdio.h>
 
 #if defined SHA1
-#  undef BIT_STRENGTH
 #  define BIT_STRENGTH 160
 #elif defined SHA224 || defined SHA512224
-#  undef BIT_STRENGTH
 #  define BIT_STRENGTH 224
 #elif defined SHA256 || defined SHA512256
-#  undef BIT_STRENGTH
 #  define BIT_STRENGTH 256
 #elif defined SHA384
-#  undef BIT_STRENGTH
 #  define BIT_STRENGTH 384
 #elif defined SHA512
-#  undef BIT_STRENGTH
 #  define BIT_STRENGTH 512
 #endif
 
