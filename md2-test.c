@@ -15,19 +15,19 @@ static void testMD2_HMAC(void);
 
 #if 0
 static void testMD2file(void);
-static void testMD2string_collision(void);
+static void testMD2_collision(void);
 #endif
 
 void testMD2(void)
 {
     /* testMD2file(); */
     testMD2string();
-    /* testMD2string_collision(); */
+    /* testMD2_collision(); */
     testMD2_HMAC();
 }
 
 #if 0
-void testMD2file(void)
+static void testMD2file(void)
 {
     /* TODO find an MD2 file generator */
     char *md2s[] = {
@@ -41,8 +41,12 @@ void testMD2file(void)
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
 
+        uint8_t *digest = MD2file(fp);
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
+
         char *expected = md2s[i];
-        char *actual = (char *) MD2file(fp);
+        char *actual = to_string(digest, DIGEST_LENGTH);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -59,13 +63,14 @@ void testMD2file(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free(actual);
         fclose(fp);
+        free(digest);
+        free(actual);
     }
 }
 #endif
 
-void testMD2string(void)
+static void testMD2string(void)
 {
     char *md2s[] = {
         "8350e5a3e24c153df2275c9f80692773",
@@ -82,6 +87,8 @@ void testMD2string(void)
     for (uint8_t i = 0; test_msgs[i]; ++i)
     {
         uint8_t *digest = MD2string(test_msgs[i]);
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
 
         char *expected = md2s[i];
         char *actual = to_string(digest, DIGEST_LENGTH);
@@ -101,12 +108,13 @@ void testMD2string(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
+        free(digest);
         free(actual);
     }
 }
 
 #if 0
-void testMD2string_collision(void)
+static void testMD2_collision(void)
 {
     /* TODO find some MD2 collision examples */
 
@@ -164,14 +172,24 @@ void testMD2string_collision(void)
         CU_ASSERT_PTR_NOT_NULL_FATAL(d1);
         CU_ASSERT_PTR_NOT_NULL_FATAL(d2);
 
-        PRINT("%s\n", (char *) d1);
-        PRINT("%s\n", (char *) d2);
+        char *bufs[] = {
+            to_string(d1, DIGEST_LENGTH),
+            to_string(d2, DIGEST_LENGTH)
+        };
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(bufs[0]);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(bufs[1]);
+
+        PRINT("%s\n", bufs[0]);
+        PRINT("%s\n", bufs[1]);
 
         CU_ASSERT_NOT_EQUAL(memcmp(msgs[i + 0], msgs[i + 1], len), 0);
-        CU_ASSERT_STRING_EQUAL(d1, d2);
+        CU_ASSERT_STRING_EQUAL(bufs[0], bufs[1]);
 
         free(d1);
         free(d2);
+        free(bufs[0]);
+        free(bufs[1]);
     }
 }
 #endif
@@ -213,6 +231,8 @@ static void testMD2_HMAC(void)
         for (uint8_t j = 0; keys[j]; ++j)
         {
             uint8_t *digest = HMAC_MD2(keys[j], test_msgs[i]);
+
+            CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
 
             char *expected = md2s[i][j];
             char *actual = to_string(digest, DIGEST_LENGTH);
