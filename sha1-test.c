@@ -2,6 +2,7 @@
 #include "util.h"
 #include "hmac.h"
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,7 +21,7 @@ void testSHA1(void)
     testSHA1_HMAC();
 }
 
-void testSHA1file(void)
+static void testSHA1file(void)
 {
     char *sha1s[] = {
         "1f10a1c87261cec87ba9b38e94154dea2a62c4d9",
@@ -34,8 +35,12 @@ void testSHA1file(void)
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
 
+        uint8_t *digest = SHA1file(fp);
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
+
         char *expected = sha1s[i];
-        char *actual = (char *) SHA1file(fp);
+        char *actual = to_string(digest, DIGEST_LENGTH);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -52,12 +57,13 @@ void testSHA1file(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free(actual);
         fclose(fp);
+        free(digest);
+        free(actual);
     }
 }
 
-void testSHA1string(void)
+static void testSHA1string(void)
 {
     char *sha1s[] = {
         "da39a3ee5e6b4b0d3255bfef95601890afd80709",
@@ -73,8 +79,12 @@ void testSHA1string(void)
 
     for (uint8_t i = 0; test_msgs[i]; ++i)
     {
+        uint8_t *digest = SHA1string(test_msgs[i]);
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
+
         char *expected = sha1s[i];
-        char *actual = (char *) SHA1string(test_msgs[i]);
+        char *actual = to_string(digest, DIGEST_LENGTH);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -91,6 +101,7 @@ void testSHA1string(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
+        free(digest);
         free(actual);
     }
 }
@@ -102,7 +113,7 @@ static void testSHA1_HMAC(void)
         "key",
         /* TODO 64-byte key */
         "==8utHoe30ASpIEmIe5Roa3#*e1$l7v8a1IeGi!gIu2OUr&$do++hiAjlAH_eTRi_Wi4dOu+l!2hiuThl7frIaclUswiuFI*GluSwiA*?ug@ASi$swOatR8A3Las0ia5",
-        0
+        0,
     };
 
     char *sha1s[][3] = {
@@ -131,8 +142,12 @@ static void testSHA1_HMAC(void)
     {
         for (uint8_t j = 0; keys[j]; ++j)
         {
+            uint8_t *digest = HMAC_SHA1(keys[j], test_msgs[i]);
+
+            CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
+
             char *expected = sha1s[i][j];
-            char *actual = (char *) HMAC_SHA1(keys[j], test_msgs[i]);
+            char *actual = to_string(digest, DIGEST_LENGTH);
 
             CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
             CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -145,10 +160,12 @@ static void testSHA1_HMAC(void)
             {
                 fprintf(stderr, "\n");
                 fprintf(stderr, "string  : -->%s<--\n", test_msgs[i]);
+                fprintf(stderr, "key     : -->%s<--\n", keys[j]);
                 fprintf(stderr, "expected: %s\n", expected);
                 fprintf(stderr, "actual  : %s\n", actual);
             }
 
+            free(digest);
             free(actual);
         }
     }

@@ -108,10 +108,10 @@ md5-test-debug.o: md5-test.c md5-debug.o hmac-debug.o
 
 #### SHA1 ####
 sha1: sha1-main.c sha1.o sha1-test.o util.o hmac.o
-	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) -DSHA1
 
-sha1-debug: sha1-main.c sha1-debug.o sha1-test-debug.o util-debug.o hmac_debug.o
-	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) $(DEBUG)
+sha1-debug: sha1-main.c sha1-debug.o sha1-test-debug.o util-debug.o hmac-debug.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) -DSHA1 $(DEBUG)
 
 sha1.o: sha1.c sha.h
 	$(CC) $(CFLAGS) -c $< -o $@ -DSHA1
@@ -120,10 +120,10 @@ sha1-debug.o: sha1.c sha.h
 	$(CC) $(CFLAGS) -c $< -o $@ -DSHA1 $(DEBUG)
 
 sha1-test.o: sha1-test.c sha1.o hmac.o
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@ -DSHA1
 
 sha1-test-debug.o: sha1-test.c sha1-debug.o hmac-debug.o
-	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
+	$(CC) $(CFLAGS) -c $< -o $@ -DSHA1 $(DEBUG)
 
 #### SHA256 ####
 sha256: sha256-main.c sha256.o sha256-test.o util.o hmac.o
