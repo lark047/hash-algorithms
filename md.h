@@ -6,7 +6,6 @@
 
 #if defined MD2
 
-# undef BIT_STRENGTH
 # define BIT_STRENGTH             128
 # define BLOCK_LENGTH_BYTES        16
 # define PAD_MSG_TO_LENGTH_BYTES    0
@@ -14,11 +13,10 @@
 
 #elif defined MD4 || defined MD5
 
-# undef BIT_STRENGTH
-# define BIT_STRENGTH            128
-# define BLOCK_LENGTH_BITS        64
-# define PAD_MSG_TO_LENGTH_BITS  448
-# define DIGEST_LENGTH_BITS      512
+# define BIT_STRENGTH             128
+# define BLOCK_LENGTH_BITS         64
+# define PAD_MSG_TO_LENGTH_BITS   448
+# define DIGEST_LENGTH_BITS       512
 
 #endif
 

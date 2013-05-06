@@ -6,34 +6,38 @@
 #include <stdlib.h>
 #include <string.h>
 
-uint8_t *HMACstring(const char *K, const char *msg, uint8_t *(*H)(const uint8_t *, uint64_t), uint8_t B)
+uint8_t *HMACstring(const char *K, const char *msg, uint8_t *(*H)(const uint8_t *, uint64_t), uint8_t B, uint8_t digest_length)
 {
     PRINT("key (length): \"%s\" (%u)\n", K, strlen(K));
     PRINT("msg (length): \"%s\" (%u)\n", msg, strlen(msg));
-    return HMAC((uint8_t *) K, strlen(K), (uint8_t *) msg, strlen(msg), H, B);
+    return HMAC((uint8_t *) K, strlen(K), (uint8_t *) msg, strlen(msg), H, B, digest_length);
 }
 
-uint8_t *HMAC(const uint8_t *K, uint64_t key_length, const uint8_t *msg, uint64_t msg_length, uint8_t *(*H)(const uint8_t *, uint64_t), uint8_t B)
+uint8_t *HMAC(const uint8_t *K, uint64_t key_length, const uint8_t *msg, uint64_t msg_length, uint8_t *(*H)(const uint8_t *, uint64_t), uint8_t B, uint8_t digest_length)
 {
     uint8_t *key = (uint8_t *) K;
     PRINT("key length = %llu\n", key_length);
+
+#ifdef DEBUG
+        char *buf = NULL;
+#endif
 
     if (key_length > B)
     {
         PRINT("hashing \"%s\"...\n", (char *) K);
         uint8_t *digest = H(K, key_length);
-        key_length = strlen((char *) digest) / 2;
+        key_length = digest_length;
 
-        key = malloc(key_length);
-        PRINT("key digest: %s\n", (char *) digest);
-        PRINT("key length: %llu\n", key_length);
-        for (uint8_t i = 0; i < key_length; ++i)
-        {
-            unsigned x;
-            sscanf((char *) digest + i * 2, "%02x", &x);
-            key[i] = x;
-            PRINT("key[%2u] = 0x%02x\n", i, key[i]);
-        }
+        key = malloc(digest_length);
+
+        PRINT("key digest: %s\n", (buf = to_string(digest, digest_length)));
+        PRINT("key length: %u\n", digest_length);
+
+#ifdef DEBUG
+        free(buf);
+#endif
+
+        memcpy(key, digest, digest_length);
 
         free(digest);
     }
@@ -69,9 +73,12 @@ uint8_t *HMAC(const uint8_t *K, uint64_t key_length, const uint8_t *msg, uint64_
 #endif
 
     uint8_t *digest = H(buffer, B + msg_length);
-    const uint8_t digest_length = strlen((char *) digest) / 2;
-    PRINT("digest (post-inner): %s\n", (char *) digest);
+    PRINT("digest (post-inner): %s\n", (buf = to_string(digest, digest_length)));
     PRINT("digest length = %u\n", digest_length);
+
+#ifdef DEBUG
+    free(buf);
+#endif
 
     free(buffer);
     buffer = malloc(B + digest_length);
@@ -79,15 +86,7 @@ uint8_t *HMAC(const uint8_t *K, uint64_t key_length, const uint8_t *msg, uint64_
     /* copy key + digest into buffer */
     memset(buffer + 0, 0x0, B);
     memcpy(buffer + 0, key, key_length);
-
-    /* TODO change the hash functions to return raw bytes, not string */
-    for (uint8_t i = 0; i < digest_length; ++i)
-    {
-        unsigned x;
-        sscanf((char *) digest + i * 2, "%02x", &x);
-        buffer[B + i] = x;
-        /* PRINT("buffer[%2u] = 0x%02x\n", B + i, buffer[B + i]); */
-    }
+    memcpy(buffer + B, digest, digest_length);
 
     /* outer pad */
     for (uint8_t i = 0; i < B; ++i)
@@ -108,7 +107,11 @@ uint8_t *HMAC(const uint8_t *K, uint64_t key_length, const uint8_t *msg, uint64_
 
     free(digest);
     digest = H(buffer, B + digest_length);
-    PRINT("digest (post-outer): %s\n", (char *) digest);
+    PRINT("digest (post-outer): %s\n", (buf = to_string(digest, digest_length)));
+
+#ifdef DEBUG
+    free(buf);
+#endif
 
     if (key != K)
     {

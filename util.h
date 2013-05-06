@@ -14,6 +14,8 @@ struct hash_info
 uint64_t append_padding(uint8_t **, const uint8_t *, uint64_t, const struct hash_info *);
 uint8_t *hash_file(FILE *, uint8_t *(*)(const uint8_t *, uint64_t));
 
+char *to_string(uint8_t *, uint8_t);
+
 # define ROTL(v,s) (((v) << (s)) | ((v) >> (sizeof(v) * CHAR_BIT - (s))))
 # define ROTR(v,s) (((v) >> (s)) | ((v) << (sizeof(v) * CHAR_BIT - (s))))
 # define SHR(v,s)  ((v) >> (s))
@@ -31,11 +33,8 @@ void print_d(const uint8_t *, uint64_t, const struct hash_info *);
 #define SIZE(a)     (sizeof (a) / sizeof *(a))
 #define STR_EQ(a,b)    (strcmp((a), (b)) == 0)
 
-#ifndef BIT_STRENGTH
-# define BIT_STRENGTH    0
-#endif
 #define CHARS_PER_BYTE   2
-#define DIGEST_LENGTH   (CHARS_PER_BYTE * BIT_STRENGTH / CHAR_BIT + 1)
+#define DIGEST_LENGTH   (BIT_STRENGTH / CHAR_BIT)
 
 /* for testing */
 extern const char *test_files[];

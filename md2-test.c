@@ -2,6 +2,7 @@
 #include "util.h"
 #include "hmac.h"
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,8 +81,10 @@ void testMD2string(void)
 
     for (uint8_t i = 0; test_msgs[i]; ++i)
     {
+        uint8_t *digest = MD2string(test_msgs[i]);
+
         char *expected = md2s[i];
-        char *actual = (char *) MD2string(test_msgs[i]);
+        char *actual = to_string(digest, DIGEST_LENGTH);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -209,8 +212,10 @@ static void testMD2_HMAC(void)
     {
         for (uint8_t j = 0; keys[j]; ++j)
         {
+            uint8_t *digest = HMAC_MD2(keys[j], test_msgs[i]);
+
             char *expected = md2s[i][j];
-            char *actual = (char *) HMAC_MD2(keys[j], test_msgs[i]);
+            char *actual = to_string(digest, DIGEST_LENGTH);
 
             CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
             CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -223,10 +228,12 @@ static void testMD2_HMAC(void)
             {
                 fprintf(stderr, "\n");
                 fprintf(stderr, "string  : -->%s<--\n", test_msgs[i]);
+                fprintf(stderr, "key     : -->%s<--\n", keys[j]);
                 fprintf(stderr, "expected: %s\n", expected);
                 fprintf(stderr, "actual  : %s\n", actual);
             }
 
+            free(digest);
             free(actual);
         }
     }

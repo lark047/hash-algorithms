@@ -40,17 +40,20 @@ int main(int argc, char **argv)
             char * const msg = argv[1];
 
             PRINT("Calculating MD2 for \"%s\"...\n", msg);
-            PRINT("Using byte size of %u\n", (unsigned) CHAR_BIT);
+            PRINT("Using digest length of %u\n", DIGEST_LENGTH);
 
             uint8_t *digest = MD2string(msg);
+            char *buf = to_string(digest, DIGEST_LENGTH);
 
-            printf("%s\n", (char *) digest);
+            printf("%s\n", buf);
 
             /* clean up */
             PRINT("%s\n", "Cleaning up...");
-            PRINT("0x%p\n", (void *) digest);
             free(digest);
+            free(buf);
+
             digest = NULL;
+            buf = NULL;
 
             rc = EXIT_SUCCESS;
         }
@@ -67,15 +70,18 @@ int main(int argc, char **argv)
         if (fp)
         {
             uint8_t *digest = MD2file(fp);
+            char *buf = to_string(digest, DIGEST_LENGTH);
 
-            printf("%s\n", (char *) digest);
+            printf("%s\n", buf);
 
             /* clean up */
             PRINT("%s\n", "Cleaning up...");
             free(digest);
+            free(buf);
             fclose(fp);
 
             digest = NULL;
+            buf = NULL;
             fp = NULL;
 
             rc = EXIT_SUCCESS;
@@ -88,12 +94,16 @@ int main(int argc, char **argv)
     else if (argc == 4 && STR_EQ(argv[1], "-h"))
     {
         uint8_t *digest = HMAC_MD2(argv[2], argv[3]);
+        char *buf = to_string(digest, DIGEST_LENGTH);
 
-        printf("%s\n", (char *) digest);
+        printf("%s\n", buf);
 
         /* clean up */
+        PRINT("%s\n", "Cleaning up...");
         free(digest);
+        free(buf);
         digest = NULL;
+        buf = NULL;
 
         rc = EXIT_SUCCESS;
     }

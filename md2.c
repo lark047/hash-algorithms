@@ -194,10 +194,7 @@ uint8_t *MD2(const uint8_t *msg, uint64_t msg_length)
     uint8_t *digest = malloc(DIGEST_LENGTH * sizeof *digest);
     PRINT("allocated %u bytes\n", DIGEST_LENGTH);
 
-    for (uint8_t i = 0, bytes = DIGEST_LENGTH / 16; i < 16; ++i)
-    {
-        snprintf((char *) digest + i * bytes, bytes + 1, "%02x", X[i]);
-    }
+    memcpy(digest, X, DIGEST_LENGTH);
 
     return digest;
 }

@@ -50,6 +50,7 @@ uint8_t *hash_file(FILE *fp, uint8_t *(*hash)(const uint8_t *, uint64_t))
         memset(buf, 0, n);
     }
 
+    PRINT("hashing %llu byte file...\n", length);
     uint8_t *digest = hash(msg, length);
 
     /* there's gotta be a better way... I just want to return hash(msg); */
@@ -125,6 +126,19 @@ void print_d(const uint8_t *data, uint64_t block_count, const struct hash_info *
 
         if ((i + 1) % block_size == 0) printf("\n");
     }
+}
+
+char *to_string(uint8_t *digest, uint8_t size)
+{
+    char *buf = malloc(size * CHARS_PER_BYTE + 1);
+
+    for (uint8_t i = 0; i < size; ++i)
+    {
+        PRINT("next = 0x%02x\n", digest[i]);
+        sprintf(buf + i * CHARS_PER_BYTE, "%02x", digest[i]);
+    }
+
+    return buf;
 }
 
 #undef BUFSIZE
