@@ -83,9 +83,6 @@ static const uint32_t T[] = {
 /* pointer to 32-bit word blocks */
 static const uint8_t *X;
 
-/* helper functions */
-static void flip(uint32_t *);
-
 #define K(m,a) ((i * (m) + (a)) % WORDS_PER_BLOCK)
 #define K1                                     (i)
 #define K2                                  K(5,1)
@@ -248,10 +245,7 @@ uint8_t *MD5(const uint8_t *msg, uint64_t msg_length)
     uint8_t *digest = malloc(DIGEST_LENGTH * sizeof *digest);
     PRINT("allocated %u bytes\n", DIGEST_LENGTH);
 
-    for (uint8_t i = 0, bytes = DIGEST_LENGTH / 4; i < 4; ++i)
-    {
-        snprintf((char *) digest + i * bytes, bytes + 1, "%08x", H[i]);
-    }
+    memcpy(digest, H, DIGEST_LENGTH);
 
     return digest;
 }
@@ -376,19 +370,6 @@ void process(const uint8_t *M, uint64_t N, uint8_t block_length)
      * In other words: the order of bits in a byte is BIG ENDIAN, but the
      * order of bytes in a word is LITTLE ENDIAN
      */
-
-    flip(&H[0]);
-    flip(&H[1]);
-    flip(&H[2]);
-    flip(&H[3]);
-}
-
-void flip(uint32_t *value)
-{
-    *value = ((*value >> 24) & 0x000000ff)  /* move byte 3 to byte 0 */
-           | ((*value >>  8) & 0x0000ff00)  /* move byte 2 to byte 1 */
-           | ((*value <<  8) & 0x00ff0000)  /* move byte 1 to byte 2 */
-           | ((*value << 24) & 0xff000000); /* move byte 0 to byte 3 */
 }
 
 static uint32_t h(uint8_t i, uint32_t x, uint32_t y, uint32_t z)

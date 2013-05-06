@@ -40,10 +40,10 @@ int main(int argc, char **argv)
             char * const msg = argv[1];
 
             PRINT("Calculating MD5 for \"%s\"...\n", msg);
-            PRINT("Using byte size of %u\n", (unsigned) CHAR_BIT);
+            PRINT("Using digest length of %u\n", DIGEST_LENGTH);
 
             uint8_t *digest = MD5string(msg);
-
+            char *buf = to_string(digest, DIGEST_LENGTH);
             /* 0: 11b3d4b6bbf79f541eb76a7f55f2fd3f */
             /* 1: 3cf198ac802190f62e0036ecf545ee79 */
             /* 2: 661cef4763c313be6cc59c6ca1d7b0f4 */
@@ -61,13 +61,15 @@ int main(int argc, char **argv)
             /* e: 9e107d9d372bb6826bd81d3542a419d6 */
             /*    9e107d9d372bb6826bd81d3542a419d6 */
 
-            printf("%s\n", (char *) digest);
+            printf("%s\n", buf);
 
             /* clean up */
             PRINT("%s\n", "Cleaning up...");
-            PRINT("0x%p\n", (void *) digest);
             free(digest);
+            free(buf);
+
             digest = NULL;
+            buf = NULL;
 
             rc = EXIT_SUCCESS;
         }
@@ -84,15 +86,18 @@ int main(int argc, char **argv)
         if (fp)
         {
             uint8_t *digest = MD5file(fp);
+            char *buf = to_string(digest, DIGEST_LENGTH);
 
-            printf("%s\n", (char *) digest);
+            printf("%s\n", buf);
 
             /* clean up */
             PRINT("%s\n", "Cleaning up...");
             free(digest);
+            free(buf);
             fclose(fp);
 
             digest = NULL;
+            buf = NULL;
             fp = NULL;
 
             rc = EXIT_SUCCESS;
@@ -105,12 +110,16 @@ int main(int argc, char **argv)
     else if (argc == 4 && STR_EQ(argv[1], "-h"))
     {
         uint8_t *digest = HMAC_MD5(argv[2], argv[3]);
+        char *buf = to_string(digest, DIGEST_LENGTH);
 
-        printf("%s\n", (char *) digest);
+        printf("%s\n", buf);
 
         /* clean up */
+        PRINT("%s\n", "Cleaning up...");
         free(digest);
+        free(buf);
         digest = NULL;
+        buf = NULL;
 
         rc = EXIT_SUCCESS;
     }
