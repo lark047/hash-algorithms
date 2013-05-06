@@ -8,7 +8,7 @@ uint8_t *HMACstring(const char *, const char *, uint8_t *(*)(const uint8_t *, ui
 /* TODO put B here... should go elsewhere? */
 /* TODO put digest_length here... should go elsewhere? */
 #define HMAC_MD2(k, m)  (HMACstring((k), (m), MD2, 16, 16))
-#define HMAC_MD4(k, m)  (HMACstring((k), (m), MD4, 64))
+#define HMAC_MD4(k, m)  (HMACstring((k), (m), MD4, 64, 16))
 #define HMAC_MD5(k, m)  (HMACstring((k), (m), MD5, 64))
 /* HMAC_MD6 */
 

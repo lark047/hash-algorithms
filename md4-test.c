@@ -2,6 +2,7 @@
 #include "util.h"
 #include "hmac.h"
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,8 +37,12 @@ static void testMD4file(void)
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
 
+        uint8_t *digest = MD4file(fp);
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
+
         char *expected = md4s[i];
-        char *actual = (char *) MD4file(fp);
+        char *actual = to_string(digest, DIGEST_LENGTH);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -54,8 +59,9 @@ static void testMD4file(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free(actual);
         fclose(fp);
+        free(digest);
+        free(actual);
     }
 }
 
@@ -75,8 +81,12 @@ static void testMD4string(void)
 
     for (uint8_t i = 0; test_msgs[i]; ++i)
     {
+        uint8_t *digest = MD4string(test_msgs[i]);
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
+
         char *expected = md4s[i];
-        char *actual = (char *) MD4string(test_msgs[i]);
+        char *actual = to_string(digest, DIGEST_LENGTH);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -93,6 +103,7 @@ static void testMD4string(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
+        free(digest);
         free(actual);
     }
 }
@@ -185,14 +196,24 @@ static void testMD4_collision(void)
         CU_ASSERT_PTR_NOT_NULL_FATAL(d1);
         CU_ASSERT_PTR_NOT_NULL_FATAL(d2);
 
-        PRINT("%s\n", (char *) d1);
-        PRINT("%s\n", (char *) d2);
+        char *bufs[] = {
+            to_string(d1, DIGEST_LENGTH),
+            to_string(d2, DIGEST_LENGTH)
+        };
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(bufs[0]);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(bufs[1]);
+
+        PRINT("%s\n", bufs[0]);
+        PRINT("%s\n", bufs[1]);
 
         CU_ASSERT_NOT_EQUAL(memcmp(msgs[i + 0], msgs[i + 1], len), 0);
-        CU_ASSERT_STRING_EQUAL(d1, d2);
+        CU_ASSERT_STRING_EQUAL(bufs[0], bufs[1]);
 
         free(d1);
         free(d2);
+        free(bufs[0]);
+        free(bufs[1]);
     }
 }
 
@@ -232,8 +253,12 @@ static void testMD4_HMAC(void)
     {
         for (uint8_t j = 0; keys[j]; ++j)
         {
+            uint8_t *digest = HMAC_MD4(keys[j], test_msgs[i]);
+
+            CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
+
             char *expected = md4s[i][j];
-            char *actual = (char *) HMAC_MD4(keys[j], test_msgs[i]);
+            char *actual = to_string(digest, DIGEST_LENGTH);
 
             CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
             CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -246,10 +271,12 @@ static void testMD4_HMAC(void)
             {
                 fprintf(stderr, "\n");
                 fprintf(stderr, "string  : -->%s<--\n", test_msgs[i]);
+                fprintf(stderr, "key     : -->%s<--\n", keys[j]);
                 fprintf(stderr, "expected: %s\n", expected);
                 fprintf(stderr, "actual  : %s\n", actual);
             }
 
+            free(digest);
             free(actual);
         }
     }
