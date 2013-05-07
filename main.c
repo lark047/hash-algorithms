@@ -24,6 +24,7 @@ extern void testSHA512256(void);
 #endif
 
 static short index_of(const char *, const char *[]);
+static FILE *open(const char *, const char *);
 
 int main(int argc, char **argv)
 {
@@ -41,6 +42,10 @@ int main(int argc, char **argv)
         "SHA-512/224",
         "SHA-512/256",
         0
+    };
+
+    const uint8_t digest_lengths[] = {
+        16, 16, 16, 20, 24, 32, 48, 64, 24, 32
     };
 
     uint8_t *(*hash_strings[])(const char *) = {
@@ -103,14 +108,16 @@ int main(int argc, char **argv)
     {
         for (uint8_t i = 0; i < SIZE(hash_strings); ++i)
         {
-            uint8_t *digest = /* TODO */ hash_strings[i] ? hash_strings[i](argv[1]) : (uint8_t *) "(not yet implemented)";
+            uint8_t *digest = /* TODO */ hash_strings[i] ? hash_strings[i](argv[1]) : NULL;
+            char *string =    /* TODO */ hash_strings[i] ? to_string(digest, digest_lengths[i]) : "(not yet implemented)";
 
-            printf("%11s: %s\n", labels[i], (char *) digest);
+            printf("%11s: %s\n", labels[i], string);
 
             /* TODO error handling */
             if (hash_strings[i])
             {
                 free(digest);
+                free(string);
             }
         }
 
@@ -121,18 +128,75 @@ int main(int argc, char **argv)
         for (uint8_t i = 0; i < SIZE(hash_files); ++i)
         {
             FILE *fp =        /* TODO */ hash_files[i] ? fopen(argv[2], "rb") : NULL;
-            uint8_t *digest = /* TODO */ hash_files[i] ? hash_files[i](fp) : (uint8_t *) "(not yet implemented)";
+            uint8_t *digest = /* TODO */ hash_files[i] ? hash_files[i](fp) : NULL;
+            char *string =    /* TODO */ hash_files[i] ? to_string(digest, digest_lengths[i]) : "(not yet implemented)";
 
             /* TODO error handling */
-            printf("%11s: %s\n", labels[i], (char *) digest);
+            printf("%11s: %s\n", labels[i], string);
 
             if (hash_files[i]) {
                 fclose(fp);
                 free(digest);
+                free(string);
             }
         }
 
         rc = EXIT_SUCCESS;
+    }
+    else if (argc == 3 && (STR_EQ(argv[1], "--verify") || STR_EQ(argv[1], "-v")))
+    {
+        const char *filename = argv[2];
+        FILE *fp, *fhash;
+
+        /* TODO check return */
+        fp = fopen(filename, "rb");
+
+        for (uint8_t i = 0; i < SIZE(hash_files); ++i)
+        {
+            /* TODO check return */
+            fhash = open(filename, labels[i]);
+
+            if (fhash)
+            {
+                char verify[256];
+                PRINT("hashing \"%s\" with %s...\n", filename, labels[i]);
+
+                uint8_t *digest = /* TODO */ hash_files[i] ? hash_files[i](fp) : NULL;
+                char *string =    /* TODO */ hash_files[i] ? to_string(digest, digest_lengths[i]) : "(not yet implemented)";
+                PRINT("%s(%s) = %s\n", labels[i], filename, string);
+
+                fscanf(fhash, "%s", verify);
+                PRINT("found verified hash: %s\n", verify);
+
+                printf("%11s: verifying \"%s\"... ", labels[i], filename);
+                fflush(stdout);
+
+                if (STR_EQ(string, verify))
+                {
+                    printf("OK\n");
+                }
+                else
+                {
+                    printf("FAILED\n\n");
+                    printf("expected: %s\n", verify);
+                    printf("actual  : %s\n", string);
+                }
+
+                fseek(fp, 0, SEEK_SET);
+                fclose(fhash);
+
+                free(digest);
+                free(string);
+
+                memset(verify, 0, sizeof verify);
+            }
+        }
+
+        if (fp)
+        {
+            fclose(fp);
+            rc = EXIT_SUCCESS;
+        }
     }
     else if (argc == 4 && STR_EQ(argv[1], "--function"))
     {
@@ -145,9 +209,14 @@ int main(int argc, char **argv)
         else
         {
             uint8_t *digest = hash_strings[index](argv[3]);
+            char *string = to_string(digest, digest_lengths[index]);
+
             /* TODO error handling */
-            printf("%s\n", (char *) digest);
+            printf("%s\n", string);
+
             free(digest);
+            free(string);
+
             rc = EXIT_SUCCESS;
         }
     }
@@ -198,6 +267,7 @@ int main(int argc, char **argv)
         printf("                   \tunless one is provided with --function.\n");
         printf("    --function hash\tHash the file/message with the specified hash\n");
         printf("                   \tfunction. Can be combined with --file.\n");
+        printf("    --verify filename\tVerifies a file against the provided signatures.\n");
     }
 
     PRINT("Exiting with status %d\n", rc);
@@ -215,4 +285,57 @@ short index_of(const char *needle, const char *haystack[])
     }
 
     return -1;
+}
+
+FILE *open(const char *filename, const char *ext)
+{
+    /* TODO need bigger int? */
+    const uint8_t sizes[] = {
+        strlen(filename),
+        strlen(ext)
+    };
+    char *hfile = malloc(sizes[0] + 1 + sizes[1] + 1);
+    PRINT("allocated %u bytes\n", sizes[0] + 1 + sizes[1] + 1);
+
+    FILE *fp = NULL;
+
+    if (hfile)
+    {
+        PRINT("copying \"%s\"...\n", filename);
+        memcpy(hfile, filename, sizes[0]);
+        PRINT("copying '%c'...\n", '.');
+        hfile[sizes[0]] = '.';
+
+        PRINT("copying \"%s\"...\n", ext);
+        memcpy(hfile + sizes[0] + 1, ext, sizes[1]);
+        PRINT("copying \\%d byte...\n", 0);
+        hfile[sizes[0] + 1 + sizes[1]] = 0;
+
+        /* remove '-', '/' */
+        PRINT("removing '%c', '%c'...\n", '-', '/');
+        char *p, *q;
+        p = q = hfile + sizes[0] + 1;
+
+        while (*p)
+        {
+            PRINT("*p = '%c' (0x%02x)\n", *p, *p);
+            PRINT("*q = '%c' (0x%02x)\n", *q, *q);
+
+            while (*p && (*p == '-' || *p == '/'))
+            {
+                ++p;
+            }
+
+            *q++ = *p++;
+        }
+
+        *q = 0;
+
+        PRINT("opening file \"%s\"\n", hfile);
+        fp = fopen(hfile, "r");
+        PRINT("opened file \"%s\"\n", hfile);
+        free(hfile);
+    }
+
+    return fp;
 }
