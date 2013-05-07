@@ -2,6 +2,7 @@
 #include "util.h"
 #include "hmac.h"
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,7 +21,7 @@ void testSHA384(void)
     testSHA384_HMAC();
 }
 
-void testSHA384file(void)
+static void testSHA384file(void)
 {
     char *sha384s[] = {
         "01d5721fb074b9e9c00da0fba1469b8920bf46261097a63fb87faf4252ad588dfc81e2b7b0907809c7328233231cdde0",
@@ -34,8 +35,12 @@ void testSHA384file(void)
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
 
+        uint8_t *digest = SHA384file(fp);
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
+
         char *expected = sha384s[i];
-        char *actual = (char *) SHA384file(fp);
+        char *actual = to_string(digest, DIGEST_LENGTH);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -52,12 +57,13 @@ void testSHA384file(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free(actual);
         fclose(fp);
+        free(digest);
+        free(actual);
     }
 }
 
-void testSHA384string(void)
+static void testSHA384string(void)
 {
     char *sha384s[] = {
         "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b",
@@ -73,8 +79,12 @@ void testSHA384string(void)
 
     for (uint8_t i = 0; test_msgs[i]; ++i)
     {
+        uint8_t *digest = SHA384string(test_msgs[i]);
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
+
         char *expected = sha384s[i];
-        char *actual = (char *) SHA384string(test_msgs[i]);
+        char *actual = to_string(digest, DIGEST_LENGTH);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -91,6 +101,7 @@ void testSHA384string(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
+        free(digest);
         free(actual);
     }
 }
@@ -149,9 +160,12 @@ static void testSHA384_HMAC(void)
     {
         for (uint8_t j = 0; keys[j]; ++j)
         {
+            uint8_t *digest = HMAC_SHA384(keys[j], test_msgs[i]);
+
+            CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
+
             char *expected = sha384s[i][j];
-            PRINT("test msg: \"%s\"\n", test_msgs[i]);
-            char *actual = (char *) HMAC_SHA384(keys[j], test_msgs[i]);
+            char *actual = to_string(digest, DIGEST_LENGTH);
 
             CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
             CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -163,12 +177,13 @@ static void testSHA384_HMAC(void)
             else
             {
                 fprintf(stderr, "\n");
-                fprintf(stderr, "key     : -->%s<--\n", keys[j]);
                 fprintf(stderr, "string  : -->%s<--\n", test_msgs[i]);
+                fprintf(stderr, "key     : -->%s<--\n", keys[j]);
                 fprintf(stderr, "expected: %s\n", expected);
                 fprintf(stderr, "actual  : %s\n", actual);
             }
 
+            free(digest);
             free(actual);
         }
     }
