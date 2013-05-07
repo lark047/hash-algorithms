@@ -1,6 +1,7 @@
 #include "sha.h"
 #include "util.h"
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,7 +18,7 @@ void testSHA224(void)
     testSHA224string();
 }
 
-void testSHA224file(void)
+static void testSHA224file(void)
 {
     char *sha224s[] = {
         "15466c1039f59bb6be71a39bd532c58784bf1bb16d75f6b0c8decb8c",
@@ -31,8 +32,12 @@ void testSHA224file(void)
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
 
+        uint8_t *digest = SHA224file(fp);
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
+
         char *expected = sha224s[i];
-        char *actual = (char *) SHA224file(fp);
+        char *actual = to_string(digest, DIGEST_LENGTH);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -49,12 +54,13 @@ void testSHA224file(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free(actual);
         fclose(fp);
+        free(digest);
+        free(actual);
     }
 }
 
-void testSHA224string(void)
+static void testSHA224string(void)
 {
     char *sha224s[] = {
         "d14a028c2a3a2bc9476102bb288234c415a2b01f828ea62ac5b3e42f",
@@ -70,8 +76,12 @@ void testSHA224string(void)
 
     for (uint8_t i = 0; test_msgs[i]; ++i)
     {
+        uint8_t *digest = SHA224string(test_msgs[i]);
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
+
         char *expected = sha224s[i];
-        char *actual = (char *) SHA224string(test_msgs[i]);
+        char *actual = to_string(digest, DIGEST_LENGTH);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -88,6 +98,7 @@ void testSHA224string(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
+        free(digest);
         free(actual);
     }
 }

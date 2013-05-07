@@ -39,17 +39,20 @@ int main(int argc, char **argv)
             char * const msg = argv[1];
 
             PRINT("Calculating SHA224 for \"%s\"...\n", msg);
-            PRINT("Using byte size of %u\n", (unsigned) CHAR_BIT);
+            PRINT("Using digest length of %u\n", DIGEST_LENGTH);
 
             uint8_t *digest = SHA224string(msg);
+            char *buf = to_string(digest, DIGEST_LENGTH);
 
-            printf("%s\n", digest);
+            printf("%s\n", buf);
 
             /* clean up */
             PRINT("%s\n", "Cleaning up...");
-            PRINT("0x%p\n", (void *) digest);
             free(digest);
+            free(buf);
+
             digest = NULL;
+            buf = NULL;
 
             rc = EXIT_SUCCESS;
         }
@@ -66,28 +69,31 @@ int main(int argc, char **argv)
         if (fp)
         {
             uint8_t *digest = SHA224file(fp);
+            char *buf = to_string(digest, DIGEST_LENGTH);
 
-            printf("%s\n", (char *) digest);
+            printf("%s\n", buf);
 
             /* clean up */
             PRINT("%s\n", "Cleaning up...");
             free(digest);
+            free(buf);
             fclose(fp);
 
             digest = NULL;
+            buf = NULL;
             fp = NULL;
 
             rc = EXIT_SUCCESS;
         }
         else
         {
-            fprintf(stderr, "Could not open %s for reading.", filename);
+            fprintf(stderr, "[ERROR] Could not open %s for reading.", filename);
         }
     }
     else
     {
-        printf("Usage: %s \"<string>\"\n", argv[0]);
-        puts("  prints the SHA224 hash of <string>\n");
+        printf("Usage: %s \"<message>\"\n", argv[0]);
+        puts("  prints the SHA224 hash of <message>\n");
         printf("Usage: %s -f <filename>\n", argv[0]);
         puts("  prints the SHA224 hash of the file named <filename>\n");
     }
