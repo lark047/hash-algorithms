@@ -142,10 +142,16 @@ uint8_t *SHA256(const uint8_t *msg, uint64_t msg_length)
     uint8_t *digest = malloc(DIGEST_LENGTH * sizeof *digest);
     PRINT("allocated %u bytes\n", DIGEST_LENGTH);
 
-    for (uint8_t i = 0, bytes = DIGEST_LENGTH / 8; i < 8; ++i)
-    {
-        snprintf((char *) digest + i * bytes, bytes + 1, "%08x", H[i]);
-    }
+    flip(&H[0]);
+    flip(&H[1]);
+    flip(&H[2]);
+    flip(&H[3]);
+    flip(&H[4]);
+    flip(&H[5]);
+    flip(&H[6]);
+    flip(&H[7]);
+
+    memcpy(digest, H, DIGEST_LENGTH);
 
     return digest;
 }

@@ -2,6 +2,7 @@
 #include "util.h"
 #include "hmac.h"
 
+#include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,7 +21,7 @@ void testSHA256(void)
     testSHA256_HMAC();
 }
 
-void testSHA256file(void)
+static void testSHA256file(void)
 {
     char *sha256s[] = {
         "3433556b9ae140dd3838bc22d269e5cc32714f800a13000e8ba5718a3e564680",
@@ -34,8 +35,12 @@ void testSHA256file(void)
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(fp)
 
+        uint8_t *digest = SHA256file(fp);
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
+
         char *expected = sha256s[i];
-        char *actual = (char *) SHA256file(fp);
+        char *actual = to_string(digest, DIGEST_LENGTH);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -52,8 +57,9 @@ void testSHA256file(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
-        free(actual);
         fclose(fp);
+        free(digest);
+        free(actual);
     }
 }
 
@@ -73,8 +79,12 @@ void testSHA256string(void)
 
     for (uint8_t i = 0; test_msgs[i]; ++i)
     {
+        uint8_t *digest = SHA256string(test_msgs[i]);
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
+
         char *expected = sha256s[i];
-        char *actual = (char *) SHA256string(test_msgs[i]);
+        char *actual = to_string(digest, DIGEST_LENGTH);
 
         CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
         CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -91,6 +101,7 @@ void testSHA256string(void)
             fprintf(stderr, "actual  : %s\n", actual);
         }
 
+        free(digest);
         free(actual);
     }
 }
@@ -149,8 +160,12 @@ static void testSHA256_HMAC(void)
     {
         for (uint8_t j = 0; keys[j]; ++j)
         {
+            uint8_t *digest = HMAC_SHA256(keys[j], test_msgs[i]);
+
+            CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
+
             char *expected = sha256s[i][j];
-            char *actual = (char *) HMAC_SHA256(keys[j], test_msgs[i]);
+            char *actual = to_string(digest, DIGEST_LENGTH);
 
             CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
             CU_ASSERT_STRING_EQUAL(actual, expected);
@@ -163,10 +178,12 @@ static void testSHA256_HMAC(void)
             {
                 fprintf(stderr, "\n");
                 fprintf(stderr, "string  : -->%s<--\n", test_msgs[i]);
+                fprintf(stderr, "key     : -->%s<--\n", keys[j]);
                 fprintf(stderr, "expected: %s\n", expected);
                 fprintf(stderr, "actual  : %s\n", actual);
             }
 
+            free(digest);
             free(actual);
         }
     }
