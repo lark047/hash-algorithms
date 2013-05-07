@@ -159,10 +159,16 @@ uint8_t *SHA512_with_initial_values(const uint8_t *msg, uint64_t msg_length, con
     uint8_t *digest = malloc(DIGEST_LENGTH * sizeof *digest);
     PRINT("allocated %u bytes\n", DIGEST_LENGTH);
 
-    for (uint8_t i = 0, bytes = DIGEST_LENGTH / 8; i < 8; ++i)
-    {
-        snprintf((char *) digest + i * bytes, bytes + 1, "%016llx", H[i]);
-    }
+    flip64(&H[0]);
+    flip64(&H[1]);
+    flip64(&H[2]);
+    flip64(&H[3]);
+    flip64(&H[4]);
+    flip64(&H[5]);
+    flip64(&H[6]);
+    flip64(&H[7]);
+
+    memcpy(digest, H, DIGEST_LENGTH);
 
     return digest;
 }
