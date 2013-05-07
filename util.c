@@ -149,4 +149,16 @@ void flip(uint32_t *value)
            | ((*value << 24) & 0xff000000); /* move byte 0 to byte 3 */
 }
 
+void flip64(uint64_t *value)
+{
+    *value = ((*value >> 56) & 0x00000000000000ff)  /* move byte 7 to byte 0 */
+           | ((*value >> 40) & 0x000000000000ff00)  /* move byte 6 to byte 1 */
+           | ((*value >> 24) & 0x0000000000ff0000)  /* move byte 5 to byte 2 */
+           | ((*value >>  8) & 0x00000000ff000000)  /* move byte 4 to byte 3 */
+           | ((*value <<  8) & 0x000000ff00000000)  /* move byte 3 to byte 4 */
+           | ((*value << 24) & 0x0000ff0000000000)  /* move byte 2 to byte 5 */
+           | ((*value << 40) & 0x00ff000000000000)  /* move byte 1 to byte 6 */
+           | ((*value << 56) & 0xff00000000000000); /* move byte 0 to byte 7 */
+}
+
 #undef BUFSIZE

@@ -16,6 +16,7 @@ uint8_t *hash_file(FILE *, uint8_t *(*)(const uint8_t *, uint64_t));
 
 char    *to_string(uint8_t *, uint8_t);
 void     flip(uint32_t *);
+void     flip64(uint64_t *);
 
 # define ROTL(v,s) (((v) << (s)) | ((v) >> (sizeof(v) * CHAR_BIT - (s))))
 # define ROTR(v,s) (((v) >> (s)) | ((v) << (sizeof(v) * CHAR_BIT - (s))))
