@@ -220,6 +220,25 @@ int main(int argc, char **argv)
             rc = EXIT_SUCCESS;
         }
     }
+    else if (argc == 4 && (STR_EQ(argv[1], "-h") || STR_EQ(argv[1], "--hmac"))
+    {
+        const char *key = argv[2];
+        const char *msg = argv[3];
+
+        // TODO for (uint8_t i = 0; i < SIZE(hash_strings); ++i)
+        // {
+        uint8_t *digest = HMAC_MD2(key, msg);
+        char *string = to_string(digest, digest_lengths[0]);
+
+        /* TODO error handling */
+        printf("%11s: %s\n", labels[0], string);
+
+        free(digest);
+        free(string);
+
+        rc = EXIT_SUCCESS;
+        // }
+    }
     else if (argc == 5 &&
                 ((STR_EQ(argv[1], "--function") && STR_EQ(argv[3], "--file")) ||
                  (STR_EQ(argv[3], "--function") && STR_EQ(argv[1], "--file"))))

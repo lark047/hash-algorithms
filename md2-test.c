@@ -230,7 +230,7 @@ static void testMD2_HMAC(void)
     {
         for (uint8_t j = 0; keys[j]; ++j)
         {
-            uint8_t *digest = HMAC_MD2(keys[j], test_msgs[i]);
+            uint8_t *digest = MD2hmac(keys[j], test_msgs[i]);
 
             CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
 

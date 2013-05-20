@@ -41,4 +41,10 @@ uint8_t *MD4string(const char *);
 uint8_t *MD5string(const char *);
 /* ... */
 
+uint8_t *MD2hmac(const char *, const char *);
+// uint8_t *MD4hmac(const char *, const char *);
+// uint8_t *MD5hmac(const char *, const char *);
+/* ... */
+
+
 #endif /* MD_H_ */
