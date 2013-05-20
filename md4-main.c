@@ -91,9 +91,9 @@ int main(int argc, char **argv)
             fprintf(stderr, "[ERROR] Could not open %s for reading.", filename);
         }
     }
-    else if (argc == 4 && STR_EQ(argv[1], "-h"))
+    else if (argc == 4 && (STR_EQ(argv[1], "-h") || STR_EQ(argv[1], "--hmac")))
     {
-        uint8_t *digest = HMAC_MD4(argv[2], argv[3]);
+        uint8_t *digest = MD4hmac(argv[2], argv[3]);
         char *buf = to_string(digest, DIGEST_LENGTH);
 
         printf("%s\n", buf);

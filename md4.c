@@ -31,6 +31,7 @@
   */
 
 #include "md.h"
+#include "hmac.h"
 #include "util.h"
 
 #include <limits.h>
@@ -80,6 +81,11 @@ uint8_t *MD4string(const char *msg)
 {
     PRINT("found newline in msg: %s\n", (strchr(msg, '\n') ? "true" : "false"));
     return MD4((uint8_t *) msg, strlen(msg));
+}
+
+uint8_t *MD4hmac(const char *key, const char *msg)
+{
+    return HMACstring(key, msg, MD4, 64, 16);
 }
 
 uint8_t *MD4(const uint8_t *msg, uint64_t msg_length)
