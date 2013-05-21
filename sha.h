@@ -172,5 +172,6 @@ uint8_t *SHA512256file(FILE *);
 
 uint8_t *SHA1hmac(const char *, const char *);
 uint8_t *SHA256hmac(const char *, const char *);
+uint8_t *SHA384hmac(const char *, const char *);
 
 #endif /* SHA_H_ */

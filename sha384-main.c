@@ -15,50 +15,47 @@ int main(int argc, char **argv)
 {
     int rc = EXIT_FAILURE;
 
-    if (argc == 2)
+    if (argc == 2 && (STR_EQ(argv[1], "-t") || STR_EQ(argv[1], "--test")))
     {
-        if (STR_EQ(argv[1], "-t"))
-        {
-            CU_pSuite suite;
+        CU_pSuite suite;
 
-            if (CU_initialize_registry() == CUE_SUCCESS)
+        if (CU_initialize_registry() == CUE_SUCCESS)
+        {
+            if ((suite = CU_add_suite("SHA384 Test Suite", NULL, NULL)))
             {
-                if ((suite = CU_add_suite("SHA384 Test Suite", NULL, NULL)))
+                if (CU_ADD_TEST(suite, testSHA384))
                 {
-                    if (CU_ADD_TEST(suite, testSHA384))
-                    {
-                        CU_basic_set_mode(CU_BRM_VERBOSE);
-                        CU_basic_run_tests();
-                    }
+                    CU_basic_set_mode(CU_BRM_VERBOSE);
+                    CU_basic_run_tests();
                 }
-                CU_cleanup_registry();
             }
-            rc = CU_get_error();
+            CU_cleanup_registry();
         }
-        else
-        {
-            char * const msg = argv[1];
-
-            PRINT("Calculating SHA384 for \"%s\"...\n", msg);
-            PRINT("Using digest length of %u\n", DIGEST_LENGTH);
-
-            uint8_t *digest = SHA384string(msg);
-            char *buf = to_string(digest, DIGEST_LENGTH);
-
-            printf("%s\n", buf);
-
-            /* clean up */
-            PRINT("%s\n", "Cleaning up...");
-            free(digest);
-            free(buf);
-
-            digest = NULL;
-            buf = NULL;
-
-            rc = EXIT_SUCCESS;
-        }
+        rc = CU_get_error();
     }
-    else if (argc == 3 && STR_EQ(argv[1], "-f"))
+    else if (argc == 2)
+    {
+        char * const msg = argv[1];
+
+        PRINT("Calculating SHA384 for \"%s\"...\n", msg);
+        PRINT("Using digest length of %u\n", DIGEST_LENGTH);
+
+        uint8_t *digest = SHA384string(msg);
+        char *buf = to_string(digest, DIGEST_LENGTH);
+
+        printf("%s\n", buf);
+
+        /* clean up */
+        PRINT("%s\n", "Cleaning up...");
+        free(digest);
+        free(buf);
+
+        digest = NULL;
+        buf = NULL;
+
+        rc = EXIT_SUCCESS;
+    }
+    else if (argc == 3 && (STR_EQ(argv[1], "-f") || STR_EQ(argv[1], "--file")))
     {
         char * const filename = argv[2];
 
@@ -91,9 +88,9 @@ int main(int argc, char **argv)
             fprintf(stderr, "[ERROR] Could not open %s for reading.", filename);
         }
     }
-    else if (argc == 4 && STR_EQ(argv[1], "-h"))
+    else if (argc == 4 && (STR_EQ(argv[1], "-h") || STR_EQ(argv[1], "--hmac")))
     {
-        uint8_t *digest = HMAC_SHA384(argv[2], argv[3]);
+        uint8_t *digest = SHA384hmac(argv[2], argv[3]);
         char *buf = to_string(digest, DIGEST_LENGTH);
 
         printf("%s\n", buf);
