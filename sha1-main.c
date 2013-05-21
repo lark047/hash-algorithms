@@ -15,29 +15,11 @@ int main(int argc, char **argv)
 
     if (argc == 2 && (STR_EQ(argv[1], "-t") || STR_EQ(argv[1], "--test")))
     {
-        rc = test("SHA1 Test Suite", testSHA1);
+        rc = do_test("SHA1 Test Suite", testSHA1);
     }
     else if (argc == 2)
     {
-        char * const msg = argv[1];
-
-        PRINT("Calculating SHA1 for \"%s\"...\n", msg);
-        PRINT("Using digest length of %u\n", DIGEST_LENGTH);
-
-        uint8_t *digest = SHA1string(msg);
-        char *buf = to_string(digest, DIGEST_LENGTH);
-
-        printf("%s\n", buf);
-
-        /* clean up */
-        PRINT("%s\n", "Cleaning up...");
-        free(digest);
-        free(buf);
-
-        digest = NULL;
-        buf = NULL;
-
-        rc = EXIT_SUCCESS;
+        rc = do_hash_string(argv[1], SHA1string, DIGEST_LENGTH);
     }
     else if (argc == 3 && (STR_EQ(argv[1], "-f") || STR_EQ(argv[1], "--file")))
     {

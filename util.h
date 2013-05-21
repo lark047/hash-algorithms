@@ -43,6 +43,7 @@ extern const char *test_files[];
 extern const char *test_msgs[];
 
 /* command line options */
-int test(const char *, void (*)(void));
+int do_test(const char *, void (*)(void));
+int do_hash_string(const char *, uint8_t *(*)(const char *), uint8_t);
 
 #endif /* UTIL_H_ */

@@ -14,29 +14,11 @@ int main(int argc, char **argv)
 
     if (argc == 2 && (STR_EQ(argv[1], "-t") || STR_EQ(argv[1], "--test")))
     {
-        rc = test("SHA224 Test Suite", testSHA224);
+        rc = do_test("SHA224 Test Suite", testSHA224);
     }
     else if (argc == 2)
     {
-        char * const msg = argv[1];
-
-        PRINT("Calculating SHA224 for \"%s\"...\n", msg);
-        PRINT("Using digest length of %u\n", DIGEST_LENGTH);
-
-        uint8_t *digest = SHA224string(msg);
-        char *buf = to_string(digest, DIGEST_LENGTH);
-
-        printf("%s\n", buf);
-
-        /* clean up */
-        PRINT("%s\n", "Cleaning up...");
-        free(digest);
-        free(buf);
-
-        digest = NULL;
-        buf = NULL;
-
-        rc = EXIT_SUCCESS;
+        rc = do_hash_string(argv[1], SHA224string, DIGEST_LENGTH);
     }
     else if (argc == 3 && (STR_EQ(argv[1], "-f") || STR_EQ(argv[1], "--file")))
     {

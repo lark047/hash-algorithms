@@ -164,7 +164,7 @@ void flip64(uint64_t *value)
 }
 
 /* command line options */
-int test(const char *label, void (*test_function)(void))
+int do_test(const char *label, void (*test_function)(void))
 {
     CU_pSuite suite;
 
@@ -181,6 +181,27 @@ int test(const char *label, void (*test_function)(void))
         CU_cleanup_registry();
     }
     return CU_get_error();
+}
+
+int do_hash_string(const char *msg, uint8_t *(*hash)(const char *), uint8_t digest_length)
+{
+    PRINT("Using digest length of %u\n", digest_length);
+
+    /* TODO check return of both functions */
+    uint8_t *digest = hash(msg);
+    char *buf = to_string(digest, digest_length);
+
+    printf("%s\n", buf);
+
+    /* clean up */
+    PRINT("%s\n", "Cleaning up...");
+    free(digest);
+    free(buf);
+
+    digest = NULL;
+    buf = NULL;
+
+    return EXIT_SUCCESS;
 }
 
 #undef BUFSIZE
