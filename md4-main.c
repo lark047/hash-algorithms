@@ -7,8 +7,6 @@
 #include <string.h>
 #include <limits.h>
 
-#include <CUnit/Basic.h>
-
 extern void testMD4(void);
 
 int main(int argc, char **argv)
@@ -17,21 +15,7 @@ int main(int argc, char **argv)
 
     if (argc == 2 && (STR_EQ(argv[1], "-t") || STR_EQ(argv[1], "--test")))
     {
-        CU_pSuite suite;
-
-        if (CU_initialize_registry() == CUE_SUCCESS)
-        {
-            if ((suite = CU_add_suite("MD4 Test Suite", NULL, NULL)))
-            {
-                if (CU_ADD_TEST(suite, testMD4))
-                {
-                    CU_basic_set_mode(CU_BRM_VERBOSE);
-                    CU_basic_run_tests();
-                }
-            }
-            CU_cleanup_registry();
-        }
-        rc = CU_get_error();
+        rc = test("MD4 Test Suite", testMD4);
     }
     else if (argc == 2)
     {

@@ -1,8 +1,8 @@
 #ifndef UTIL_H_
 #define UTIL_H_
 
-#include <stdint.h>
-#include <stdio.h>
+#  include <stdint.h>
+#  include <stdio.h>
 
 struct hash_info
 {
@@ -18,28 +18,31 @@ char    *to_string(uint8_t *, uint8_t);
 void     flip(uint32_t *);
 void     flip64(uint64_t *);
 
-# define ROTL(v,s) (((v) << (s)) | ((v) >> (sizeof(v) * CHAR_BIT - (s))))
-# define ROTR(v,s) (((v) >> (s)) | ((v) << (sizeof(v) * CHAR_BIT - (s))))
-# define SHR(v,s)  ((v) >> (s))
+#  define ROTL(v,s) (((v) << (s)) | ((v) >> (sizeof(v) * CHAR_BIT - (s))))
+#  define ROTR(v,s) (((v) >> (s)) | ((v) << (sizeof(v) * CHAR_BIT - (s))))
+#  define SHR(v,s)  ((v) >> (s))
 
-#define STRINGIFY_(x)  #x
-#define STRINGIFY(x)   STRINGIFY_(x)
+#  define STRINGIFY_(x)  #x
+#  define STRINGIFY(x)   STRINGIFY_(x)
 
-#ifdef DEBUG
-# define PRINT(f, ...)  printf("[debug] " __FILE__ ":" STRINGIFY(__LINE__) " " f, __VA_ARGS__)
+#  ifdef DEBUG
+#    define PRINT(f, ...)  printf("[debug] " __FILE__ ":" STRINGIFY(__LINE__) " " f, __VA_ARGS__)
 void print_d(const uint8_t *, uint64_t, const struct hash_info *);
-#else
-# define PRINT(f, ...)  /* NO-OP */
-#endif
+#  else
+#    define PRINT(f, ...)  /* NO-OP */
+#  endif
 
-#define SIZE(a)     (sizeof (a) / sizeof *(a))
-#define STR_EQ(a,b)    (strcmp((a), (b)) == 0)
+#  define SIZE(a)     (sizeof (a) / sizeof *(a))
+#  define STR_EQ(a,b)    (strcmp((a), (b)) == 0)
 
-#define CHARS_PER_BYTE   2
-#define DIGEST_LENGTH   (BIT_STRENGTH / CHAR_BIT)
+#  define CHARS_PER_BYTE   2
+#  define DIGEST_LENGTH   (BIT_STRENGTH / CHAR_BIT)
 
 /* for testing */
 extern const char *test_files[];
 extern const char *test_msgs[];
+
+/* command line options */
+int test(const char *, void (*)(void));
 
 #endif /* UTIL_H_ */

@@ -6,6 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <CUnit/Basic.h>
+
 /* for use with hash_file */
 #define BUFSIZE 1024
 
@@ -159,6 +161,26 @@ void flip64(uint64_t *value)
            | ((*value << 24) & 0x0000ff0000000000)  /* move byte 2 to byte 5 */
            | ((*value << 40) & 0x00ff000000000000)  /* move byte 1 to byte 6 */
            | ((*value << 56) & 0xff00000000000000); /* move byte 0 to byte 7 */
+}
+
+/* command line options */
+int test(const char *label, void (*test_function)(void))
+{
+    CU_pSuite suite;
+
+    if (CU_initialize_registry() == CUE_SUCCESS)
+    {
+        if ((suite = CU_add_suite(label, NULL, NULL)))
+        {
+            if (CU_ADD_TEST(suite, test_function))
+            {
+                CU_basic_set_mode(CU_BRM_VERBOSE);
+                CU_basic_run_tests();
+            }
+        }
+        CU_cleanup_registry();
+    }
+    return CU_get_error();
 }
 
 #undef BUFSIZE

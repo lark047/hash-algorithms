@@ -6,58 +6,39 @@
 #include <string.h>
 #include <limits.h>
 
-#include <CUnit/Basic.h>
-
 extern void testSHA224(void);
 
 int main(int argc, char **argv)
 {
     int rc = EXIT_FAILURE;
 
-    if (argc == 2)
+    if (argc == 2 && (STR_EQ(argv[1], "-t") || STR_EQ(argv[1], "--test")))
     {
-        if (STR_EQ(argv[1], "-t"))
-        {
-            CU_pSuite suite;
-
-            if (CU_initialize_registry() == CUE_SUCCESS)
-            {
-                if ((suite = CU_add_suite("SHA224 Test Suite", NULL, NULL)))
-                {
-                    if (CU_ADD_TEST(suite, testSHA224))
-                    {
-                        CU_basic_set_mode(CU_BRM_VERBOSE);
-                        CU_basic_run_tests();
-                    }
-                }
-                CU_cleanup_registry();
-            }
-            rc = CU_get_error();
-        }
-        else
-        {
-            char * const msg = argv[1];
-
-            PRINT("Calculating SHA224 for \"%s\"...\n", msg);
-            PRINT("Using digest length of %u\n", DIGEST_LENGTH);
-
-            uint8_t *digest = SHA224string(msg);
-            char *buf = to_string(digest, DIGEST_LENGTH);
-
-            printf("%s\n", buf);
-
-            /* clean up */
-            PRINT("%s\n", "Cleaning up...");
-            free(digest);
-            free(buf);
-
-            digest = NULL;
-            buf = NULL;
-
-            rc = EXIT_SUCCESS;
-        }
+        rc = test("SHA224 Test Suite", testSHA224);
     }
-    else if (argc == 3 && STR_EQ(argv[1], "-f"))
+    else if (argc == 2)
+    {
+        char * const msg = argv[1];
+
+        PRINT("Calculating SHA224 for \"%s\"...\n", msg);
+        PRINT("Using digest length of %u\n", DIGEST_LENGTH);
+
+        uint8_t *digest = SHA224string(msg);
+        char *buf = to_string(digest, DIGEST_LENGTH);
+
+        printf("%s\n", buf);
+
+        /* clean up */
+        PRINT("%s\n", "Cleaning up...");
+        free(digest);
+        free(buf);
+
+        digest = NULL;
+        buf = NULL;
+
+        rc = EXIT_SUCCESS;
+    }
+    else if (argc == 3 && (STR_EQ(argv[1], "-f") || STR_EQ(argv[1], "--file")))
     {
         char * const filename = argv[2];
 
