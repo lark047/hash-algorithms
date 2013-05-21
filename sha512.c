@@ -1,4 +1,5 @@
 #include "sha.h"
+#include "hmac.h"
 #include "util.h"
 
 #include <limits.h>
@@ -62,6 +63,11 @@ uint8_t *SHA512string(const char *msg)
 {
     PRINT("found newline in msg: %s\n", (strchr(msg, '\n') ? "true" : "false"));
     return SHA512((uint8_t *) msg, strlen(msg));
+}
+
+uint8_t *SHA512hmac(const char *key, const char *msg)
+{
+    return HMACstring(key, msg, SHA512, 128, 64);
 }
 
 uint8_t *SHA512(const uint8_t *msg, uint64_t msg_length)

@@ -160,7 +160,7 @@ static void testSHA512_HMAC(void)
     {
         for (uint8_t j = 0; keys[j]; ++j)
         {
-            uint8_t *digest = HMAC_SHA512(keys[j], test_msgs[i]);
+            uint8_t *digest = SHA512hmac(keys[j], test_msgs[i]);
 
             CU_ASSERT_PTR_NOT_NULL_FATAL(digest);
 
