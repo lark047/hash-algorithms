@@ -36,6 +36,7 @@
  */
 
 #include "md.h"
+#include "hmac.h"
 #include "util.h"
 
 #include <limits.h>
@@ -104,6 +105,11 @@ uint8_t *MD5string(const char *msg)
 {
     PRINT("found newline in msg: %s\n", (strchr(msg, '\n') ? "true" : "false"));
     return MD5((uint8_t *) msg, strlen(msg));
+}
+
+uint8_t *MD5hmac(const char *key, const char *msg)
+{
+    return HMACstring(key, msg, MD5, 64, 16);
 }
 
 uint8_t *MD5(const uint8_t *msg, uint64_t msg_length)
