@@ -49,4 +49,15 @@ int do_hash_file(const char *, uint8_t *(*)(FILE *), uint8_t);
 int do_hmac(const char *, const char *, uint8_t *(*)(const char *, const char *), uint8_t);
 void usage(const char *, const char *);
 
+enum command_option
+{
+    Test = 1,
+    String = 2,
+    File = 4,
+    Verify = 8,
+    MAC = 16
+};
+
+enum command_option get_option(int, char **);
+
 #endif /* UTIL_H_ */

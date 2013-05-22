@@ -270,4 +270,32 @@ void usage(const char *program, const char *label)
     // TODO printf("-v, --verify\tVerifies a file against the provided signature.\n");
 }
 
+enum command_option get_option(int count, char **args)
+{
+    if (count == 2 && (STR_EQ(args[1], "-t") || STR_EQ(args[1], "--test")))
+    {
+        return Test;
+    }
+    else if (count == 2)
+    {
+        return String;
+    }
+    else if (count == 3 && (STR_EQ(args[1], "-f") || STR_EQ(args[1], "--file")))
+    {
+        return File;
+    }
+#if 0
+    else if (count == 3 && (STR_EQ(args[1], "-v") || STR_EQ(args[1], "--verify")))
+    {
+        return Verify;
+    }
+#endif
+    else if (count == 4 && (STR_EQ(args[1], "-h") || STR_EQ(args[1], "--hmac")))
+    {
+        return MAC;
+    }
+
+    return 0;
+}
+
 #undef BUFSIZE
