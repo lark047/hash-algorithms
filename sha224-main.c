@@ -22,36 +22,7 @@ int main(int argc, char **argv)
     }
     else if (argc == 3 && (STR_EQ(argv[1], "-f") || STR_EQ(argv[1], "--file")))
     {
-        char * const filename = argv[2];
-
-        PRINT("Calculating SHA224 for \"%s\"...\n", filename);
-        PRINT("Using byte size of %u\n", (unsigned) CHAR_BIT);
-
-        FILE *fp = fopen(filename, "rb");
-
-        if (fp)
-        {
-            uint8_t *digest = SHA224file(fp);
-            char *buf = to_string(digest, DIGEST_LENGTH);
-
-            printf("%s\n", buf);
-
-            /* clean up */
-            PRINT("%s\n", "Cleaning up...");
-            free(digest);
-            free(buf);
-            fclose(fp);
-
-            digest = NULL;
-            buf = NULL;
-            fp = NULL;
-
-            rc = EXIT_SUCCESS;
-        }
-        else
-        {
-            fprintf(stderr, "[ERROR] Could not open %s for reading.", filename);
-        }
+        rc = do_hash_file(argv[2], SHA224file, DIGEST_LENGTH);
     }
     else
     {

@@ -185,6 +185,7 @@ int do_test(const char *label, void (*test_function)(void))
 
 int do_hash_string(const char *msg, uint8_t *(*hash)(const char *), uint8_t digest_length)
 {
+    PRINT("Calculating hash for \"%s\"...\n", msg);
     PRINT("Using digest length of %u\n", digest_length);
 
     /* TODO check return of both functions */
@@ -202,6 +203,42 @@ int do_hash_string(const char *msg, uint8_t *(*hash)(const char *), uint8_t dige
     buf = NULL;
 
     return EXIT_SUCCESS;
+}
+
+int do_hash_file(const char *filename, uint8_t *(*hash)(FILE *), uint8_t digest_length)
+{
+    int rc = EXIT_FAILURE;
+
+    PRINT("Calculating hash for \"%s\"...\n", filename);
+    PRINT("Using byte size of %u\n", (unsigned) CHAR_BIT);
+
+    FILE *fp = fopen(filename, "rb");
+
+    if (fp)
+    {
+        uint8_t *digest = hash(fp);
+        char *buf = to_string(digest, digest_length);
+
+        printf("%s\n", buf);
+
+        /* clean up */
+        PRINT("%s\n", "Cleaning up...");
+        free(digest);
+        free(buf);
+        fclose(fp);
+
+        digest = NULL;
+        buf = NULL;
+        fp = NULL;
+
+        rc = EXIT_SUCCESS;
+    }
+    else
+    {
+        fprintf(stderr, "[ERROR] Could not open %s for reading.", filename);
+    }
+
+    return rc;
 }
 
 #undef BUFSIZE
