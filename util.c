@@ -260,4 +260,14 @@ int do_hmac(const char *key, const char *msg, uint8_t *(*hash)(const char *, con
     return EXIT_SUCCESS;
 }
 
+void usage(const char *program, const char *label)
+{
+    printf("Usage: %s [-t|--test] [-f|--file] [-h|--hmac] \"<message>\"\n", program);
+    printf("Hash a given message or file with the %s hash function.\n\n", label);
+    printf("-t, --test\t\t\tRun the test suite.\n");
+    printf("-f, --file \"<filename>\"\t\tCalculate the %s hash of file named <filename>.\n", label);
+    printf("-h, --hmac \"<key>\" \"<message>\"\tCalculate the %s HMAC hash of <message> using <key>.\n", label);
+    // TODO printf("-v, --verify\tVerifies a file against the provided signature.\n");
+}
+
 #undef BUFSIZE

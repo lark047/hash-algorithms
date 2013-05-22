@@ -1,8 +1,6 @@
 #include "sha.h"
 #include "util.h"
-#include "hmac.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -31,12 +29,7 @@ int main(int argc, char **argv)
     }
     else
     {
-        printf("Usage: %s \"<message>\"\n", argv[0]);
-        puts("  prints the SHA384 hash of <message>\n");
-        printf("Usage: %s -f <filename>\n", argv[0]);
-        puts("  prints the SHA384 hash of the file named <filename>\n");
-        printf("Usage: %s -h \"<key>\" \"<message>\"\n", argv[0]);
-        puts("  prints the SHA384 HMAC hash of <message> using <key>\n");
+        usage(*argv, "SHA384");
     }
 
     PRINT("Exiting with status %d\n", rc);

@@ -47,5 +47,6 @@ int do_test(const char *, void (*)(void));
 int do_hash_string(const char *, uint8_t *(*)(const char *), uint8_t);
 int do_hash_file(const char *, uint8_t *(*)(FILE *), uint8_t);
 int do_hmac(const char *, const char *, uint8_t *(*)(const char *, const char *), uint8_t);
+void usage(const char *, const char *);
 
 #endif /* UTIL_H_ */
