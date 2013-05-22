@@ -27,23 +27,10 @@ int main(int argc, char **argv)
     }
     else if (argc == 4 && (STR_EQ(argv[1], "-h") || STR_EQ(argv[1], "--hmac")))
     {
-        uint8_t *digest = SHA256hmac(argv[2], argv[3]);
-        char *buf = to_string(digest, DIGEST_LENGTH);
-
-        printf("%s\n", buf);
-
-        /* clean up */
-        PRINT("%s\n", "Cleaning up...");
-        free(digest);
-        free(buf);
-        digest = NULL;
-        buf = NULL;
-
-        rc = EXIT_SUCCESS;
+        rc = do_hmac(argv[2], argv[3], SHA256hmac, DIGEST_LENGTH);
     }
     else
     {
-        /* TODO add HASH macro that resolves to the hash name */
         printf("Usage: %s \"<message>\"\n", argv[0]);
         puts("  prints the SHA256 hash of <message>\n");
         printf("Usage: %s -f <filename>\n", argv[0]);

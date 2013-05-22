@@ -188,7 +188,7 @@ int do_hash_string(const char *msg, uint8_t *(*hash)(const char *), uint8_t dige
     PRINT("Calculating hash for \"%s\"...\n", msg);
     PRINT("Using digest length of %u\n", digest_length);
 
-    /* TODO check return of both functions */
+    /* TODO check returns */
     uint8_t *digest = hash(msg);
     char *buf = to_string(digest, digest_length);
 
@@ -216,6 +216,7 @@ int do_hash_file(const char *filename, uint8_t *(*hash)(FILE *), uint8_t digest_
 
     if (fp)
     {
+        /* TODO check returns */
         uint8_t *digest = hash(fp);
         char *buf = to_string(digest, digest_length);
 
@@ -239,6 +240,24 @@ int do_hash_file(const char *filename, uint8_t *(*hash)(FILE *), uint8_t digest_
     }
 
     return rc;
+}
+
+int do_hmac(const char *key, const char *msg, uint8_t *(*hash)(const char *, const char *), uint8_t digest_length)
+{
+    /* TODO check returns */
+    uint8_t *digest = hash(key, msg);
+    char *buf = to_string(digest, digest_length);
+
+    printf("%s\n", buf);
+
+    /* clean up */
+    PRINT("%s\n", "Cleaning up...");
+    free(digest);
+    free(buf);
+    digest = NULL;
+    buf = NULL;
+
+    return EXIT_SUCCESS;
 }
 
 #undef BUFSIZE

@@ -27,19 +27,7 @@ int main(int argc, char **argv)
     }
     else if (argc == 4 && (STR_EQ(argv[1], "-h") || STR_EQ(argv[1], "--hmac")))
     {
-        uint8_t *digest = SHA1hmac(argv[2], argv[3]);
-        char *buf = to_string(digest, DIGEST_LENGTH);
-
-        printf("%s\n", buf);
-
-        /* clean up */
-        PRINT("%s\n", "Cleaning up...");
-        free(digest);
-        free(buf);
-        digest = NULL;
-        buf = NULL;
-
-        rc = EXIT_SUCCESS;
+        rc = do_hmac(argv[2], argv[3], SHA1hmac, DIGEST_LENGTH);
     }
     else
     {
