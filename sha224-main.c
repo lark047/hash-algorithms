@@ -1,7 +1,6 @@
 #include "sha.h"
 #include "util.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
@@ -26,11 +25,12 @@ int main(int argc, char **argv)
             rc = do_hash_file(argv[2], SHA224file, DIGEST_LENGTH);
             break;
 
+        case MAC:
+            rc = do_hmac(argv[2], argv[3], SHA224hmac, DIGEST_LENGTH);
+            break;
+
         default:
-            printf("Usage: %s \"<message>\"\n", argv[0]);
-            puts("  prints the SHA224 hash of <message>\n");
-            printf("Usage: %s -f <filename>\n", argv[0]);
-            puts("  prints the SHA224 hash of the file named <filename>\n");
+            usage(*argv, "SHA224");
             break;
     }
 

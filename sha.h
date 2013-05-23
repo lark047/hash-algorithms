@@ -137,16 +137,15 @@
 /* public interface */
 
 uint8_t *SHA1(const uint8_t *, uint64_t);
+uint8_t *SHA224(const uint8_t *, uint64_t);
 uint8_t *SHA256(const uint8_t *, uint64_t);
 uint8_t *SHA384(const uint8_t *, uint64_t);
 uint8_t *SHA512(const uint8_t *, uint64_t);
 
 #if 0
-uint8_t *SHA224(const uint8_t *, uint64_t);
 uint8_t *SHA512224(const uint8_t *, uint64_t);
 uint8_t *SHA512256(const uint8_t *, uint64_t);
 #endif
-/* ... */
 
 uint8_t *SHA1string(const char *);
 uint8_t *SHA224string(const char *);
@@ -171,12 +170,12 @@ uint8_t *SHA512256file(FILE *);
 #endif
 
 uint8_t *SHA1hmac(const char *, const char *);
+uint8_t *SHA224hmac(const char *, const char *);
 uint8_t *SHA256hmac(const char *, const char *);
 uint8_t *SHA384hmac(const char *, const char *);
 uint8_t *SHA512hmac(const char *, const char *);
 
 #if 0
-uint8_t *SHA224hmac(const char *, const char *);
 uint8_t *SHA512224hmac(const char *, const char *);
 uint8_t *SHA512256hmac(const char *, const char *);
 #endif

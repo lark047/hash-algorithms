@@ -11,8 +11,4 @@ uint8_t *HMACstring(const char *, const char *, uint8_t *(*)(const uint8_t *, ui
 
 /* HMAC_SHA0 */
 
-#if 0
-#  /* TODO */ define HMAC_SHA224(k, m) (HMACstring((k), (m), SHA224, 64, 24))
-#endif
-
 #endif /* HMAC_H_ */

@@ -145,10 +145,10 @@ sha256-test-debug.o: sha256-test.c sha256-debug.o hmac-debug.o
 	$(CC) $(CFLAGS) -c $< -o $@ -DSHA256 $(DEBUG)
 
 #### SHA224 ####
-sha224: sha224-main.c sha224.o sha224-test.o util.o
+sha224: sha224-main.c sha224.o sha224-test.o util.o hmac.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) -DSHA224
 
-sha224-debug: sha224-main.c sha224-debug.o sha224-test-debug.o util-debug.o
+sha224-debug: sha224-main.c sha224-debug.o sha224-test-debug.o util-debug.o hmac-debug.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) -DSHA224 $(DEBUG)
 
 sha224.o: sha224.c sha.h
@@ -157,10 +157,10 @@ sha224.o: sha224.c sha.h
 sha224-debug.o: sha224.c sha.h
 	$(CC) $(CFLAGS) -c $< -o $@ -DSHA224 $(DEBUG)
 
-sha224-test.o: sha224-test.c sha1.o
+sha224-test.o: sha224-test.c sha1.o hmac.o
 	$(CC) $(CFLAGS) -c $< -o $@ -DSHA224
 
-sha224-test-debug.o: sha224-test.c sha224-debug.o
+sha224-test-debug.o: sha224-test.c sha224-debug.o hmac-debug.o
 	$(CC) $(CFLAGS) -c $< -o $@ -DSHA224 $(DEBUG)
 
 #### SHA384 ####
