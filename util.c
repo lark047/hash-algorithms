@@ -163,6 +163,59 @@ void flip64(uint64_t *value)
            | ((*value << 56) & 0xff00000000000000); /* move byte 0 to byte 7 */
 }
 
+FILE *open(const char *filename, const char *ext)
+{
+    /* TODO need bigger int? */
+    const uint8_t sizes[] = {
+        strlen(filename),
+        strlen(ext)
+    };
+    char *hfile = malloc(sizes[0] + 1 + sizes[1] + 1);
+    PRINT("allocated %u bytes\n", sizes[0] + 1 + sizes[1] + 1);
+
+    FILE *fp = NULL;
+
+    if (hfile)
+    {
+        PRINT("copying \"%s\"...\n", filename);
+        memcpy(hfile, filename, sizes[0]);
+        PRINT("copying '%c'...\n", '.');
+        hfile[sizes[0]] = '.';
+
+        PRINT("copying \"%s\"...\n", ext);
+        memcpy(hfile + sizes[0] + 1, ext, sizes[1]);
+        PRINT("copying \\%d byte...\n", 0);
+        hfile[sizes[0] + 1 + sizes[1]] = 0;
+
+        /* remove '-', '/' */
+        PRINT("removing '%c', '%c'...\n", '-', '/');
+        char *p, *q;
+        p = q = hfile + sizes[0] + 1;
+
+        while (*p)
+        {
+            PRINT("*p = '%c' (0x%02x)\n", *p, *p);
+            PRINT("*q = '%c' (0x%02x)\n", *q, *q);
+
+            while (*p && (*p == '-' || *p == '/'))
+            {
+                ++p;
+            }
+
+            *q++ = *p++;
+        }
+
+        *q = 0;
+
+        PRINT("opening file \"%s\"\n", hfile);
+        fp = fopen(hfile, "r");
+        PRINT("opened file \"%s\"\n", hfile);
+        free(hfile);
+    }
+
+    return fp;
+}
+
 /* command line options */
 int do_test(const char *label, void (*test_function)(void))
 {
@@ -242,6 +295,58 @@ int do_hash_file(const char *filename, uint8_t *(*hash)(FILE *), uint8_t digest_
     return rc;
 }
 
+int do_verify(const char *filename, const char *label, uint8_t *(*hash)(FILE *), uint8_t digest_length)
+{
+    FILE *fp, *fhash;
+
+    if ((fp = fopen(filename, "rb")) == NULL)
+    {
+        printf("[error] could not open %s for reading.\n", filename);
+        return EXIT_FAILURE;
+    }
+
+    if ((fhash = open(filename, label)) == NULL)
+    {
+        printf("[warn] no %s signature found for %s.\n", label, filename);
+        return EXIT_FAILURE;
+    }
+
+    PRINT("hashing \"%s\" with %s...\n", filename, label);
+    uint8_t *digest = hash(fp);
+    char *string = to_string(digest, digest_length);
+    PRINT("%s(%s) = %s\n", label, filename, string);
+
+    /* TODO check return */
+    PRINT("allocating %u bytes...\n", digest_length * CHARS_PER_BYTE + 1);
+    char *verify = malloc(digest_length * CHARS_PER_BYTE + 1);
+    fscanf(fhash, "%s", verify);
+    PRINT("found verified hash: %s\n", verify);
+
+    printf("Verifying \"%s\"... ", filename);
+    fflush(stdout);
+
+    if (STR_EQ(string, verify))
+    {
+        printf("OK.\n");
+    }
+    else
+    {
+        printf("FAILED.\n\n");
+        printf("expected: %s\n", verify);
+        printf("actual  : %s\n", string);
+    }
+
+    PRINT("%s...\n", "cleaning up");
+    free(verify);
+    free(string);
+    free(digest);
+
+    fclose(fhash);
+    fclose(fp);
+
+    return EXIT_SUCCESS;
+}
+
 int do_hmac(const char *key, const char *msg, uint8_t *(*hash)(const char *, const char *), uint8_t digest_length)
 {
     /* TODO check returns */
@@ -284,12 +389,10 @@ enum command_option get_option(int count, char **args)
     {
         return File;
     }
-#if 0
     else if (count == 3 && (STR_EQ(args[1], "-v") || STR_EQ(args[1], "--verify")))
     {
         return Verify;
     }
-#endif
     else if (count == 4 && (STR_EQ(args[1], "-h") || STR_EQ(args[1], "--hmac")))
     {
         return MAC;

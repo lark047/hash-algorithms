@@ -25,6 +25,10 @@ int main(int argc, char **argv)
             rc = do_hash_file(argv[2], MD5file, DIGEST_LENGTH);
             break;
 
+        case Verify:
+            rc = do_verify(argv[2], "MD5", MD5file, DIGEST_LENGTH);
+            break;
+
         case MAC:
             rc = do_hmac(argv[2], argv[3], MD5hmac, DIGEST_LENGTH);
             break;
