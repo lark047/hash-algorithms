@@ -28,8 +28,6 @@ main: main.c \
 		sha256.o sha256-test.o \
 		sha384.o sha384-test.o \
 		sha512.o sha512-test.o \
-		sha512-224.o \
-		sha512-256.o \
 		util.o \
 		hmac.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o hash -l$(LIB-CUNIT)
@@ -43,8 +41,6 @@ debug: main.c \
 		sha256-debug.o sha256-test-debug.o \
 		sha384-debug.o sha384-test-debug.o \
 		sha512-debug.o sha512-test-debug.o \
-		sha512-224-debug.o \
-		sha512-256-debug.o \
 		util-debug.o \
 		hmac-debug.o
 	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o hash -l$(LIB-CUNIT) $(DEBUG)
