@@ -7,9 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* SHA512/256 general hash function */
-uint8_t *SHA512256(const uint8_t *, uint64_t);
-
 /* functions called by SHAstring */
 static void append_length(uint8_t *, uint64_t, uint64_t, uint8_t);
 static void generate_initial_hash_values(uint16_t);
@@ -165,7 +162,7 @@ uint8_t *SHA512256(const uint8_t *msg, uint64_t msg_length)
     return digest;
 }
 
-void append_length(uint8_t *buffer, uint64_t length, uint64_t padded_index, uint8_t block_length)
+static void append_length(uint8_t *buffer, uint64_t length, uint64_t padded_index, uint8_t block_length)
 {
     /* can't shift right >= 64 so just set the first 8 bytes to 0 */
     memset(buffer + padded_index, 0x0, 8);
@@ -177,7 +174,8 @@ void append_length(uint8_t *buffer, uint64_t length, uint64_t padded_index, uint
     }
 }
 
-void generate_initial_hash_values(uint16_t t)
+/* TODO move to util.c */
+static void generate_initial_hash_values(uint16_t t)
 {
     const uint64_t salt = 0xa5a5a5a5a5a5a5a5;
     const uint64_t H0[] = {
@@ -192,8 +190,8 @@ void generate_initial_hash_values(uint16_t t)
     };
 
     const char *template = "SHA-512/%3u";
-
     char *msg = malloc(strlen(template));
+
     sprintf(msg, template, t);
     PRINT("Hashing \"%s\"...\n", msg);
 
@@ -228,7 +226,7 @@ void generate_initial_hash_values(uint16_t t)
     free(tmp_digest);
 }
 
-void process(const uint8_t *buffer, uint64_t N, uint8_t block_length)
+static void process(const uint8_t *buffer, uint64_t N, uint8_t block_length)
 {
     uint64_t W[ROUNDS];
 

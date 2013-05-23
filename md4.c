@@ -40,9 +40,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* MD4 general hash function */
-uint8_t *MD4(const uint8_t *, uint64_t);
-
 /* functions called by MD4 */
 static void append_length(uint8_t *, uint64_t, uint64_t, uint8_t);
 static void process(const uint8_t *, uint64_t, uint8_t);
@@ -222,7 +219,7 @@ uint8_t *MD4(const uint8_t *msg, uint64_t msg_length)
     return digest;
 }
 
-void append_length(uint8_t *buffer, uint64_t length, uint64_t padded_index, uint8_t block_length)
+static void append_length(uint8_t *buffer, uint64_t length, uint64_t padded_index, uint8_t block_length)
 {
     /* assume length < 2^64 */
     for (uint8_t i = 0; i < block_length; ++i)
@@ -231,7 +228,7 @@ void append_length(uint8_t *buffer, uint64_t length, uint64_t padded_index, uint
     }
 }
 
-void process(const uint8_t *M, uint64_t N, uint8_t block_length)
+static void process(const uint8_t *M, uint64_t N, uint8_t block_length)
 {
     const uint8_t s[][4] = {
         { 3, 7, 11, 19 },
@@ -339,7 +336,7 @@ static uint32_t h(uint8_t i, uint32_t x, uint32_t y, uint32_t z)
     return 0;
 }
 
-void r(uint32_t *a, uint32_t b, uint32_t c, uint32_t d, uint8_t k, uint8_t s, uint8_t i)
+static void r(uint32_t *a, uint32_t b, uint32_t c, uint32_t d, uint8_t k, uint8_t s, uint8_t i)
 {
     uint32_t x = (X[4 * k + 0] <<  0)
                + (X[4 * k + 1] <<  8)

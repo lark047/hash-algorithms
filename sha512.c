@@ -8,9 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* SHA512 general hash function */
-uint8_t *SHA512(const uint8_t *, uint64_t);
-
 /* functions called by SHA512 */
 static void append_length(uint8_t *, uint64_t, uint64_t, uint8_t);
 static void process(const uint8_t *, uint64_t, uint8_t);
@@ -179,7 +176,7 @@ uint8_t *SHA512_with_initial_values(const uint8_t *msg, uint64_t msg_length, con
     return digest;
 }
 
-void append_length(uint8_t *buffer, uint64_t length, uint64_t padded_index, uint8_t block_length)
+static void append_length(uint8_t *buffer, uint64_t length, uint64_t padded_index, uint8_t block_length)
 {
     /* can't shift right >= 64 so just set the first 8 bytes to 0 */
     memset(buffer + padded_index, 0x0, 8);
@@ -192,7 +189,7 @@ void append_length(uint8_t *buffer, uint64_t length, uint64_t padded_index, uint
     }
 }
 
-void process(const uint8_t *buffer, uint64_t N, uint8_t block_length)
+static void process(const uint8_t *buffer, uint64_t N, uint8_t block_length)
 {
     uint64_t W[ROUNDS];
 

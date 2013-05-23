@@ -37,9 +37,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* MD2 general hash function */
-uint8_t *MD2(const uint8_t *, uint64_t);
-
 /* functions called by MD2 */
 static uint64_t append_padding$(uint8_t **, const uint8_t *, uint64_t, const struct hash_info *);
 static void append_checksum(uint8_t *, uint64_t, uint8_t);
@@ -205,7 +202,7 @@ uint8_t *MD2(const uint8_t *msg, uint64_t msg_length)
     return digest;
 }
 
-uint64_t append_padding$(uint8_t **buffer_ref, const uint8_t *msg, uint64_t length, const struct hash_info *info)
+static uint64_t append_padding$(uint8_t **buffer_ref, const uint8_t *msg, uint64_t length, const struct hash_info *info)
 {
     /* TODO what if the length in bits isn't a multiple of CHAR_BIT? */
     /* TODO use general one in util.c */
@@ -250,7 +247,7 @@ uint64_t append_padding$(uint8_t **buffer_ref, const uint8_t *msg, uint64_t leng
     return padded_length;
 }
 
-void append_checksum(uint8_t *M, uint64_t N, uint8_t block_length)
+static void append_checksum(uint8_t *M, uint64_t N, uint8_t block_length)
 {
     uint8_t C[16] = {0};
     uint8_t L = 0;
@@ -284,7 +281,7 @@ void append_checksum(uint8_t *M, uint64_t N, uint8_t block_length)
     memcpy(M + N, C, block_length);
 }
 
-void process(const uint8_t *M, uint64_t N_prime, uint8_t block_length)
+static void process(const uint8_t *M, uint64_t N_prime, uint8_t block_length)
 {
     /* Process each 16-byte block. */
     for (uint32_t i = 0; i < N_prime / block_length; ++i)

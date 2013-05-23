@@ -8,9 +8,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* SHA224 general hash function */
-uint8_t *SHA224(const uint8_t *, uint64_t);
-
 /* functions called by SHA224 */
 static void append_length(uint8_t *, uint64_t, uint64_t, uint8_t);
 static void process(const uint8_t *, uint64_t, uint8_t);
@@ -162,7 +159,7 @@ uint8_t *SHA224(const uint8_t *msg, uint64_t msg_length)
     return digest;
 }
 
-void append_length(uint8_t *buffer, uint64_t length, uint64_t padded_index, uint8_t block_length)
+static void append_length(uint8_t *buffer, uint64_t length, uint64_t padded_index, uint8_t block_length)
 {
     /* assume length < 2^64 */
     for (uint8_t i = 0; i < block_length; ++i)
@@ -171,7 +168,7 @@ void append_length(uint8_t *buffer, uint64_t length, uint64_t padded_index, uint
     }
 }
 
-void process(const uint8_t *buffer, uint64_t N, uint8_t block_length)
+static void process(const uint8_t *buffer, uint64_t N, uint8_t block_length)
 {
     uint32_t W[ROUNDS];
 
