@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     switch (get_option(argc, argv))
     {
         case Test:
-            rc = do_test(LABEL " Test Suite", testSHA512224);
+            rc = do_test(LABEL " Test Suite", "test" LABEL, testSHA512224);
             break;
 
         case String:

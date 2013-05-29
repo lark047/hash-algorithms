@@ -217,7 +217,7 @@ FILE *open(const char *filename, const char *ext)
 }
 
 /* command line options */
-int do_test(const char *label, void (*test_function)(void))
+int do_test(const char *label, const char *test_name, void (*test_function)(void))
 {
     CU_pSuite suite;
 
@@ -225,7 +225,7 @@ int do_test(const char *label, void (*test_function)(void))
     {
         if ((suite = CU_add_suite(label, NULL, NULL)))
         {
-            if (CU_ADD_TEST(suite, test_function))
+            if (CU_add_test(suite, test_name, test_function))
             {
                 CU_basic_set_mode(CU_BRM_VERBOSE);
                 CU_basic_run_tests();
