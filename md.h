@@ -6,17 +6,25 @@
 
 #if defined MD2
 
-# define BIT_STRENGTH             128
-# define BLOCK_LENGTH_BYTES        16
-# define PAD_MSG_TO_LENGTH_BYTES    0
-# define DIGEST_LENGTH_BITS       128
+#  define BIT_STRENGTH               128
+#  define BLOCK_LENGTH_BYTES          16
+#  define PAD_MSG_TO_LENGTH_BYTES      0
+#  define DIGEST_LENGTH_BITS         128
+
+#  define LABEL                    "MD2"
 
 #elif defined MD4 || defined MD5
 
-# define BIT_STRENGTH             128
-# define BLOCK_LENGTH_BITS         64
-# define PAD_MSG_TO_LENGTH_BITS   448
-# define DIGEST_LENGTH_BITS       512
+#  define BIT_STRENGTH               128
+#  define BLOCK_LENGTH_BITS           64
+#  define PAD_MSG_TO_LENGTH_BITS     448
+#  define DIGEST_LENGTH_BITS         512
+
+#  ifdef MD4
+#    define LABEL                  "MD4"
+#  else
+#    define LABEL                  "MD5"
+#  endif
 
 #endif
 

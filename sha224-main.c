@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     switch (get_option(argc, argv))
     {
         case Test:
-            rc = do_test("SHA224 Test Suite", testSHA224);
+            rc = do_test(LABEL " Test Suite", testSHA224);
             break;
 
         case String:
@@ -26,7 +26,7 @@ int main(int argc, char **argv)
             break;
 
         case Verify:
-            rc = do_verify(argv[2], "SHA224", SHA224file, DIGEST_LENGTH);
+            rc = do_verify(argv[2], LABEL, SHA224file, DIGEST_LENGTH);
             break;
 
         case MAC:
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
             break;
 
         default:
-            usage(*argv, "SHA224");
+            usage(*argv, LABEL);
             break;
     }
 

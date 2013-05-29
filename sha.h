@@ -26,24 +26,24 @@
  * used during hashing or message digest sizes. Figure 1 presents the basic properties of these hash
  * algorithms.
  *
- * +------------+--------------+------------+-----------+---------------------+
- * | Algorithm  | Message Size | Block Size | Word Size | Message Digest Size |
- * |            |    (bits)    |   (bits)   |   (bits)  |       (bits)        |
- * +------------+--------------+------------+-----------+---------------------+
- * | SHA-1      |    < 2^64    |     512    |     32    |        160          |
- * +------------+--------------+------------+-----------+---------------------+
- * | SHA-224    |    < 2^64    |     512    |     32    |        224          |
- * +------------+--------------+------------+-----------+---------------------+
- * | SHA-256    |    < 2^64    |     512    |     32    |        256          |
- * +------------+--------------+------------+-----------+---------------------+
- * | SHA-384    |    < 2^128   |    1024    |     64    |        384          |
- * +------------+--------------+------------+-----------+---------------------+
- * | SHA-512    |    < 2^128   |    1024    |     64    |        512          |
- * +------------+--------------+------------+-----------+---------------------+
- * |SHA-512/224 |    < 2^128   |    1024    |     64    |        224          |
- * +------------+--------------+------------+-----------+---------------------+
- * |SHA-512/256 |    < 2^128   |    1024    |     64    |        256          |
- * +------------+--------------+------------+-----------+---------------------+
+ * +-------------+--------------+------------+-----------+---------------------+
+ * |  Algorithm  | Message Size | Block Size | Word Size | Message Digest Size |
+ * |             |    (bits)    |   (bits)   |   (bits)  |       (bits)        |
+ * +-------------+--------------+------------+-----------+---------------------+
+ * | SHA-1       |    < 2^64    |     512    |     32    |        160          |
+ * +-------------+--------------+------------+-----------+---------------------+
+ * | SHA-224     |    < 2^64    |     512    |     32    |        224          |
+ * +-------------+--------------+------------+-----------+---------------------+
+ * | SHA-256     |    < 2^64    |     512    |     32    |        256          |
+ * +-------------+--------------+------------+-----------+---------------------+
+ * | SHA-384     |    < 2^128   |    1024    |     64    |        384          |
+ * +-------------+--------------+------------+-----------+---------------------+
+ * | SHA-512     |    < 2^128   |    1024    |     64    |        512          |
+ * +-------------+--------------+------------+-----------+---------------------+
+ * | SHA-512/224 |    < 2^128   |    1024    |     64    |        224          |
+ * +-------------+--------------+------------+-----------+---------------------+
+ * | SHA-512/256 |    < 2^128   |    1024    |     64    |        256          |
+ * +-------------+--------------+------------+-----------+---------------------+
  *                  Figure 1: Secure Hash Algorithm Properties
  */
 
@@ -51,15 +51,26 @@
 #include <stdio.h>
 
 #if defined SHA1
-#  define BIT_STRENGTH 160
-#elif defined SHA224 || defined SHA512224
-#  define BIT_STRENGTH 224
-#elif defined SHA256 || defined SHA512256
-#  define BIT_STRENGTH 256
+#  define BIT_STRENGTH            160
+#  define LABEL               "SHA-1"
+#elif defined SHA224
+#  define BIT_STRENGTH            224
+#  define LABEL             "SHA-224"
+#elif defined SHA256
+#  define BIT_STRENGTH            256
+#  define LABEL             "SHA-256"
 #elif defined SHA384
-#  define BIT_STRENGTH 384
+#  define BIT_STRENGTH            384
+#  define LABEL             "SHA-384"
 #elif defined SHA512
-#  define BIT_STRENGTH 512
+#  define BIT_STRENGTH            512
+#  define LABEL             "SHA-512"
+#elif defined SHA512224
+#  define BIT_STRENGTH            224
+#  define LABEL         "SHA-512/224"
+#elif defined SHA512256
+#  define BIT_STRENGTH            256
+#  define LABEL         "SHA-512/256"
 #endif
 
 #if defined SHA224 || defined SHA256 || defined SHA384 || defined SHA512 || defined SHA512224 || defined SHA512256
@@ -141,22 +152,16 @@ uint8_t *SHA224(const uint8_t *, uint64_t);
 uint8_t *SHA256(const uint8_t *, uint64_t);
 uint8_t *SHA384(const uint8_t *, uint64_t);
 uint8_t *SHA512(const uint8_t *, uint64_t);
-
-#if 0
 uint8_t *SHA512224(const uint8_t *, uint64_t);
 uint8_t *SHA512256(const uint8_t *, uint64_t);
-#endif
 
 uint8_t *SHA1string(const char *);
 uint8_t *SHA224string(const char *);
 uint8_t *SHA256string(const char *);
 uint8_t *SHA384string(const char *);
 uint8_t *SHA512string(const char *);
-
-#if 0
 uint8_t *SHA512224string(const char *);
 uint8_t *SHA512256string(const char *);
-#endif
 
 uint8_t *SHA1file(FILE *);
 uint8_t *SHA224file(FILE *);

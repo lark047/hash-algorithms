@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     switch (get_option(argc, argv))
     {
         case Test:
-            rc = do_test("MD2 Test Suite", testMD2);
+            rc = do_test(LABEL " Test Suite", testMD2);
             break;
 
         case String:
@@ -26,7 +26,7 @@ int main(int argc, char **argv)
             break;
 
         case Verify:
-            rc = do_verify(argv[2], "MD2", MD2file, DIGEST_LENGTH);
+            rc = do_verify(argv[2], LABEL, MD2file, DIGEST_LENGTH);
             break;
 
         case MAC:
@@ -34,7 +34,7 @@ int main(int argc, char **argv)
             break;
 
         default:
-            usage(*argv, "MD2");
+            usage(*argv, LABEL);
             break;
     }
 
