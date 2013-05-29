@@ -52,10 +52,12 @@ static const uint8_t *M;
 /* SHA512/224 requires SHA512 */
 extern uint8_t *SHA512_with_initial_values(const uint8_t *, uint64_t, const uint64_t *);
 
+#if 0
 uint8_t *SHA512224file(FILE *fp)
 {
     return hash_file(fp, SHA512224);
 }
+#endif
 
 uint8_t *SHA512224string(const char *msg)
 {
@@ -154,12 +156,12 @@ uint8_t *SHA512224(const uint8_t *msg, uint64_t msg_length)
     uint8_t *digest = malloc(DIGEST_LENGTH * sizeof *digest);
     PRINT("allocated %u bytes\n", DIGEST_LENGTH);
 
-    for (uint8_t i = 0, bytes = DIGEST_LENGTH / 4; i < 3; ++i)
-    {
-        snprintf((char *) digest + i * bytes, bytes + 1, "%016llx", H[i]);
-    }
+    flip64(&H[0]);
+    flip64(&H[1]);
+    flip64(&H[2]);
+    flip64(&H[3]);
 
-    snprintf((char *) digest + 3 * DIGEST_LENGTH / 4, 8, "%08x", (uint32_t) (H[3] >> 32));
+    memcpy(digest, H, DIGEST_LENGTH);
 
     return digest;
 }
@@ -197,25 +199,27 @@ static void generate_initial_hash_values(uint16_t t)
     sprintf(msg, template, t);
     PRINT("Hashing \"%s\"...\n", msg);
 
+#ifdef DEBUG
+    char *buf;
+#endif
+
     /* TODO need general SHA512/224 function? */
     uint8_t *tmp_digest = SHA512_with_initial_values((uint8_t *) msg, strlen(msg), H0);
-    PRINT("Created hash value: %s\n", (char *) tmp_digest);
+    PRINT("Created hash value: %s\n", (buf = to_string(tmp_digest, 64)));
 
     free(msg);
 
 #ifdef DEBUG
-    uint8_t n = 0;
+    free(buf);
 #endif
+
+    memcpy(H, tmp_digest, 64);
 
     for (uint8_t i = 0; i < SIZE(H); ++i)
     {
-#ifdef DEBUG
-        n +=
-#endif
-        sscanf((char *) tmp_digest + 16 * i, "%016llx", H + i);
+        flip64(&H[i]);
     }
 
-    PRINT("converted %u strings to int\n", n);
     PRINT("h0: 0x%016llx\n", H[0]);
     PRINT("h1: 0x%016llx\n", H[1]);
     PRINT("h2: 0x%016llx\n", H[2]);
