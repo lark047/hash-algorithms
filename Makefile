@@ -198,11 +198,11 @@ sha512-test-debug.o: sha512-test.c sha512-debug.o hmac-debug.o
 	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512 $(DEBUG)
 
 #### SHA512/224 ####
-sha512-224: sha512-224-main.c sha512-224.o sha512-224-test.o sha512.o util.o
-	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
+sha512-224: sha512-224-main.c sha512-224.o sha512-224-test.o sha512.o util.o hmac.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) -DSHA512224
 
-sha512-224-debug: sha512-224-main.c sha512-224-debug.o sha512-224-test-debug.o sha512-debug.o util-debug.o
-	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) $(DEBUG)
+sha512-224-debug: sha512-224-main.c sha512-224-debug.o sha512-224-test-debug.o sha512-debug.o util-debug.o hmac-debug.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) -DSHA512224 $(DEBUG)
 
 sha512-224.o: sha512-224.c sha.h
 	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512224
@@ -210,18 +210,18 @@ sha512-224.o: sha512-224.c sha.h
 sha512-224-debug.o: sha512-224.c sha.h
 	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512224 $(DEBUG)
 
-sha512-224-test.o: sha512-224-test.c sha512-224.o
-	$(CC) $(CFLAGS) -c $< -o $@
+sha512-224-test.o: sha512-224-test.c sha512-224.o hmac.o
+	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512224
 
-sha512-224-test-debug.o: sha512-224-test.c sha512-224-debug.o
-	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
+sha512-224-test-debug.o: sha512-224-test.c sha512-224-debug.o hmac-debug.o
+	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512224 $(DEBUG)
 
 #### SHA512/256 ####
-sha512-256: sha512-256-main.c sha512-256.o sha512-256-test.o sha512.o util.o
-	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT)
+sha512-256: sha512-256-main.c sha512-256.o sha512-256-test.o sha512.o util.o hmac.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) -DSHA512256
 
-sha512-256-debug: sha512-256-main.c sha512-256-debug.o sha512-256-test-debug.o sha512-debug.o util-debug.o
-	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) $(DEBUG)
+sha512-256-debug: sha512-256-main.c sha512-256-debug.o sha512-256-test-debug.o sha512-debug.o util-debug.o hmac-debug.o
+	$(CC) $(CFLAGS) -L$(LIB-DIR) $^ -o $@ -l$(LIB-MATH) -l$(LIB-CUNIT) -DSHA512256 $(DEBUG)
 
 sha512-256.o: sha512-256.c sha.h
 	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512256
@@ -229,11 +229,11 @@ sha512-256.o: sha512-256.c sha.h
 sha512-256-debug.o: sha512-256.c sha.h
 	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512256 $(DEBUG)
 
-sha512-256-test.o: sha512-256-test.c sha512-256.o
-	$(CC) $(CFLAGS) -c $< -o $@
+sha512-256-test.o: sha512-256-test.c sha512-256.o hmac.o
+	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512256
 
-sha512-256-test-debug.o: sha512-256-test.c sha512-256-debug.o
-	$(CC) $(CFLAGS) -c $< -o $@ $(DEBUG)
+sha512-256-test-debug.o: sha512-256-test.c sha512-256-debug.o hmac-debug.o
+	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512256 $(DEBUG)
 
 
 .PHONY: clean nuke
