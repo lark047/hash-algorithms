@@ -6,12 +6,6 @@
 
 #include "matasano.h"
 
-#ifdef DEBUG
-#  define print_d(f, ...)  printf("[debug] " f, __VA_ARGS__)
-#else
-#  define print_d(f, ...)  /* NO-OP */
-#endif
-
 #define SWAP(T,a,b)  do { T tmp = a; a = b; b = tmp; } while (0)
 
 #define PADDING0  ""
@@ -32,17 +26,35 @@ int main(int argc, char **argv)
 
     if (argc == 2)
     {
-        char *base64 = malloc(2 * ceil(strlen(argv[1]) / 3) + 1);
-        uint8_t *raw = malloc(strlen(argv[1]) / 2 + 1);
+        char *input;
+
+        if (STR_EQ(argv[1], "-t") || STR_EQ(argv[1], "--test"))
+        {
+            input = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
+            print_d("%s\n", "in testing mode...");
+        }
+        else
+        {
+            input = argv[1];
+            print_d("%s\n", "in input mode...");
+        }
+
+        char *base64 = malloc(2 * ceil(strlen(input) / 3) + 1);
+        uint8_t *raw = malloc(strlen(input) / 2 + 1);
 
         if (base64 && raw)
         {
-            EncodeBase64(argv[1], base64);
+            EncodeBase64(input, base64);
             DecodeBase64((const char *) base64, raw);
 
-            printf("original: %s\n", argv[1]);
+            printf("original: %s\n", input);
             printf("encoded: %s\n", base64);
-            printf("decoded: %s\n", raw);
+
+            printf("decoded: ");
+            fflush(stdout);
+
+            PrintHex(raw, strlen(input) / 2);
+            printf("decoded text: %s\n", raw);
 
             free(base64);
             free(raw);
@@ -50,10 +62,30 @@ int main(int argc, char **argv)
             rc = EXIT_SUCCESS;
         }
     }
+    else if (argc == 3 && (STR_EQ(argv[1], "-e") || STR_EQ(argv[1], "--encode")))
+    {
+        /* TODO check return */
+        char *base64 = malloc(2 * ceil(strlen(argv[2]) / 3) + 1);
+
+        EncodeBase64(argv[2], base64);
+
+        printf("%s\n", base64);
+    }
+    else if (argc == 3 && (STR_EQ(argv[1], "-d") || STR_EQ(argv[1], "--decode")))
+    {
+        /* TODO check return */
+        const uint64_t length = 3 * strlen(argv[2]) / 4;
+        uint8_t *bytes = malloc(length + 1);
+
+        DecodeBase64(argv[2], bytes);
+
+        PrintHex(bytes, length);
+    }
 
     return rc;
 }
 
+/* TODO merge into EncodeBase64 */
 static void to_base64(const uint8_t *bytes, const char *padding, char *base64)
 {
     char *p = base64;
@@ -88,6 +120,16 @@ static void to_base64(const uint8_t *bytes, const char *padding, char *base64)
     *p++ = CHARS[index];
 
     snprintf(base64 + 4 - padding_length, padding_length + 1, "%s", padding);
+}
+
+void PrintHex(const uint8_t *msg, const uint64_t length)
+{
+    for (uint64_t i = 0; i < length; ++i)
+    {
+        printf("%02x ", msg[i]);
+        fflush(stdout);
+    }
+    printf("\n");
 }
 
 void EncodeBase64(const char *msg, char * const base64)
@@ -142,6 +184,7 @@ void DecodeBase64(const char *base64, uint8_t * const msg)
 
     // TODO if strlen(base64) % 4 != 0 error
 
+    /* TODO handle endings in = and == */
     for (uint8_t i = 0; i < strlen(base64); i += 4)
     {
         /* SSdt */

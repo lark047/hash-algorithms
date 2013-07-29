@@ -240,6 +240,12 @@ sha512-256-test-debug.o: sha512-256-test.c sha512-256-debug.o hmac-debug.o
 	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512256 $(DEBUG)
 
 
+#### Matasano challenge ####
+
+matasano: matasano1.c
+	$(CC) $(CFLAGS) -lm -o $@ $^
+
+
 .PHONY: clean nuke
 
 clean:
@@ -250,4 +256,3 @@ clean:
 
 nuke:
 	rm -f *.exe *.o *.stackdump
-	
