@@ -1,0 +1,185 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdint.h>
+
+#include <CUnit/Basic.h>
+#include <CUnit/CUError.h>
+
+#include "matasano.h"
+#include "matasano-test.h"
+
+#define FREE(ptr) do { free(ptr); ptr = NULL; } while (0)
+#define SIZE(a)                (sizeof (a) / sizeof *(a))
+
+#define test01  testEncodeDecodeBase64
+#define test02  /* TODO */
+
+static void testEncodeDecodeBase64(void);
+
+const char *RunTests(void)
+{
+    /* initialize the CUnit test registry */
+    if (CUE_SUCCESS == CU_initialize_registry())
+    {
+        CU_pSuite suite = NULL;
+
+        /* add a suite to the registry */
+        if ((suite = CU_add_suite("Matasano Crypto Challenge #1", NULL, NULL)) != NULL)
+        {
+            /* add the tests to the suite */
+            if (CU_ADD_TEST(suite, test01) != NULL /* &&
+                CU_ADD_TEST(suite, test02) != NULL &&
+                etc. */)
+            {
+                /* Run all tests using the CUnit Basic interface */
+                CU_basic_set_mode(CU_BRM_VERBOSE);
+                CU_basic_run_tests();
+            }
+        }
+    }
+
+    CU_cleanup_registry();
+
+    return CU_get_error() == CUE_SUCCESS ? "" : CU_get_error_msg();
+}
+
+static void testEncodeBase64(void);
+static void testDecodeBase64(void);
+
+static void testEncodeDecodeBase64(void)
+{
+    testEncodeBase64();
+    testDecodeBase64();
+}
+
+static void testEncodeBase64(void)
+{
+    char *base64 = NULL;
+
+    EncodeBase64(NULL, base64);
+    CU_ASSERT_PTR_NULL(base64);
+
+    EncodeBase64("", base64);
+    CU_ASSERT_PTR_NULL(base64);
+
+    /* TODO garbage input */
+    // EncodeBase64("", base64);
+
+    char *input[] = {
+        "2e",               /* "."     */
+        "6f23",             /* "o#"    */
+        "355a3f",           /* "5Z?"   */
+        "79475e22",         /* "yG^\"" */
+        "49276d206b696c6c"
+        "696e6720796f7572"
+        "20627261696e206c"
+        "696b65206120706f"
+        "69736f6e6f757320"
+        "6d757368726f6f6d"  /* I'm killing your brain like a poisonous mushroom */
+    };
+
+    char *expected[] = {
+        "Lg==",
+        "byM=",
+        "NVo/",
+        "eUdeIg==",
+        "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"
+    };
+
+    for (uint8_t i = 0; i < SIZE(input); ++i)
+    {
+        base64 = malloc(2 * ceil(strlen(input[i]) / 3) + 1);
+        EncodeBase64(input[i], base64);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(base64);
+        CU_ASSERT_STRING_EQUAL(base64, expected[i]);
+
+        if (!STR_EQ(expected[i], base64))
+        {
+            fprintf(stderr, "Expected: %s Actual: %s\n", expected[i], base64);
+        }
+
+        FREE(base64);
+    }
+}
+
+static void testDecodeBase64(void)
+{
+    print_d("%s\n", "*****************************************************");
+    uint8_t *hex = NULL;
+
+    DecodeBase64(NULL, hex);
+    CU_ASSERT_PTR_NULL(hex);
+
+    DecodeBase64("", hex);
+    CU_ASSERT_PTR_NULL(hex);
+
+    char *input[] = {
+        "Lg==",                                                             /* "."     */
+        "byM=",                                                             /* "o#"    */
+        "NVo/",                                                             /* "5Z?"   */
+        "eUdeIg==",                                                         /* "yG^\"" */
+        "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"  /* I'm killing your brain like a poisonous mushroom */
+    };
+
+    uint8_t *expected[5];
+    uint8_t bytes_len[] = { 3, 3, 3, 6, 48 };
+
+    expected[0] = malloc(bytes_len[0] * sizeof *expected);
+    expected[0][0] = 0x2e;
+    expected[0][1] = 0x00;
+    expected[0][2] = 0x00;
+
+    expected[1] = malloc(bytes_len[1] * sizeof *expected);
+    expected[1][0] = 0x6f;
+    expected[1][1] = 0x23;
+    expected[1][2] = 0x00;
+
+    expected[2] = malloc(bytes_len[2] * sizeof *expected);
+    expected[2][0] = 0x35;
+    expected[2][1] = 0x5a;
+    expected[2][2] = 0x3f;
+
+    expected[3] = malloc(bytes_len[3] * sizeof *expected);
+    expected[3][0] = 0x79;
+    expected[3][1] = 0x47;
+    expected[3][2] = 0x5e;
+    expected[3][3] = 0x22;
+    expected[3][4] = 0x00;
+    expected[3][5] = 0x00;
+
+    expected[4] = malloc(bytes_len[4] * sizeof *expected);
+    expected[4][ 0] = 0x49; expected[4][ 1] = 0x27; expected[4][ 2] = 0x6d; expected[4][ 3] = 0x20;
+    expected[4][ 4] = 0x6b; expected[4][ 5] = 0x69; expected[4][ 6] = 0x6c; expected[4][ 7] = 0x6c;
+    expected[4][ 8] = 0x69; expected[4][ 9] = 0x6e; expected[4][10] = 0x67; expected[4][11] = 0x20;
+    expected[4][12] = 0x79; expected[4][13] = 0x6f; expected[4][14] = 0x75; expected[4][15] = 0x72;
+    expected[4][16] = 0x20; expected[4][17] = 0x62; expected[4][18] = 0x72; expected[4][19] = 0x61;
+    expected[4][20] = 0x69; expected[4][21] = 0x6e; expected[4][22] = 0x20; expected[4][23] = 0x6c;
+    expected[4][24] = 0x69; expected[4][25] = 0x6b; expected[4][26] = 0x65; expected[4][27] = 0x20;
+    expected[4][28] = 0x61; expected[4][29] = 0x20; expected[4][30] = 0x70; expected[4][31] = 0x6f;
+    expected[4][32] = 0x69; expected[4][33] = 0x73; expected[4][34] = 0x6f; expected[4][35] = 0x6e;
+    expected[4][36] = 0x6f; expected[4][37] = 0x75; expected[4][38] = 0x73; expected[4][39] = 0x20;
+    expected[4][40] = 0x6d; expected[4][41] = 0x75; expected[4][42] = 0x73; expected[4][43] = 0x68;
+    expected[4][44] = 0x72; expected[4][45] = 0x6f; expected[4][46] = 0x6f; expected[4][47] = 0x6d;
+
+    for (uint8_t i = 0; i < SIZE(input); ++i)
+    {
+        hex = malloc((3 * ceil(bytes_len[i] / 4) + 1) * sizeof *hex);
+        DecodeBase64(input[i], hex);
+        CU_ASSERT_PTR_NOT_NULL_FATAL(hex);
+
+        for (uint8_t j = 0; j < bytes_len[i]; ++j)
+        {
+            // print_d("%u: comparing %u (expected) and %u (actual)\n", j, expected[i][j], hex[j]);
+            CU_ASSERT_EQUAL(hex[j], expected[i][j]);
+
+            if (expected[i][j] != hex[j])
+            {
+                fprintf(stderr, "%u: expected: 0x%0x Actual: 0x%0x\n", j, expected[i][j], hex[j]);
+            }
+        }
+
+        FREE(expected[i]);
+        FREE(hex);
+    }
+}
