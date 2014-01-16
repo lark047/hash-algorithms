@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <inttypes.h>
 
 #include <CUnit/Basic.h>
 #include <CUnit/CUError.h>
@@ -12,10 +13,9 @@
 #define FREE(ptr) do { free(ptr); ptr = NULL; } while (0)
 #define SIZE(a)                (sizeof (a) / sizeof *(a))
 
-#define test01  testEncodeDecodeBase64
-#define test02  /* TODO */
-
 static void testEncodeDecodeBase64(void);
+static void testFixedXOR(void);
+static void testDecodeXOR(void);
 
 const char *RunTests(void)
 {
@@ -28,9 +28,9 @@ const char *RunTests(void)
         if ((suite = CU_add_suite("Matasano Crypto Challenge #1", NULL, NULL)) != NULL)
         {
             /* add the tests to the suite */
-            if (CU_ADD_TEST(suite, test01) != NULL /* &&
-                CU_ADD_TEST(suite, test02) != NULL &&
-                etc. */)
+            if (CU_ADD_TEST(suite, testEncodeDecodeBase64) != NULL &&
+                CU_ADD_TEST(suite, testFixedXOR) != NULL &&
+                CU_ADD_TEST(suite, testDecodeXOR) != NULL)
             {
                 /* Run all tests using the CUnit Basic interface */
                 CU_basic_set_mode(CU_BRM_VERBOSE);
@@ -164,7 +164,9 @@ static void testDecodeBase64(void)
 
     for (uint8_t i = 0; i < SIZE(input); ++i)
     {
-        hex = malloc((3 * ceil(bytes_len[i] / 4) + 1) * sizeof *hex);
+        hex = malloc((3 * strlen(input[i]) / 4 + 1) * sizeof *hex);
+        print_d("3 * %zu / 4) + 1 = %d\n", strlen(input[i]), (int) (3 * ceil(bytes_len[i] / 4) + 1));
+        print_d("allocated %zu bytes\n", 3 * strlen(input[i]) / 4 + 1);
         DecodeBase64(input[i], hex);
         CU_ASSERT_PTR_NOT_NULL_FATAL(hex);
 
@@ -182,4 +184,72 @@ static void testDecodeBase64(void)
         FREE(expected[i]);
         FREE(hex);
     }
+}
+
+static void testFixedXOR(void)
+{
+    uint8_t *result;
+    print_d("%s\n", "");
+
+    result = (uint8_t *) FixedXOR(NULL, NULL, 0);
+    CU_ASSERT_PTR_NULL(result);
+
+    uint8_t *hex1 = malloc(1 * sizeof *hex1), *hex2;
+    hex1[0] = 0xff;
+
+    result = (uint8_t *) FixedXOR(hex1, NULL, 1);
+    CU_ASSERT_PTR_NULL(result);
+    FREE(hex1);
+
+    char *msg1 = "1c0111001f010100061a024b53535009181c";
+    char *msg2 = "686974207468652062756c6c277320657965";
+
+    hex1 = malloc(strlen(msg1) * sizeof *hex1 / 2);
+    hex2 = malloc(strlen(msg2) * sizeof *hex2 / 2);
+
+    CU_ASSERT_PTR_NOT_NULL_FATAL(hex1);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(hex2);
+
+    StringToHex(msg1, hex1);
+    StringToHex(msg2, hex2);
+
+    result = (uint8_t *) FixedXOR(hex1, hex2, strlen(msg1) / 2);
+
+    const uint8_t expected[] = {
+        0x74, 0x68, 0x65, 0x20, 0x6b, 0x69, 0x64, 0x20, 0x64,
+        0x6f, 0x6e, 0x27, 0x74, 0x20, 0x70, 0x6c, 0x61, 0x79
+    };
+
+    for (uint8_t i = 0; i < strlen(msg1) / 2; ++i)
+    {
+        CU_ASSERT_EQUAL(result[i], expected[i]);
+    }
+
+    FREE(hex1);
+    FREE(hex2);
+    FREE(result);
+
+}
+
+static void testDecodeXOR(void)
+{
+    const char *msg = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+
+    uint8_t *hex = malloc(strlen(msg) * sizeof *hex / 2);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(hex);
+
+    StringToHex(msg, hex);
+
+    char *text = malloc(strlen(msg) / 2);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(text);
+
+    uint8_t key = DecodeXOR(hex, strlen(msg) / 2, text);
+
+    print_d("key = 0x%02x\n", key);
+    print_d("text = \"%s\"\n", text);
+
+    CU_ASSERT_STRING_EQUAL("Cooking MC's like a pound of bacon", text);
+
+    FREE(hex);
+    FREE(text);
 }

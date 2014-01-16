@@ -3,19 +3,18 @@
 
 #include <stdint.h>
 
-#ifdef DEBUG
-#  define print_d(f, ...)  printf("[debug] " f, __VA_ARGS__)
-#else
-#  define print_d(f, ...)  /* NO-OP */
-#endif
+#include "matasano-common.h"
 
-#define STR_EQ(s1, s2)  (strcmp((s1), (s2)) == 0)
+/* 1. Convert hex to base64 and back. */
 
-/* util functions */
-void PrintHex(const uint8_t *, const uint64_t);
+void EncodeBase64(const char * const, char * const);
+void DecodeBase64(const char * const, uint8_t * const);
 
-/* exercise functions */
-void EncodeBase64(const char *msg, char * const base64);
-void DecodeBase64(const char *base64, uint8_t * const msg);
+/* Fixed XOR */
+
+const uint8_t *FixedXOR(const uint8_t * const, const uint8_t * const, const uint64_t);
+
+/* Single-character XOR Cipher */
+uint8_t DecodeXOR(const uint8_t * const, const uint64_t, const char *);
 
 #endif /* MATASANO_H_ */
