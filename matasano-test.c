@@ -10,12 +10,13 @@
 #include "matasano.h"
 #include "matasano-test.h"
 
-#define FREE(ptr) do { free(ptr); ptr = NULL; } while (0)
-#define SIZE(a)                (sizeof (a) / sizeof *(a))
+#define FREE(ptr) do { free((void *) ptr); ptr = NULL; } while (0)
+#define SIZE(a)                         (sizeof (a) / sizeof *(a))
 
 static void testEncodeDecodeBase64(void);
 static void testFixedXOR(void);
 static void testDecodeXOR(void);
+static void testDecodeXORFromFile(void);
 
 const char *RunTests(void)
 {
@@ -28,9 +29,10 @@ const char *RunTests(void)
         if ((suite = CU_add_suite("Matasano Crypto Challenge #1", NULL, NULL)) != NULL)
         {
             /* add the tests to the suite */
-            if (CU_ADD_TEST(suite, testEncodeDecodeBase64) != NULL &&
+            if (/* CU_ADD_TEST(suite, testEncodeDecodeBase64) != NULL &&
                 CU_ADD_TEST(suite, testFixedXOR) != NULL &&
-                CU_ADD_TEST(suite, testDecodeXOR) != NULL)
+                CU_ADD_TEST(suite, testDecodeXOR) != NULL && */
+                CU_ADD_TEST(suite, testDecodeXORFromFile) != NULL)
             {
                 /* Run all tests using the CUnit Basic interface */
                 CU_basic_set_mode(CU_BRM_VERBOSE);
@@ -240,16 +242,40 @@ static void testDecodeXOR(void)
 
     StringToHex(msg, hex);
 
-    char *text = malloc(strlen(msg) / 2);
-    CU_ASSERT_PTR_NOT_NULL_FATAL(text);
+    struct result *result = DecodeXOR(hex, strlen(msg) / 2);
 
-    uint8_t key = DecodeXOR(hex, strlen(msg) / 2, text);
+    print_d("key = 0x%02x\n", result->key);
+    print_d("text = \"%s\"\n", result->text);
 
-    print_d("key = 0x%02x\n", key);
-    print_d("text = \"%s\"\n", text);
-
-    CU_ASSERT_STRING_EQUAL("Cooking MC's like a pound of bacon", text);
+    CU_ASSERT_STRING_EQUAL("Cooking MC's like a pound of bacon", result->text);
 
     FREE(hex);
-    FREE(text);
+    FREE(result->hex);
+    FREE(result->text);
+    FREE(result);
+}
+
+static void testDecodeXORFromFile(void)
+{
+    FILE *fp = fopen("gistfile1.txt", "r");
+    CU_ASSERT_PTR_NOT_NULL_FATAL(fp);
+
+    struct result *result = DecodeXORFromFile(fp);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(result);
+
+    char *p = strchr((char *) result->text, '\n');
+    if (p) { *p = '\0'; }
+
+    print_d("key = '%c' (0x%02x)\n", result->key, result->key);
+    print_d("score = %.4f\n", result->score);
+    print_d("text = \"%s\"\n", result->text);
+
+    CU_ASSERT_EQUAL(result->key, 0x35);
+    CU_ASSERT_STRING_EQUAL(result->text, "Now that the party is jumping");
+
+    FREE(result->hex);
+    FREE(result->text);
+    FREE(result);
+
+    fclose(fp);
 }
