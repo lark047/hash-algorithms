@@ -37,7 +37,7 @@ static const uint32_t LETTER_COUNT[ASIZE] = {
 #endif
 };
 
-static const uint32_t SAMPLE_SIZE =
+static const uint32_t SAMPLE_TEXT_LENGTH =
 #if 0
                  100000
 #elif 0
@@ -51,8 +51,8 @@ struct freq
     /* letter count (per occurrence) */
     uint32_t *freq;
 
-    /* sample size */
-    uint32_t size;
+    /* sample text length */
+    uint32_t length;
 
     /* distinct letter count */
     uint32_t count;
@@ -63,16 +63,22 @@ struct freq
 
 static double calculate_score(struct freq *, struct freq *);
 
-uint8_t DecodeXOR(const uint8_t * const hex, const uint64_t length, const char *msg)
+static FILE *fout;
+
+struct result *DecodeXOR(const uint8_t * const hex, const uint64_t length)
 {
-    print_d("%s\n", "**********************************");
-    const uint8_t *xor_result;
+    //char *fn = tempnam("C:\\tmp", NULL);
+    //print_d("printing to file \"%s\"\n", fn);
+    //fout = fopen(fn, "w");
+    fout = stdout;
+
+    uint8_t *xor_result;
     uint8_t *buffer = malloc(length * sizeof *buffer); /* TODO check */
 
     struct freq ef, tf;
 
     ef.freq = (uint32_t *) LETTER_COUNT;
-    ef.size = SAMPLE_SIZE;
+    ef.length = SAMPLE_TEXT_LENGTH;
 
     if ((tf.freq = malloc(ASIZE * sizeof *(tf.freq))) == NULL)
     {
@@ -86,27 +92,27 @@ uint8_t DecodeXOR(const uint8_t * const hex, const uint64_t length, const char *
     /* from 0x00 to 0xff */
     for (uint16_t c = 0; c <= UCHAR_MAX; ++c)
     {
-        memset(tf.freq, 0, ASIZE * sizeof *(tf.freq));
-        tf.size = tf.count = tf.spaces = 0;
+        /* reset */
+        memset(tf.freq, 0, ASIZE * sizeof *tf.freq);
+        tf.count = tf.spaces = 0;
+        tf.length = length;
 
-        print_d("XORing with 0x%02x\n", (int) c);
-
-        memset(buffer, c, length);
-        xor_result = FixedXOR(hex, buffer, length);
+        memset(buffer, c, tf.length);
+        xor_result = (uint8_t *) FixedXOR(hex, buffer, tf.length);
 
         /* go through the decoded string */
-        for (uint64_t i = 0; i < length; ++i)
+        for (uint64_t i = 0; i < tf.length; ++i)
         {
             if (isalpha(xor_result[i]))
             {
-                // print_d("result[%2" PRIu64 "] = 0x%02x (%c)\n", i, xor_result[i], xor_result[i]);
+                // fprint_d(fout, "result[%2" PRIu64 "] = 0x%02x (%c)\n", i, xor_result[i], xor_result[i]);
 
                 int index = tolower(xor_result[i]) - 'a';
 
                 /* count letters */
                 uint32_t mask = 1 << index;
                 tf.count |= ((tf.count & mask) >> mask ? 0 : mask);
-                print_d("(1) letter count = %07lx (2^%d) after '%c'\n", (long unsigned) tf.count, index, xor_result[i]);
+                // fprint_d(fout, "(1) letter count = %07lx (2^%d) after '%c'\n", (long unsigned) tf.count, index, xor_result[i]);
 
                 ++tf.freq[index];
             }
@@ -114,16 +120,13 @@ uint8_t DecodeXOR(const uint8_t * const hex, const uint64_t length, const char *
             {
                 ++tf.spaces;
             }
-
-            ++tf.size;
         }
 
-        free((void *) xor_result);
+        HexToCleanString(xor_result, tf.length, buffer);
+        free(xor_result);
 
-        print_d("calculating score for '%c' (0x%02x)\n", (int) c, (int) c);
         score = calculate_score(&tf, &ef);
-        score *= (double) tf.size / length;
-        print_d("score with key '%c' (0x%02x) is %.3f\n", isprint((int) c) ? (int) c : ' ', (int) c, score);
+        fprint_d(fout, "score with key '%c' (0x%02x) is %.3f \"%s\"\n", isprint((int) c) ? (int) c : ' ', (int) c, score, buffer);
 
         if (score > max_score)
         {
@@ -134,16 +137,35 @@ uint8_t DecodeXOR(const uint8_t * const hex, const uint64_t length, const char *
 
     print_d("key '%c' (0x%02x) gives a maximum score of %.3f\n", (int) key, (int) key, max_score);
 
-    memset(buffer, key, length);
-    xor_result = FixedXOR(hex, buffer, length);
+    memset(buffer, key, tf.length);
+    xor_result = (uint8_t *) FixedXOR(hex, buffer, tf.length);
 
-    memcpy((char *) msg, xor_result, length);
+    struct result *result = malloc(sizeof *result); /* TODO check */
+
+    result->key = key;
+    result->score = max_score;
+    result->hex = xor_result;
+
+#if 0
+    for (uint8_t i = 0; i < tf.length; ++i)
+    {
+        if (!(isalpha(xor_result[i]) || xor_result[i] == ' '))
+        {
+            xor_result[i] = '*';
+        }
+    }
+#endif
+
+    result->text = malloc(tf.length + 1); /* TODO check */
+    memcpy(result->text, xor_result, tf.length);
+    result->text[tf.length] = '\0';
 
     free(tf.freq);
     free(buffer);
-    free((void *) xor_result);
 
-    return key;
+    // fclose(fout);
+
+    return result;
 }
 
 static double calculate_score(struct freq *text, struct freq *english)
@@ -156,18 +178,18 @@ static double calculate_score(struct freq *text, struct freq *english)
         bool present = (text->count & (1 << i)) >> i;
         letter_count += present;
 
-        print_d("text->count = %" PRIu32 "\n", text->count);
-        print_d("text->count & mask = %" PRIu32 "\n", text->count & (1 << i));
-        print_d("(2) letter count = %" PRIu8 "\n", letter_count);
+        fprint_d(fout, "text->count = %" PRIu32 "\n", text->count);
+        fprint_d(fout, "text->count & mask = %" PRIu32 "\n", text->count & (1 << i));
+        fprint_d(fout, "(2) letter count = %" PRIu8 "\n", letter_count);
 
         if (present)
         {
-            ef = (double) english->freq[i] / english->size;
-            tf = (double) text->freq[i] / text->size;
+            ef = (double) english->freq[i] / english->length;
+            tf = (double) text->freq[i] / text->length;
 
-            print_d("ef[%2" PRIu8 "] = %.5f\n", i, ef);
-            print_d("tf[%2" PRIu8 "] = %.5f\n", i, tf);
-            print_d("adding %.3f for '%c'\n", 1 / fabs(ef - tf), ALPHA[i]);
+            fprint_d(fout, "ef[%2" PRIu8 "] = %.5f\n", i, ef);
+            fprint_d(fout, "tf[%2" PRIu8 "] = %.5f\n", i, tf);
+            fprint_d(fout, "adding %.3f for '%c'\n", 1 / fabs(ef - tf), ALPHA[i]);
 
             freq_score += 1 / fabs(ef - tf);
         }
@@ -177,23 +199,23 @@ static double calculate_score(struct freq *text, struct freq *english)
     if (text->spaces > 0)
     {
         ++letter_count;
-        ef = 19181.82 / english->size; // according to wiki TODO get other freqs
-        tf = (double) text->spaces / text->size;
-        print_d("ef(space) = %.5f\n", ef);
-        print_d("tf(space) = %.5f (%" PRIu32 " / %" PRIu32 ")\n", tf, text->spaces, text->size);
-        print_d("adding %.3f for '%c'\n", 1 / fabs(ef - tf), ' ');
+        ef = 19181.82 / english->length; // according to wiki TODO get other freqs
+        tf = (double) text->spaces / text->length;
+        fprint_d(fout, "ef(space) = %.5f\n", ef);
+        fprint_d(fout, "tf(space) = %.5f (%" PRIu32 " / %" PRIu32 ")\n", tf, text->spaces, text->length);
+        fprint_d(fout, "adding %.3f for '%c'\n", 1 / fabs(ef - tf), ' ');
         freq_score += 1 / fabs(ef - tf);
     }
 
 #if 0
     /* other characters: frequency between 't' and 'a' (ignore for now) */
-    ef = (double) (english->freq[19] + english->freq[0]) / (2 * english->size);
-    tf = text->misc / (text->size + text->spaces + text->misc);
-    print_d("warning: dividing by %.8f\n", fabs(ef - tf));
+    ef = (double) (english->freq[19] + english->freq[0]) / (2 * english->length);
+    tf = text->misc / (text->length + text->spaces + text->misc);
+    fprint_d(fout, "warning: dividing by %.8f\n", fabs(ef - tf));
     freq_score += 1 / fabs(ef - tf);
 #endif
 
-    print_d("found %" PRIu8 " distinct letter(s)\n", letter_count);
+    fprint_d(fout, "found %" PRIu8 " distinct letter(s)\n", letter_count);
 
     return freq_score * letter_count;
 }
