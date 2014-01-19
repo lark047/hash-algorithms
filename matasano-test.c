@@ -287,7 +287,7 @@ static void testRepeatingKeyXOR(void)
     const char * const msg = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
     const char * const key = "ICE";
 
-    uint8_t *result = RepeatingKeyXOR(msg, key);
+    const uint8_t *result = RepeatingKeyXOR(msg, key);
     CU_ASSERT_PTR_NOT_NULL_FATAL(result);
 
     const char *expected = "0b3637272a2b2e63622c2e69692a2369"

@@ -5,7 +5,7 @@
 #include "matasano.h"
 // #include "matasano-common.h"
 
-uint8_t *RepeatingKeyXOR(const char * const msg, const char * const key)
+const uint8_t *RepeatingKeyXOR(const char * const msg, const char * const key)
 {
     if (msg == NULL || key == NULL)
     {
@@ -51,12 +51,7 @@ uint8_t *RepeatingKeyXOR(const char * const msg, const char * const key)
         if (i < msg_length)
         {
             print_d("%zu > %zu\n", i, msg_length);
-
-            while (i != msg_length)
-            {
-                buffer[i] = key[i % key_length];
-                ++i;
-            }
+            strncpy(buffer + i, key, msg_length - i);
         }
 
         print_d("i = %zu\n", i);
