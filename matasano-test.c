@@ -17,6 +17,7 @@ static void testEncodeDecodeBase64(void);
 static void testFixedXOR(void);
 static void testDecodeXOR(void);
 static void testDecodeXORFromFile(void);
+static void testRepeatingKeyXOR(void);
 
 const char *RunTests(void)
 {
@@ -31,8 +32,9 @@ const char *RunTests(void)
             /* add the tests to the suite */
             if (/* CU_ADD_TEST(suite, testEncodeDecodeBase64) != NULL &&
                 CU_ADD_TEST(suite, testFixedXOR) != NULL &&
-                CU_ADD_TEST(suite, testDecodeXOR) != NULL && */
-                CU_ADD_TEST(suite, testDecodeXORFromFile) != NULL)
+                CU_ADD_TEST(suite, testDecodeXOR) != NULL &&
+                CU_ADD_TEST(suite, testDecodeXORFromFile) != NULL && */
+                CU_ADD_TEST(suite, testRepeatingKeyXOR))
             {
                 /* Run all tests using the CUnit Basic interface */
                 CU_basic_set_mode(CU_BRM_VERBOSE);
@@ -278,4 +280,38 @@ static void testDecodeXORFromFile(void)
     FREE(result);
 
     fclose(fp);
+}
+
+static void testRepeatingKeyXOR(void)
+{
+    const char * const msg = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
+    const char * const key = "ICE";
+
+    uint8_t *result = RepeatingKeyXOR(msg, key);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(result);
+
+    const char *expected = "0b3637272a2b2e63622c2e69692a2369"
+                           "3a2a3c6324202d623d63343c2a262263"
+                           "24272765272a282b2f20430a652e2c65"
+                           "2a3124333a653e2b2027630c692b2028"
+                           "3165286326302e27282f";
+
+    const size_t length = strlen(expected);
+    unsigned char *actual = malloc(length + 1);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(actual);
+
+    for (size_t i = 0; i < length / 2; ++i)
+    {
+        print_d("result[%2zu] = 0x%02x\n", i, result[i]);
+        snprintf((char *) actual + 2 * i, 3, "%02x", result[i]);
+        print_d("actual[%2zu] = %c%c\n", 2 * i, (unsigned) actual[2 * i], (unsigned) actual[2 * i + 1]);
+    }
+
+    actual[length] = '\0';
+    print_d("actual is \"%s\"\n", actual);
+
+    CU_ASSERT_STRING_EQUAL(actual, expected);
+
+    FREE(result);
+    FREE(actual);
 }
