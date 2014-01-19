@@ -19,7 +19,7 @@ const uint8_t *FixedXOR(const uint8_t * const, const uint8_t * const, const uint
 struct result *DecodeXOR(const uint8_t * const, const uint64_t);
 
 /* 4. Detect single-character XOR */
-struct result *DecodeXORFromFile(FILE *fp);
+struct result *DecodeXORFromFile(FILE *);
 
 /* 5. Repeating-key XOR Cipher */
 uint8_t *RepeatingKeyXOR(const char * const, const char * const);
