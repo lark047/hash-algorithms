@@ -24,4 +24,7 @@ struct result *DecodeXORFromFile(FILE *);
 /* 5. Repeating-key XOR Cipher */
 const uint8_t *RepeatingKeyXOR(const char * const, const char * const);
 
+/* 6. Break repeating-key XOR */
+const uint8_t *BreakRepeatingKeyXOR(FILE *);
+
 #endif /* MATASANO_H_ */

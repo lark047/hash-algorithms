@@ -18,6 +18,7 @@ static void testFixedXOR(void);
 static void testDecodeXOR(void);
 static void testDecodeXORFromFile(void);
 static void testRepeatingKeyXOR(void);
+static void testBreakRepeatingKeyXOR(void);
 
 const char *RunTests(void)
 {
@@ -33,8 +34,9 @@ const char *RunTests(void)
             if (/* CU_ADD_TEST(suite, testEncodeDecodeBase64) != NULL &&
                 CU_ADD_TEST(suite, testFixedXOR) != NULL &&
                 CU_ADD_TEST(suite, testDecodeXOR) != NULL &&
-                CU_ADD_TEST(suite, testDecodeXORFromFile) != NULL && */
-                CU_ADD_TEST(suite, testRepeatingKeyXOR))
+                CU_ADD_TEST(suite, testDecodeXORFromFile) != NULL &&
+                CU_ADD_TEST(suite, testRepeatingKeyXOR) != NULL && */
+                CU_ADD_TEST(suite, testBreakRepeatingKeyXOR) != NULL)
             {
                 /* Run all tests using the CUnit Basic interface */
                 CU_basic_set_mode(CU_BRM_VERBOSE);
@@ -314,4 +316,14 @@ static void testRepeatingKeyXOR(void)
 
     FREE(result);
     FREE(actual);
+}
+
+static void testBreakRepeatingKeyXOR(void)
+{
+    FILE *fp = fopen("gistfile2.txt", "r");
+    CU_ASSERT_PTR_NOT_NULL_FATAL(fp);
+
+    BreakRepeatingKeyXOR(fp);
+
+    fclose(fp);
 }
