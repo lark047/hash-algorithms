@@ -251,25 +251,7 @@ matasano : matasano.o matasano-common.o \
 matasano-common.o : matasano-common.c matasano.h matasano-common.h
 	$(CC) $(CFLAGS) $(DEBUG) -c $< -o $@
 
-matasano01.o : matasano01.c matasano.h
-	$(CC) $(CFLAGS) $(DEBUG) -c $< -o $@
-
-matasano02.o : matasano02.c matasano.h
-	$(CC) $(CFLAGS) $(DEBUG) -c $< -o $@
-
-matasano03.o : matasano03.c matasano.h matasano-common.h
-	$(CC) $(CFLAGS) $(DEBUG) -c $< -o $@
-
-matasano04.o : matasano04.c matasano.h matasano-common.h
-	$(CC) $(CFLAGS) $(DEBUG) -c $< -o $@
-
-matasano05.o : matasano05.c matasano.h matasano-common.h
-	$(CC) $(CFLAGS) $(DEBUG) -c $< -o $@
-
-matasano06.o : matasano06.c matasano.h matasano-common.h
-	$(CC) $(CFLAGS) $(DEBUG) -c $< -o $@
-
-matasano-test.o : matasano-test.c matasano.h matasano-test.h
+matasano%.o : matasano%.c matasano.h matasano-common.o
 	$(CC) $(CFLAGS) $(DEBUG) -c $< -o $@
 
 .PHONY: clean nuke
