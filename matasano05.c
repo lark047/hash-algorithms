@@ -3,9 +3,8 @@
 #include <string.h>
 
 #include "matasano.h"
-// #include "matasano-common.h"
 
-const uint8_t *RepeatingKeyXOR(const char * const msg, const char * const key)
+const uint8_t *RepeatingKeyXOR(const uint8_t * const msg, uint64_t msg_length, const uint8_t * const key, uint64_t key_length)
 {
     if (msg == NULL || key == NULL)
     {
@@ -13,20 +12,17 @@ const uint8_t *RepeatingKeyXOR(const char * const msg, const char * const key)
         return NULL;
     }
 
-    const size_t msg_length = strlen(msg);
-    const size_t key_length = strlen(key);
-
     print_d("%s\n", "");
-    print_d("length of \"%s\" is %zu\n", msg, msg_length);
-    print_d("length of \"%s\" is %zu\n", key, key_length);
+    print_d("length of \"%s\" is %zu\n", (char *) msg, msg_length);
+    print_d("length of \"%s\" is %zu\n", (char *) key, key_length);
 
-    char *buffer = malloc(msg_length + 1); /* TODO check */
+    uint8_t *buffer = malloc(msg_length + 1); /* TODO check */
     uint8_t *hex1 = malloc(msg_length * sizeof *hex1); /* TODO check */
     uint8_t *hex2 = malloc(msg_length * sizeof *hex2); /* TODO check */
 
     if (msg_length == key_length)
     {
-        strcpy(buffer, key);
+        memcpy(buffer, key, key_length);
     }
     else
     {
@@ -42,20 +38,20 @@ const uint8_t *RepeatingKeyXOR(const char * const msg, const char * const key)
                 break;
             }
 
-            strcpy(buffer + i, key);
+            memcpy(buffer + i, key, key_length);
         }
 
         print_d("i = %zu\n", i);
-        print_d("buffer is \"%s\" (%zu)\n", buffer, strlen(buffer));
+        // print_d("buffer is \"%s\" (%zu)\n", buffer, strlen(buffer));
 
         if (i < msg_length)
         {
             print_d("%zu > %zu\n", i, msg_length);
-            strncpy(buffer + i, key, msg_length - i);
+            memcpy(buffer + i, key, msg_length - i);
         }
 
         print_d("i = %zu\n", i);
-        print_d("buffer is \"%s\" (%zu)\n", buffer, strlen(buffer));
+        // print_d("buffer is \"%s\" (%zu)\n", buffer, strlen(buffer));
     }
 
     memcpy(hex1, msg, msg_length);
