@@ -22,7 +22,7 @@ struct result *DecodeXOR(const uint8_t * const, const uint64_t);
 struct result *DecodeXORFromFile(FILE *);
 
 /* 5. Repeating-key XOR Cipher */
-const uint8_t *RepeatingKeyXOR(const char * const, const char * const);
+const uint8_t *RepeatingKeyXOR(const uint8_t * const, const uint64_t, const uint8_t * const, const uint64_t);
 
 /* 6. Break repeating-key XOR */
 const uint8_t *BreakRepeatingKeyXOR(FILE *);
