@@ -6,7 +6,6 @@
 #include <inttypes.h>
 
 #include "matasano.h"
-#include "matasano-common.h"
 
 /* string length (60) + newline + nul byte */
 #define BUFSIZE (60 + 1 + 1)

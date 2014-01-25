@@ -10,7 +10,6 @@
 #include <stdbool.h>
 
 #include "matasano.h"
-#include "matasano-common.h"
 
 #define ASIZE                           26
 #define ALPHA "abcdefghijklmnopqrstuvwxyz"
@@ -126,7 +125,10 @@ struct result *DecodeXOR(const uint8_t * const hex, const uint64_t length)
         free(xor_result);
 
         score = calculate_score(&tf, &ef);
-        fprint_d(fout, "score with key '%c' (0x%02x) is %.3f \"%s\"\n", isprint((int) c) ? (int) c : ' ', (int) c, score, buffer);
+        if (score > 0)
+        {
+            fprint_d(fout, "score with key '%c' (0x%02x) is %.3f \"%s\"\n", isprint((int) c) ? (int) c : ' ', (int) c, score, buffer);
+        }
 
         if (score > max_score)
         {
