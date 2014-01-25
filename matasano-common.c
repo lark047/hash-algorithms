@@ -4,10 +4,11 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <ctype.h>
+#include <stdbool.h>
 
 #include "matasano-common.h"
 
-static void PrintHelper(const uint8_t * const, const uint64_t, const char *);
+static void PrintHelper(const uint8_t * const, const uint64_t, const char *, bool, int (*)(int));
 
 void StringToHex(const char * const msg, uint8_t * const hex)
 {
@@ -30,21 +31,38 @@ void HexToCleanString(const uint8_t * const hex, const uint64_t length, unsigned
     }
 }
 
-void PrintHex(const uint8_t * const hex, const uint64_t length)
+static int always(int c)
 {
-    PrintHelper(hex, length, "");
+    return 1;
+}
+
+void PrintHex(const uint8_t * const hex, const uint64_t length, bool raw)
+{
+    PrintHelper(hex, length, "", raw, always);
 }
 
 void PrintHexWithSpace(const uint8_t * const hex, const uint64_t length)
 {
-    PrintHelper(hex, length, " ");
+    PrintHelper(hex, length, " ", true, always);
 }
 
-static void PrintHelper(const uint8_t * const hex, const uint64_t length, const char *spacer)
+static int alphaplus(int c)
 {
+    return isalpha(c) || c == ' ';
+}
+
+void PrintAsString(const uint8_t * const hex, const uint64_t length)
+{
+    PrintHelper(hex, length, "", false, alphaplus);
+}
+
+static void PrintHelper(const uint8_t * const hex, const uint64_t length, const char *spacer, bool raw, int (*printable)(int))
+{
+    char *fmt = (raw ? "%02x%s" : "%c%s");
+
     for (uint64_t i = 0; i < length; ++i)
     {
-        printf("%02x%s", hex[i], spacer);
+        printf(fmt, ((*printable)(hex[i]) ? hex[i] : '*'), spacer);
         fflush(stdout);
     }
 

@@ -1,6 +1,9 @@
 #ifndef MATASANO_COMMON_H_
 #define MATASANO_COMMON_H_
 
+#include <stdint.h>
+#include <stdbool.h>
+
 #define _STR(x)    #x
 #define STR(x) _STR(x)
 
@@ -17,8 +20,9 @@
 void StringToHex(const char * const, uint8_t * const);
 void HexToCleanString(const uint8_t * const, const uint64_t, unsigned char * const);
 
-void PrintHex(const uint8_t * const, const uint64_t);
+void PrintHex(const uint8_t * const, const uint64_t, const bool);
 void PrintHexWithSpace(const uint8_t * const, const uint64_t);
+void PrintAsString(const uint8_t * const, const uint64_t);
 
 /* result of XOR decode */
 struct result
