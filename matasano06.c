@@ -4,13 +4,25 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <math.h>
+#include <stdbool.h>
+#include <float.h>
 
 #include "matasano.h"
 
 #define LINESIZE (60 + 1 + 1)
 
-// static size_t compute_hamming_distance(const uint8_t *, const uint8_t *, const uint8_t);
-static void transpose(uint8_t **, uint8_t, size_t); /* TODO change size_t to uint32_t */
+enum GuessType
+{
+    TWO_BLOCKS,
+    TOP_THREE,
+    FOUR_BLOCKS
+};
+
+static enum GuessType guess_type = FOUR_BLOCKS;
+
+static uint8_t guess_keysize(const uint8_t *, const uint64_t, const uint8_t);
+static size_t compute_hamming_distance(const uint8_t *, const uint8_t *, const uint8_t);
+static void transpose(uint8_t **, uint8_t, size_t, uint8_t **); /* TODO change size_t to uint32_t */
 
 const uint8_t *BreakRepeatingKeyXOR(FILE *fp)
 {
@@ -38,125 +50,214 @@ const uint8_t *BreakRepeatingKeyXOR(FILE *fp)
         bytes_read += len;
     }
 
-    print_d("base64 = \"%s\" (%zu)\n", base64, strlen(base64));
+    print_d("base64 = \"%s\"\n", base64);
+    print_d("encoded length = %zu\n", strlen(base64));
+    print_d("decoded length = %zu\n", 3 * strlen(base64) / 4);
 
     size_t decoded_length = 3 * strlen(base64) / 4;
-    uint8_t *decoded_base64 = malloc(decoded_length * sizeof *decoded_base64);
+    uint8_t *decoded_base64 = malloc(decoded_length * sizeof *decoded_base64); /* TODO check */
 
     DecodeBase64(base64, decoded_base64);
-    PrintHex(decoded_base64, decoded_length);
+    PrintHex(decoded_base64, decoded_length, true);
+    free(base64);
 
-    uint8_t keysize = 0;
+    /* a. Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40. */
+    uint8_t keysize = guess_keysize(decoded_base64, decoded_length, 200);
 
-#ifdef DEBUG
-    keysize = 29;
-#else
-    double prev_score = 0, prev_pct = 0, max_ratio = 0;
-    for (uint8_t i = 2; i <= 50; ++i)
-    {
-        print_d("computing Hamming distances for keysize %" PRIu8 "\n", i);
-
-        uint8_t *hex1, *hex2;
-        double score = 0, pct = 0;
-
-        size_t partitions = (size_t) floor((double) decoded_length / i);
-        partitions += (decoded_length % i == 0 ? 0 : 1);
-        print_d("dividing into %zu partitions\n", partitions);
-
-        /* using two keysize-length blocks */
-        for (size_t j = 0; j < partitions; j += 2)
-        {
-            const size_t bytes = i * sizeof *hex1;
-
-            hex1 = malloc(bytes); /* TODO check */
-            hex2 = malloc(bytes); /* TODO check */
-
-            memcpy(hex1, decoded_base64 + j * bytes, bytes);
-            PrintHex(hex1, i);
-
-            memcpy(hex2, decoded_base64 + (j + 1) * bytes, bytes);
-            PrintHex(hex2, i);
-
-            score += (double) ComputeHammingDistance(hex1, hex2, i) / i;
-
-            free(hex1);
-            free(hex2);
-        }
-
-        print_d("score for keysize %" PRIu8 " is %.5f\n", i, score);
-
-        if (prev_score != 0)
-        {
-            pct = 100 * (score - prev_score) / score;
-            print_d("pct change from previous = %2.5f%%\n", pct);
-        }
-
-        if (prev_pct != 0 && max_ratio < pct / prev_pct)
-        {
-            max_ratio = pct / prev_pct;
-            keysize = i;
-            print_d("keysize 0x%02x (%" PRIu8 ") has ratio %.5f\n", keysize, keysize, max_ratio);
-        }
-
-        prev_score = score;
-        prev_pct = pct;
-    }
-#endif
-
-    size_t partitions = (size_t) floor((double) decoded_length / keysize);
+    size_t partitions = decoded_length / keysize;
     partitions += (decoded_length % keysize == 0 ? 0 : 1);
+
     print_d("dividing into %zu partitions\n", partitions);
-    print_d("decoded length = %zu\n", decoded_length);
     print_d("creating %zu x %" PRIu8 " (%zu block) array\n", partitions, keysize, partitions * keysize);
 
+    /* <partitions> blocks of size <keysize>, or <partitions> x <keysize> array */
     uint8_t **blocks = malloc(partitions * sizeof *blocks); /* TODO check */
+
+    /* <keysize> blocks of size <partitions>, or <keysize> x <partitions> array */
+    uint8_t **transposed = malloc(keysize * sizeof *transposed); /* TODO check */
+
+    for (uint8_t i = 0; i < keysize; ++i)
+    {
+        transposed[i] = malloc(partitions * sizeof *transposed); /* TODO check */
+    }
 
     for (size_t i = 0; i < partitions; ++i)
     {
         blocks[i] = malloc(keysize * sizeof *blocks[i]); /* TODO check */
         memset(blocks[i], 0, keysize);
 
-        uint8_t bytes;
+        uint8_t bytes = keysize;
 
         if ((i + 1) * keysize > decoded_length)
         {
-            bytes = keysize - ((i + 1) * keysize % decoded_length);
-        }
-        else
-        {
-            bytes = keysize;
+            bytes -= (i + 1) * keysize % decoded_length;
         }
 
         print_d("copying %" PRIu8 " bytes into block %zu\n", bytes, i);
         memcpy(blocks[i], decoded_base64 + i * keysize, bytes);
 
         print_d("block %zu:\n", i);
-        PrintHex(blocks[i], keysize);
+        PrintHex(blocks[i], keysize, true);
     }
 
-    transpose(blocks, keysize, partitions);
+    transpose(blocks, keysize, partitions, transposed);
 
-    uint8_t *key = malloc(partitions * sizeof *key); /* TODO check */
-
-    for (size_t i = 0; i < partitions; ++i)
-    {
-        struct *result = DecodeXOR(blocks[i], keysize);
-        key[i] = result->key;
-    }
-
+    /* done with blocks */
     for (size_t i = 0; i < partitions; ++i)
     {
         free(blocks[i]);
     }
 
-    free(decoded_base64);
     free(blocks);
+
+    uint8_t *key = malloc(keysize * sizeof *key); /* TODO check */
+
+    for (uint8_t i = 0; i < keysize; ++i)
+    {
+        struct result *result = DecodeXOR(transposed[i], partitions);
+        key[i] = result->key;
+        free(result);
+    }
+
+    print_d("%s\n", "key is:");
+    PrintHex(key, keysize, true);
+
+    for (uint8_t i = 0; i < keysize; ++i)
+    {
+        free(transposed[i]);
+    }
+
+    const uint8_t *result = RepeatingKeyXOR(decoded_base64, decoded_length, key, keysize);
+    PrintHex(result, decoded_length, false);
+
+    free(decoded_base64);
+    free(transposed);
     free(key);
+    free((void *) result);
 
     return NULL;
 }
 
-#if 0
+static uint8_t guess_keysize(const uint8_t *decoded_base64, const uint64_t decoded_length, const uint8_t bound)
+{
+    /* TWO_BLOCKS */
+    /* FOUR_BLOCKS */
+    uint8_t keysize = 0;
+    double min_score = DBL_MAX;
+
+    /* TOP_THREE */
+    uint8_t three_keysizes[3] = { 0 };
+    double min_three_scores[3] = { DBL_MAX, DBL_MAX, DBL_MAX };
+
+#ifndef DEBUG
+    keysize = 58;
+    min_score = 1.5;
+#else
+    for (uint8_t i = 2; i <= bound; ++i)
+    {
+        print_d("computing Hamming distances for keysize %" PRIu8 "\n", i);
+
+        size_t partitions = decoded_length / i;
+        partitions += (decoded_length % i == 0 ? 0 : 1);
+
+        // print_d("dividing into %zu partitions\n", partitions);
+        uint8_t *hex1, *hex2;
+        const size_t bytes = i * sizeof *hex1;
+        double score = 0;
+
+        if (guess_type != FOUR_BLOCKS)
+        {
+            /* using two keysize-length blocks */
+            hex1 = malloc(bytes); /* TODO check */
+            hex2 = malloc(bytes); /* TODO check */
+
+            memcpy(hex1, decoded_base64, bytes);
+            PrintHex(hex1, i, true);
+
+            memcpy(hex2, decoded_base64 + bytes, bytes);
+            PrintHex(hex2, i, true);
+
+            score = compute_hamming_distance(hex1, hex2, i);
+
+            free(hex1);
+            free(hex2);
+        }
+        if (guess_type == FOUR_BLOCKS)
+        {
+            /* 4 KEYSIZE blocks instead of 2 and average the distances */
+            for (uint8_t j = 0; j < 4; ++j)
+            {
+                switch (j % 2)
+                {
+                    case 0:
+                        hex1 = malloc(bytes); /* TODO check */
+                        memcpy(hex1, decoded_base64 + j * bytes, bytes);
+                        PrintHex(hex1, i, true);
+                        break;
+
+                    case 1:
+                        hex2 = malloc(bytes); /* TODO check */
+                        memcpy(hex2, decoded_base64 + j * bytes, bytes);
+                        PrintHex(hex2, i, true);
+
+                        score += compute_hamming_distance(hex1, hex2, i);
+
+                        break;
+                }
+            }
+
+            score /= 2;
+        }
+
+        score /= i;
+
+        print_d("score for keysize %" PRIu8 " is %.5f\n", i, score);
+
+        if (guess_type != TOP_THREE)
+        {
+            if (score < min_score)
+            {
+                min_score = score;
+                keysize = i;
+            }
+        }
+        else
+        {
+            if (score < min_three_scores[0])
+            {
+                min_three_scores[0] = score;
+                three_keysizes[0] = i;
+            }
+            else if (min_three_scores[0] < score && score < min_three_scores[1])
+            {
+                min_three_scores[1] = score;
+                three_keysizes[1] = i;
+            }
+            else if (min_three_scores[1] < score && score < min_three_scores[2])
+            {
+                min_three_scores[2] = score;
+                three_keysizes[2] = i;
+            }
+        }
+    }
+#endif
+
+    if (guess_type == TWO_BLOCKS)
+    {
+        print_d("minimum score %.5f with keysize %" PRIu8 "\n", min_score, keysize);
+    }
+    else if (guess_type == TOP_THREE)
+    {
+        print_d("lowest score %.5f with keysize %" PRIu8 "\n", min_three_scores[0], three_keysizes[0]);
+        print_d("lowest score %.5f with keysize %" PRIu8 "\n", min_three_scores[1], three_keysizes[1]);
+        print_d("lowest score %.5f with keysize %" PRIu8 "\n", min_three_scores[2], three_keysizes[2]);
+    }
+
+    return keysize;
+}
+
+#if 1
+/* b. Write a function to compute the edit distance/Hamming distance between two strings. */
 static size_t compute_hamming_distance(const uint8_t *msg1, const uint8_t *msg2, uint8_t length)
 {
     uint8_t xor;
@@ -176,7 +277,7 @@ static size_t compute_hamming_distance(const uint8_t *msg1, const uint8_t *msg2,
 }
 #endif
 
-static void transpose(uint8_t **blocks, uint8_t keysize, size_t partitions)
+static void transpose(uint8_t **blocks, uint8_t keysize, size_t partitions, uint8_t **result)
 {
     for (size_t i = 0; i < partitions; ++i)
     {
@@ -185,9 +286,7 @@ static void transpose(uint8_t **blocks, uint8_t keysize, size_t partitions)
             if (i != j)
             {
                 /* swap blocks[i][j] and blocks[j][i] */
-                uint8_t tmp = blocks[i][j];
-                blocks[i][j] = blocks[j][i];
-                blocks[j][i] = tmp;
+                result[j][i] = blocks[i][j];
             }
         }
     }
