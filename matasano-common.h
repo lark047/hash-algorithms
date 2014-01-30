@@ -31,7 +31,7 @@ struct result
     double score;
 
     /* ciphertext */
-    uint8_t *hex;
+    const uint8_t *hex;
 
     /* plaintext */
     unsigned char *text;

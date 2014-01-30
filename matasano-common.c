@@ -33,7 +33,7 @@ void HexToCleanString(const uint8_t * const hex, const uint64_t length, unsigned
 
 static int always(int c)
 {
-    return 1;
+    return c == c;
 }
 
 void PrintHex(const uint8_t * const hex, const uint64_t length, bool raw)
