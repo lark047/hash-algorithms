@@ -57,6 +57,8 @@ const struct result *DecodeXORFromFile(FILE *fp)
         }
         else
         {
+            free((void *) tmp->hex);
+            free(tmp->text);
             free((void *) tmp);
         }
     }

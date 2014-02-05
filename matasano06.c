@@ -17,7 +17,7 @@ enum GuessType
     FOUR_BLOCKS
 };
 
-static enum GuessType guess_type = TWO_BLOCKS;
+static enum GuessType guess_type = TOP_THREE;
 
 static uint8_t *guess_keysize(const uint8_t *, const uint64_t, const uint8_t);
 static size_t compute_hamming_distance(const uint8_t *, const uint8_t *, const uint8_t);
@@ -120,6 +120,8 @@ const uint8_t *BreakRepeatingKeyXOR(FILE *fp)
         {
             const struct result *r = DecodeXOR(transposed[j], partitions);
             key[j] = r->key;
+            free((void *) r->hex);
+            free(r->text);
             free((void *) r);
         }
 
@@ -214,6 +216,9 @@ static uint8_t *guess_keysize(const uint8_t *hex, const uint64_t decoded_length,
             }
 
             score /= 2;
+
+            free(hex1);
+            free(hex2);
         }
 
         /* ... Normalize this result by dividing by KEYSIZE. */
@@ -259,6 +264,8 @@ static uint8_t *guess_keysize(const uint8_t *hex, const uint64_t decoded_length,
         print_d("2nd lowest score %.5f with keysize %" PRIu8 "\n", min_score[1], keysize[1]);
         print_d("3rd lowest score %.5f with keysize %" PRIu8 "\n", min_score[2], keysize[2]);
     }
+
+    free(min_score);
 
     return keysize;
 }
