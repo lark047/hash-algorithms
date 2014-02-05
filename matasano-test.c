@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <inttypes.h>
+#include <math.h>
 
 #include <CUnit/Basic.h>
 #include <CUnit/CUError.h>
@@ -32,11 +33,11 @@ const char *RunTests(void)
         {
             /* add the tests to the suite */
             if (/* CU_ADD_TEST(suite, testEncodeDecodeBase64) != NULL &&
-                CU_ADD_TEST(suite, testFixedXOR) != NULL &&
-                CU_ADD_TEST(suite, testDecodeXOR) != NULL &&
+                CU_ADD_TEST(suite, testFixedXOR) != NULL && */
+                CU_ADD_TEST(suite, testDecodeXOR) != NULL /* &&
                 CU_ADD_TEST(suite, testDecodeXORFromFile) != NULL &&
-                CU_ADD_TEST(suite, testRepeatingKeyXOR) != NULL && */
-                CU_ADD_TEST(suite, testBreakRepeatingKeyXOR) != NULL)
+                CU_ADD_TEST(suite, testRepeatingKeyXOR) != NULL &&
+                CU_ADD_TEST(suite, testBreakRepeatingKeyXOR) != NULL */)
             {
                 /* Run all tests using the CUnit Basic interface */
                 CU_basic_set_mode(CU_BRM_VERBOSE);
@@ -61,28 +62,48 @@ static void testEncodeDecodeBase64(void)
 
 static void testEncodeBase64(void)
 {
-    char *base64 = NULL;
+    const char *base64;
 
-    EncodeBase64(NULL, base64);
+    errno = 0;
+    base64 = EncodeBase64(NULL);
     CU_ASSERT_PTR_NULL(base64);
+    CU_ASSERT_EQUAL(EINVAL, errno);
 
-    EncodeBase64("", base64);
+    errno = 0;
+    base64 = EncodeBase64("");
     CU_ASSERT_PTR_NULL(base64);
+    CU_ASSERT_EQUAL(0, errno);
 
-    /* TODO garbage input */
-    // EncodeBase64("", base64);
+    errno = 0;
+    base64 = EncodeBase64("e");
+    CU_ASSERT_PTR_NULL(base64);
+    CU_ASSERT_EQUAL(EINVAL, errno);
 
     char *input[] = {
-        "2e",               /* "."     */
-        "6f23",             /* "o#"    */
-        "355a3f",           /* "5Z?"   */
-        "79475e22",         /* "yG^\"" */
-        "49276d206b696c6c"
-        "696e6720796f7572"
-        "20627261696e206c"
-        "696b65206120706f"
-        "69736f6e6f757320"
-        "6d757368726f6f6d"  /* I'm killing your brain like a poisonous mushroom */
+        "2e",                                /* "."     */
+        "6f23",                              /* "o#"    */
+        "355a3f",                            /* "5Z?"   */
+        "79475e22",                          /* "yG^\"" */
+        "49276d206b696c6c696e6720796f7572"
+        "20627261696e206c696b65206120706f"
+        "69736f6e6f7573206d757368726f6f6d",  /* "I'm killing your brain like a poisonous mushroom" */
+        "4d616e2069732064697374696e677569"
+        "736865642c206e6f74206f6e6c792062"
+        "792068697320726561736f6e2c206275"
+        "7420627920746869732073696e67756c"
+        "61722070617373696f6e2066726f6d20"
+        "6f7468657220616e696d616c732c2077"
+        "686963682069732061206c757374206f"
+        "6620746865206d696e642c2074686174"
+        "2062792061207065727365766572616e"
+        "6365206f662064656c6967687420696e"
+        "2074686520636f6e74696e7565642061"
+        "6e6420696e6465666174696761626c65"
+        "2067656e65726174696f6e206f66206b"
+        "6e6f776c656467652c20657863656564"
+        "73207468652073686f72742076656865"
+        "6d656e6365206f6620616e7920636172"
+        "6e616c20706c6561737572652e"         /* see https://en.wikipedia.org/wiki/Base64#Examples */
     };
 
     char *expected[] = {
@@ -90,46 +111,77 @@ static void testEncodeBase64(void)
         "byM=",
         "NVo/",
         "eUdeIg==",
-        "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"
+        "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t",
+        "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5vdCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1"
+        "dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Npb24gZnJvbSBvdGhlciBhbmltYWxzLCB3"
+        "aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1pbmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFu"
+        "Y2Ugb2YgZGVsaWdodCBpbiB0aGUgY29udGludWVkIGFuZCBpbmRlZmF0aWdhYmxl"
+        "IGdlbmVyYXRpb24gb2Yga25vd2xlZGdlLCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhl"
+        "bWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4="
     };
 
     for (uint8_t i = 0; i < SIZE(input); ++i)
     {
-        base64 = malloc(2 * ceil(strlen(input[i]) / 3) + 1);
-        EncodeBase64(input[i], base64);
+        errno = 0;
+
+        base64 = EncodeBase64(input[i]);
+        // print_d("%s\n", base64);
+
         CU_ASSERT_PTR_NOT_NULL_FATAL(base64);
-        CU_ASSERT_STRING_EQUAL(base64, expected[i]);
+        CU_ASSERT_EQUAL(0, errno);
 
         if (!STR_EQ(expected[i], base64))
         {
             fprintf(stderr, "Expected: %s Actual: %s\n", expected[i], base64);
         }
 
+        CU_ASSERT_STRING_EQUAL(base64, expected[i]);
         FREE(base64);
     }
 }
 
 static void testDecodeBase64(void)
 {
-    print_d("%s\n", "*****************************************************");
-    uint8_t *hex = NULL;
+    const uint8_t *hex;
 
-    DecodeBase64(NULL, hex);
+    errno = 0;
+    hex = DecodeBase64(NULL);
     CU_ASSERT_PTR_NULL(hex);
+    CU_ASSERT_EQUAL(EINVAL, errno);
 
-    DecodeBase64("", hex);
+    errno = 0;
+    hex = DecodeBase64("");
     CU_ASSERT_PTR_NULL(hex);
+    CU_ASSERT_EQUAL(0, errno);
+
+    errno = 0;
+    hex = DecodeBase64("d4=");
+    CU_ASSERT_PTR_NULL(hex);
+    CU_ASSERT_EQUAL(EINVAL, errno);
 
     char *input[] = {
-        "Lg==",                                                             /* "."     */
-        "byM=",                                                             /* "o#"    */
-        "NVo/",                                                             /* "5Z?"   */
-        "eUdeIg==",                                                         /* "yG^\"" */
-        "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t"  /* I'm killing your brain like a poisonous mushroom */
+        "Lg==",                              /* "."     */
+        "byM=",                              /* "o#"    */
+        "NVo/",                              /* "5Z?"   */
+        "eUdeIg==",                          /* "yG^\"" */
+        "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBs"
+        "aWtlIGEgcG9pc29ub3VzIG11c2hyb29t",  /* I'm killing your brain like a poisonous mushroom */
+        "TWFuIGlzIGRpc3Rpbmd1aXNoZWQsIG5v"
+        "dCBvbmx5IGJ5IGhpcyByZWFzb24sIGJ1"
+        "dCBieSB0aGlzIHNpbmd1bGFyIHBhc3Np"
+        "b24gZnJvbSBvdGhlciBhbmltYWxzLCB3"
+        "aGljaCBpcyBhIGx1c3Qgb2YgdGhlIG1p"
+        "bmQsIHRoYXQgYnkgYSBwZXJzZXZlcmFu"
+        "Y2Ugb2YgZGVsaWdodCBpbiB0aGUgY29u"
+        "dGludWVkIGFuZCBpbmRlZmF0aWdhYmxl"
+        "IGdlbmVyYXRpb24gb2Yga25vd2xlZGdl"
+        "LCBleGNlZWRzIHRoZSBzaG9ydCB2ZWhl"
+        "bWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVh"
+        "c3VyZS4="                           /* see https://en.wikipedia.org/wiki/Base64#Examples */
     };
 
-    uint8_t *expected[5];
-    uint8_t bytes_len[] = { 3, 3, 3, 6, 48 };
+    uint8_t *expected[6];
+    uint8_t bytes_len[] = { 3, 3, 3, 6, 48, 240 };
 
     expected[0] = malloc(bytes_len[0] * sizeof *expected);
     expected[0][0] = 0x2e;
@@ -168,23 +220,27 @@ static void testDecodeBase64(void)
     expected[4][40] = 0x6d; expected[4][41] = 0x75; expected[4][42] = 0x73; expected[4][43] = 0x68;
     expected[4][44] = 0x72; expected[4][45] = 0x6f; expected[4][46] = 0x6f; expected[4][47] = 0x6d;
 
-    for (uint8_t i = 0; i < SIZE(input); ++i)
-    {
-        hex = malloc((3 * strlen(input[i]) / 4 + 1) * sizeof *hex);
-        print_d("3 * %zu / 4) + 1 = %d\n", strlen(input[i]), (int) (3 * ceil(bytes_len[i] / 4) + 1));
-        print_d("allocated %zu bytes\n", 3 * strlen(input[i]) / 4 + 1);
-        DecodeBase64(input[i], hex);
-        CU_ASSERT_PTR_NOT_NULL_FATAL(hex);
+    // TODO expected[5] = malloc(bytes_len[5] * sizeof *expected);
+    // 4d 61 6e 20 69 73 20 64 69 73 74 69 6e 67 75 69 73 68 65 64 2c 20 6e 6f 74 20 6f 6e 6c 79 20 62 79 20 68 69 73 20 72 65 61 73 6f 6e 2c 20 62 75 74 20 62 79 20 74 68 69 73 20 73 69 6e 67 75 6c 61 72 20 70 61 73 73 69 6f 6e 20 66 72 6f 6d 20 6f 74 68 65 72 20 61 6e 69 6d 61 6c 73 2c 20 77 68 69 63 68 20 69 73 20 61 0d 0a 6c 75 73 74 20 6f 66 20 74 68 65 20 6d 69 6e 64 2c 20 74 68 61 74 20 62 79 20 61 20 70 65 72 73 65 76 65 72 61 6e 63 65 20 6f 66 20 64 65 6c 69 67 68 74 20 69 6e 20 74 68 65 20 63 6f 6e 74 69 6e 75 65 64 20 61 6e 64 20 69 6e 64 65 66 61 74 69 67 61 62 6c 65 20 67 65 6e 65 72 61 74 69 6f 6e 20 6f 66 20 6b 6e 6f 77 6c 65 64 67 65 2c 20 65 78 63 65 65 64 73 20 74 68 65 20 73 68 6f 72 74 20 76 65 68 65 6d 65 6e 63 65 20 6f 66 20 61 6e 79 20 63 61 72 6e 61 6c 20 70 6c 65 61 73 75 72 65 2e
 
-        for (uint8_t j = 0; j < bytes_len[i]; ++j)
+    for (uint8_t i = 0; i < 5; ++i)
+    {
+        errno = 0;
+
+        hex = DecodeBase64(input[i]);
+
+        CU_ASSERT_PTR_NOT_NULL_FATAL(hex);
+        CU_ASSERT_EQUAL(0, errno);
+
+        for (size_t j = 0; j < bytes_len[i]; ++j)
         {
             // print_d("%u: comparing %u (expected) and %u (actual)\n", j, expected[i][j], hex[j]);
-            CU_ASSERT_EQUAL(hex[j], expected[i][j]);
-
             if (expected[i][j] != hex[j])
             {
-                fprintf(stderr, "%u: expected: 0x%0x Actual: 0x%0x\n", j, expected[i][j], hex[j]);
+                fprintf(stderr, "%zu: expected: 0x%0x Actual: 0x%0x\n", j, expected[i][j], hex[j]);
             }
+
+            CU_ASSERT_EQUAL(hex[j], expected[i][j]);
         }
 
         FREE(expected[i]);
@@ -194,16 +250,15 @@ static void testDecodeBase64(void)
 
 static void testFixedXOR(void)
 {
-    uint8_t *result;
-    print_d("%s\n", "");
+    const uint8_t *result;
 
-    result = (uint8_t *) FixedXOR(NULL, NULL, 0);
+    result = FixedXOR(NULL, NULL, 0);
     CU_ASSERT_PTR_NULL(result);
 
     uint8_t *hex1 = malloc(1 * sizeof *hex1), *hex2;
     hex1[0] = 0xff;
 
-    result = (uint8_t *) FixedXOR(hex1, NULL, 1);
+    result = FixedXOR(hex1, NULL, 1);
     CU_ASSERT_PTR_NULL(result);
     FREE(hex1);
 
@@ -219,7 +274,7 @@ static void testFixedXOR(void)
     StringToHex(msg1, hex1);
     StringToHex(msg2, hex2);
 
-    result = (uint8_t *) FixedXOR(hex1, hex2, strlen(msg1) / 2);
+    result = FixedXOR(hex1, hex2, strlen(msg1) / 2);
 
     const uint8_t expected[] = {
         0x74, 0x68, 0x65, 0x20, 0x6b, 0x69, 0x64, 0x20, 0x64,
@@ -234,29 +289,45 @@ static void testFixedXOR(void)
     FREE(hex1);
     FREE(hex2);
     FREE(result);
-
 }
 
 static void testDecodeXOR(void)
 {
-    const char *msg = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+    const uint8_t len = 34;
+    const uint8_t hex[] = {
+        0x1b, 0x37, 0x37, 0x33, 0x31, 0x36, 0x3f, 0x78,
+        0x15, 0x1b, 0x7f, 0x2b, 0x78, 0x34, 0x31, 0x33,
+        0x3d, 0x78, 0x39, 0x78, 0x28, 0x37, 0x2d, 0x36,
+        0x3c, 0x78, 0x37, 0x3e, 0x78, 0x3a, 0x39, 0x3b,
+        0x37, 0x36
+    };
 
-    uint8_t *hex = malloc(strlen(msg) * sizeof *hex / 2);
-    CU_ASSERT_PTR_NOT_NULL_FATAL(hex);
+    const struct result *r = DecodeXOR(hex, len);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(r);
+    CU_ASSERT_EQUAL(r->key, 'X');
+    CU_ASSERT_STRING_EQUAL(r->text, "Cooking MC's like a pound of bacon");
 
-    StringToHex(msg, hex);
+    free((void *) r->hex);
+    free(r->text);
+    FREE(r);
 
-    struct result *result = DecodeXOR(hex, strlen(msg) / 2);
+#if 1
+    const uint8_t hex2[] = {
+        0x1c, 0x3d, 0xf1, 0x13, 0x53, 0x21, 0xa8, 0xe9,
+        0x24, 0x1a, 0x56, 0x07, 0xf8, 0x30, 0x5d, 0x57,
+        0x1a, 0xa5, 0x46, 0x00, 0x1e, 0x32, 0x54, 0x55,
+        0x5a, 0x11, 0x51, 0x19, 0x24
+    };
 
-    print_d("key = 0x%02x\n", result->key);
-    print_d("text = \"%s\"\n", result->text);
+    const struct result *r2 = DecodeXOR(hex2, 29);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(r2);
 
-    CU_ASSERT_STRING_EQUAL("Cooking MC's like a pound of bacon", result->text);
+    print_d("key '%c' (0x%02x) gives score %f and text \"%s\"\n", r2->key, r2->key, r2->score, r2->text);
 
-    FREE(hex);
-    FREE(result->hex);
-    FREE(result->text);
-    FREE(result);
+    free((void *) r2->hex);
+    free(r2->text);
+    FREE(r2);
+#endif
 }
 
 static void testDecodeXORFromFile(void)
@@ -264,22 +335,22 @@ static void testDecodeXORFromFile(void)
     FILE *fp = fopen("gistfile1.txt", "r");
     CU_ASSERT_PTR_NOT_NULL_FATAL(fp);
 
-    struct result *result = DecodeXORFromFile(fp);
-    CU_ASSERT_PTR_NOT_NULL_FATAL(result);
+    const struct result *r = DecodeXORFromFile(fp);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(r);
 
-    char *p = strchr((char *) result->text, '\n');
+    char *p = strchr((char *) r->text, '\n');
     if (p) { *p = '\0'; }
 
-    print_d("key = '%c' (0x%02x)\n", result->key, result->key);
-    print_d("score = %.4f\n", result->score);
-    print_d("text = \"%s\"\n", result->text);
+    print_d("key = '%c' (0x%02x)\n", r->key, r->key);
+    print_d("score = %.4f\n", r->score);
+    print_d("text = \"%s\"\n", r->text);
 
-    CU_ASSERT_EQUAL(result->key, 0x35);
-    CU_ASSERT_STRING_EQUAL(result->text, "Now that the party is jumping");
+    CU_ASSERT_EQUAL(r->key, 0x35);
+    CU_ASSERT_STRING_EQUAL(r->text, "Now that the party is jumping");
 
-    FREE(result->hex);
-    FREE(result->text);
-    FREE(result);
+    free((void *) r->hex);
+    free(r->text);
+    FREE(r);
 
     fclose(fp);
 }
