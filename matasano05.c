@@ -13,8 +13,6 @@ const uint8_t *RepeatingKeyXOR(const uint8_t * const msg, uint64_t msg_length, c
     }
 
     print_d("%s\n", "");
-    print_d("length of \"%s\" is %zu\n", (char *) msg, msg_length);
-    print_d("length of \"%s\" is %zu\n", (char *) key, key_length);
 
     uint8_t *buffer = malloc(msg_length + 1); /* TODO check */
     uint8_t *hex1 = malloc(msg_length * sizeof *hex1); /* TODO check */
