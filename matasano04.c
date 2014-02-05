@@ -10,20 +10,22 @@
 /* string length (60) + newline + nul byte */
 #define BUFSIZE (60 + 1 + 1)
 
-struct result *DecodeXORFromFile(FILE *fp)
+const struct result *DecodeXORFromFile(FILE *fp)
 {
     char line[BUFSIZE], *p; /* TODO remove hard-coded size */
     uint8_t * const hex = malloc(30 * sizeof *hex); /* TODO ^ and check */
-    struct result *result = NULL;
+    const struct result *result = NULL;
 
     while (fgets(line, BUFSIZE, fp) != NULL)
     {
+#if 0
         int c = fgetc(fp);
         if (!isspace(c))
         {
             print_d("next char is '%c' (0x%02x)\n", c, c);
             fputc(c, fp);
         }
+#endif
 
         if ((p = strchr(line, '\n')) != NULL)
         {
@@ -35,14 +37,19 @@ struct result *DecodeXORFromFile(FILE *fp)
             *p = 0;
         }
 
-        print_d("read \"%s\"\n", line);
+        const uint8_t length = strlen(line) / 2;
+
+        print_d("read \"%s\" (%" PRIu8 ")\n", line, length);
 
         StringToHex(line, hex);
-        // PrintHex(hex, 30);
+        PrintHexWithSpace(hex, length);
 
-        struct result *tmp = DecodeXOR(hex, 30);
+        const struct result *tmp = DecodeXOR(hex, length);
 
-        print_d("decoded with '%c' (0x%02x): %s\n", (isprint(tmp->key) ? tmp->key : ' '), tmp->key, tmp->text);
+        print_d("length %" PRIu8 " and score %f with key 0x%02x\n", length, tmp->score, tmp->key);
+
+        // print_d("decoded with '%c' (0x%02x)\n", (isprint(tmp->key) ? tmp->key : '*'), tmp->key);
+        // PrintAsString(tmp->text, 30);
 
         if (result == NULL || result->score < tmp->score)
         {
@@ -50,7 +57,7 @@ struct result *DecodeXORFromFile(FILE *fp)
         }
         else
         {
-            free(tmp);
+            free((void *) tmp);
         }
     }
 
