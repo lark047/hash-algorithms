@@ -48,7 +48,7 @@ void PrintHexWithSpace(const uint8_t * const hex, const uint64_t length)
 
 static int alphaplus(int c)
 {
-    return isalpha(c) || c == ' ';
+    return isalpha(c) || ispunct(c) || isspace(c) || isdigit(c);
 }
 
 void PrintAsString(const uint8_t * const hex, const uint64_t length)
