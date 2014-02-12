@@ -46,7 +46,7 @@ const struct result *DecodeXORFromFile(FILE *fp)
 
         const struct result *tmp = DecodeXOR(hex, length);
 
-        print_d("length %" PRIu8 " and score %f with key 0x%02x\n", length, tmp->score, tmp->key);
+        print_d("length %" PRIu8 " and score %f with key 0x%02x\n", length, tmp->score, tmp->key.c);
 
         // print_d("decoded with '%c' (0x%02x)\n", (isprint(tmp->key) ? tmp->key : '*'), tmp->key);
         // PrintAsString(tmp->text, 30);

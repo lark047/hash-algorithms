@@ -15,7 +15,9 @@
 #  define print_d(f, ...)      /* NO-OP */
 #endif
 
-#define STR_EQ(s1,s2) (strcmp(s1, s2) == 0)
+#define STR_EQ(s1,s2)     (strcmp(s1, s2) == 0)
+#define ASIZE                                27
+#define ALPHA     "abcdefghijklmnopqrstuvwxyz "
 
 void StringToHex(const char * const, uint8_t * const);
 void HexToCleanString(const uint8_t * const, const uint64_t, unsigned char * const);
@@ -24,10 +26,19 @@ void PrintHex(const uint8_t * const, const uint64_t, const bool);
 void PrintHexWithSpace(const uint8_t * const, const uint64_t);
 void PrintAsString(const uint8_t * const, const uint64_t);
 
+double CalculateScore(const uint8_t * const, const uint64_t);
+
 /* result of XOR decode */
 struct result
 {
-    uint8_t key;
+    uint16_t keysize;
+
+    union
+    {
+        uint8_t   c;
+        uint8_t  *ptr;
+    } key;
+
     double score;
 
     /* ciphertext */
@@ -35,6 +46,18 @@ struct result
 
     /* plaintext */
     unsigned char *text;
+};
+
+struct freq
+{
+    /* count by letter */
+    uint32_t *freq;
+
+    /* sample text length */
+    uint32_t length;
+
+    /* alpha or ' ' hits */
+    uint32_t hits;
 };
 
 #endif /* MATASANO_COMMON_H_ */

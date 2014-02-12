@@ -25,6 +25,6 @@ const struct result *DecodeXORFromFile(FILE *);
 const uint8_t *RepeatingKeyXOR(const uint8_t * const, const uint64_t, const uint8_t * const, const uint64_t);
 
 /* 6. Break repeating-key XOR */
-const uint8_t *BreakRepeatingKeyXOR(FILE *);
+const struct result *BreakRepeatingKeyXOR(FILE *);
 
 #endif /* MATASANO_H_ */
