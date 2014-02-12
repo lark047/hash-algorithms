@@ -8,7 +8,8 @@
 
 #include "matasano.h"
 
-#define LINESIZE (60 + 1 + 1)
+#define LINESIZE             (60 + 1 + 1)
+#define MIN(a,b)  ((a) < (b) ? (a) : (b))
 
 enum GuessType
 {
@@ -23,30 +24,33 @@ static uint8_t *guess_keysize(const uint8_t *, const uint64_t, const uint8_t);
 static size_t compute_hamming_distance(const uint8_t *, const uint8_t *, const uint8_t);
 static void transpose(uint8_t **, uint8_t, size_t, uint8_t **); /* TODO change size_t to uint32_t */
 static void free_array(uint8_t ***, const uint64_t);
+static void reduce_key(struct result * const);
 
-const uint8_t *BreakRepeatingKeyXOR(FILE *fp)
+const struct result *BreakRepeatingKeyXOR(FILE *fp)
 {
     print_d("%s\n", "");
-    //size_t dist = ComputeHammingDistance("this is a test", "wokka wokka!!!");
-    //print_d("hamming distance is %zu\n", dist);
+
+#if 0
+    size_t dist = compute_hamming_distance("this is a test", "wokka wokka!!!", 14);
+    print_d("hamming distance is %zu\n", dist);
+#endif
 
     size_t bytes_read = 0;
-    char line[LINESIZE], *base64 = NULL;
+    char line[LINESIZE], *base64 = NULL, *p;
 
     while (fgets(line, sizeof line, fp) != NULL)
     {
-        char *p = strchr(line, '\n');
-        if (p)
+        if ((p = strchr(line, '\n')) != NULL)
         {
             *p = '\0';
         }
 
-        print_d("read \"%s\" (%zu)\n", line, strlen(line));
+        print_d("read \"%s\" (%zu characters)\n", line, strlen(line));
 
         size_t len = strlen(line);
         base64 = realloc(base64, bytes_read + len + 1); /* TODO check */
 
-        strncpy(base64 + bytes_read, line, len);
+        memcpy(base64 + bytes_read, line, len + 1);
         bytes_read += len;
     }
 
@@ -55,15 +59,24 @@ const uint8_t *BreakRepeatingKeyXOR(FILE *fp)
     print_d("decoded length = %zu\n", 3 * strlen(base64) / 4);
 
     size_t decoded_length = 3 * strlen(base64) / 4;
-
     const uint8_t *hex = DecodeBase64(base64);
-    PrintHex(hex, decoded_length, true);
+
     free(base64);
 
-    /* a. Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40. */
-    uint8_t *keysize = guess_keysize(hex, decoded_length, 200);
+    PrintHex(hex, decoded_length, true);
 
-    for (uint8_t i = 0; keysize[i]; ++i)
+    struct result *result = malloc(sizeof *result); /* TODO check; free()'d by caller */
+    double score;
+
+    result->key.ptr = NULL;
+    result->score = DBL_MAX;
+    result->hex = NULL;
+    result->text = NULL;
+
+    /* a. Let KEYSIZE be the guessed length of the key; try values from 2 to (say) 40. */
+    uint8_t *keysize = guess_keysize(hex, decoded_length, MIN(decoded_length, 200));
+
+    for (uint8_t i = 0; keysize[i] != 0; ++i)
     {
         size_t partitions = decoded_length / keysize[i];
         partitions += (decoded_length % keysize[i] == 0 ? 0 : 1);
@@ -119,7 +132,7 @@ const uint8_t *BreakRepeatingKeyXOR(FILE *fp)
         for (uint8_t j = 0; j < keysize[i]; ++j)
         {
             const struct result *r = DecodeXOR(transposed[j], partitions);
-            key[j] = r->key;
+            key[j] = r->key.c;
             free((void *) r->hex);
             free(r->text);
             free((void *) r);
@@ -131,30 +144,46 @@ const uint8_t *BreakRepeatingKeyXOR(FILE *fp)
         /* done with transposed */
         free_array(&transposed, keysize[i]);
 
-        const uint8_t *result = RepeatingKeyXOR(hex, decoded_length, key, keysize[i]);
-        PrintAsString(result, decoded_length);
+        const uint8_t *xor_result = RepeatingKeyXOR(hex, decoded_length, key, keysize[i]);
+        PrintAsString(xor_result, decoded_length);
 
-        free(key);
-        free((void *) result);
+        print_d("calculating score for keysize %" PRIu8 "\n", keysize[i]);
+        score = CalculateScore(xor_result, decoded_length);
+
+        if (score < result->score)
+        {
+            free(result->key.ptr);
+            free((void *) result->hex);
+            // free(result->text);
+
+            result->keysize = keysize[i];
+            result->key.ptr = key;
+            result->score = score;
+            result->hex = xor_result;
+            result->text = (unsigned char *) xor_result;
+        }
+        else
+        {
+            free(key);
+            free((void *) xor_result);
+        }
     }
 
     free((void *) hex);
     free(keysize);
 
-    return NULL;
+    reduce_key(result);
+
+    return result;
 }
 
 static uint8_t *guess_keysize(const uint8_t *hex, const uint64_t decoded_length, const uint8_t bound)
 {
-    uint8_t *keysize;
-    double *min_score;
-
     const uint8_t size = (guess_type == TOP_THREE ? 4 : 2);
 
-    keysize = malloc(size * sizeof *keysize); /* TODO check */
-    min_score = malloc((size - 1) * sizeof *min_score); /* TODO check */
+    uint8_t *keysize = calloc(size, sizeof *keysize); /* TODO check */
+    double *min_score = malloc((size - 1) * sizeof *min_score); /* TODO check */
 
-    memset(keysize, 0, size * sizeof *keysize);
     for (uint8_t i = 0; i < size; ++i)
     {
         min_score[i] = DBL_MAX;
@@ -176,13 +205,17 @@ static uint8_t *guess_keysize(const uint8_t *hex, const uint64_t decoded_length,
         if (guess_type != FOUR_BLOCKS)
         {
             /* ... take the FIRST KEYSIZE worth of bytes, and the SECOND KEYSIZE worth of bytes, ... */
-            hex1 = malloc(bytes); /* TODO check */
-            hex2 = malloc(bytes); /* TODO check */
+            hex1 = calloc(bytes, sizeof *hex1); /* TODO check */
+            hex2 = calloc(bytes, sizeof *hex2); /* TODO check */
 
-            memcpy(hex1, hex, bytes);
+            memcpy(hex1, hex, MIN(bytes, decoded_length));
             PrintHex(hex1, ks, true);
 
-            memcpy(hex2, hex + bytes, bytes);
+            if (bytes <= decoded_length)
+            {
+                memcpy(hex2, hex + bytes, MIN(bytes, decoded_length - bytes));
+            }
+
             PrintHex(hex2, ks, true);
 
             /* ... and find the edit distance between them. */
@@ -199,13 +232,13 @@ static uint8_t *guess_keysize(const uint8_t *hex, const uint64_t decoded_length,
                 switch (i % 2)
                 {
                     case 0:
-                        hex1 = malloc(bytes); /* TODO check */
+                        hex1 = calloc(bytes, sizeof *hex1); /* TODO check */
                         memcpy(hex1, hex + i * bytes, bytes);
                         PrintHex(hex1, ks, true);
                         break;
 
                     case 1:
-                        hex2 = malloc(bytes); /* TODO check */
+                        hex2 = calloc(bytes, sizeof *hex2); /* TODO check */
                         memcpy(hex2, hex + i * bytes, bytes);
                         PrintHex(hex2, ks, true);
 
@@ -308,5 +341,32 @@ static void free_array(uint8_t ***array, const uint64_t length)
         free((*array)[i]);
     }
     free(*array);
-    *array = NULL;
+}
+
+static void reduce_key(struct result * const result)
+{
+    uint8_t *key = result->key.ptr;
+    uint16_t keysize = 0;
+
+    for (uint16_t ks = 1; ks < result->keysize; ++ks)
+    {
+        print_d("trying keysize %" PRIu16 "\n", ks);
+        for (uint16_t i = 0; i < ks; ++i)
+        {
+            if (memcmp(key + i * ks, key + (i + 1) * ks, ks) == 0)
+            {
+                print_d("actual keysize is %" PRIu16 "\n", ks);
+                keysize = ks;
+                break;
+            }
+        }
+
+        if (keysize != 0)
+        {
+            break;
+        }
+    }
+
+    result->keysize = keysize;
+    result->key.ptr = realloc(result->key.ptr, keysize * sizeof *(result->key.ptr)); /* TODO check */
 }

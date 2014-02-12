@@ -33,11 +33,11 @@ const char *RunTests(void)
         {
             /* add the tests to the suite */
             if (/* CU_ADD_TEST(suite, testEncodeDecodeBase64) != NULL &&
-                CU_ADD_TEST(suite, testFixedXOR) != NULL && */
-                CU_ADD_TEST(suite, testDecodeXOR) != NULL /* &&
+                CU_ADD_TEST(suite, testFixedXOR) != NULL &&
+                CU_ADD_TEST(suite, testDecodeXOR) != NULL &&
                 CU_ADD_TEST(suite, testDecodeXORFromFile) != NULL &&
-                CU_ADD_TEST(suite, testRepeatingKeyXOR) != NULL &&
-                CU_ADD_TEST(suite, testBreakRepeatingKeyXOR) != NULL */)
+                CU_ADD_TEST(suite, testRepeatingKeyXOR) != NULL && */
+                CU_ADD_TEST(suite, testBreakRepeatingKeyXOR) != NULL)
             {
                 /* Run all tests using the CUnit Basic interface */
                 CU_basic_set_mode(CU_BRM_VERBOSE);
@@ -304,14 +304,14 @@ static void testDecodeXOR(void)
 
     const struct result *r = DecodeXOR(hex, len);
     CU_ASSERT_PTR_NOT_NULL_FATAL(r);
-    CU_ASSERT_EQUAL(r->key, 'X');
+    CU_ASSERT_EQUAL(r->key.c, 'X');
     CU_ASSERT_STRING_EQUAL(r->text, "Cooking MC's like a pound of bacon");
 
     free((void *) r->hex);
     free(r->text);
     FREE(r);
 
-#if 1
+#if 0
     const uint8_t hex2[] = {
         0x1c, 0x3d, 0xf1, 0x13, 0x53, 0x21, 0xa8, 0xe9,
         0x24, 0x1a, 0x56, 0x07, 0xf8, 0x30, 0x5d, 0x57,
@@ -341,11 +341,11 @@ static void testDecodeXORFromFile(void)
     char *p = strchr((char *) r->text, '\n');
     if (p) { *p = '\0'; }
 
-    print_d("key = '%c' (0x%02x)\n", r->key, r->key);
+    print_d("key = '%c' (0x%02x)\n", r->key.c, r->key.c);
     print_d("score = %.4f\n", r->score);
     print_d("text = \"%s\"\n", r->text);
 
-    CU_ASSERT_EQUAL(r->key, 0x35);
+    CU_ASSERT_EQUAL(r->key.c, 0x35);
     CU_ASSERT_STRING_EQUAL(r->text, "Now that the party is jumping");
 
     free((void *) r->hex);
@@ -375,9 +375,9 @@ static void testRepeatingKeyXOR(void)
 
     for (size_t i = 0; i < length / 2; ++i)
     {
-        print_d("result[%2zu] = 0x%02x\n", i, result[i]);
+        // print_d("result[%2zu] = 0x%02x\n", i, result[i]);
         snprintf((char *) actual + 2 * i, 3, "%02x", result[i]);
-        print_d("actual[%2zu] = %c%c\n", 2 * i, (unsigned) actual[2 * i], (unsigned) actual[2 * i + 1]);
+        // print_d("actual[%2zu] = %c%c\n", 2 * i, (unsigned) actual[2 * i], (unsigned) actual[2 * i + 1]);
     }
 
     actual[length] = '\0';
@@ -394,7 +394,61 @@ static void testBreakRepeatingKeyXOR(void)
     FILE *fp = fopen("gistfile2.txt", "r");
     CU_ASSERT_PTR_NOT_NULL_FATAL(fp);
 
-    BreakRepeatingKeyXOR(fp);
+    const struct result *result = BreakRepeatingKeyXOR(fp);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(result);
+
+    uint8_t expected_key[] = {
+        0x54, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x61, 0x74, 0x6f, 0x72, 0x20, 0x58, 0x3a, 0x20,
+        0x42, 0x72, 0x69, 0x6e, 0x67, 0x20, 0x74, 0x68, 0x65, 0x20, 0x6e, 0x6f, 0x69, 0x73,
+        0x65
+    };
+
+    CU_ASSERT_EQUAL(result->keysize, SIZE(expected_key));
+    CU_ASSERT_PTR_NOT_NULL_FATAL(result->key.ptr);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(result->hex);
+    CU_ASSERT_PTR_NOT_NULL_FATAL(result->text);
+
+    for (uint8_t i = 0; i < result->keysize; ++i)
+    {
+        if (expected_key[i] != result->key.ptr[i])
+        {
+            fprintf(stderr, "Expected: '%c' actual: '%c' at index %" PRIu8 "\n", expected_key[i], result->key.ptr[i], i);
+        }
+
+        CU_ASSERT_EQUAL(result->key.ptr[i], expected_key[i]);
+    }
+
+    char *expected_text = "I'm back and I'm ringin' the bell \nA rockin' on the mike while the fly girls yell \nIn ecstasy in the"
+        " back of me \nWell that's my DJ Deshay cuttin' all them Z's \nHittin' hard and the girlies goin' crazy \nVanilla's on th"
+        "e mike, man I'm not lazy. \n\nI'm lettin' my drug kick in \nIt controls my mouth and I begin \nTo just let it flow, let "
+        "my concepts go \nMy posse's to the side yellin', Go Vanilla Go! \n\nSmooth 'cause that's the way I will be \nAnd if you "
+        "don't give a damn, then \nWhy you starin' at me \nSo get off 'cause I control the stage \nThere's no dissin' allowed \nI"
+        "'m in my own phase \nThe girlies sa y they love me and that is ok \nAnd I can dance better than any kid n' play \n\nStag"
+        "e 2 -- Yea the one ya' wanna listen to \nIt's off my head so let the beat play through \nSo I can funk it up and make it"
+        "sound good \n1-2-3 Yo -- Knock on some wood \nFor good luck, I like my rhymes atrocious \nSupercalafragilisticexpialidoc"
+        "ious \nI'm an effect and that you can bet \nI can take a fly girl and make her wet. \n\nI'm like Samson -- Samson to Del"
+        "ilah \nThere's no denyin', You can try to hang \nBut you'll keep tryin' to get my style \nOver and over, practice makes "
+        "perfect \nBut not if you're a loafer. \n\nYou'll get nowhere, no place, no time, no girls \nSoon -- Oh my God, homebody,"
+        " you probably eat \nSpaghetti with a spoon! Come on and say it! \n\nVIP. Vanilla Ice yep, yep, I'm comin' hard like a rh"
+        "ino \nIntoxicating so you stagger like a wino \nSo punks stop trying and girl stop cryin' \nVanilla Ice is sellin' and y"
+        "ou people are buyin' \n'Cause why the freaks are jockin' like Crazy Glue \nMovin' and groovin' trying to sing along \nAl"
+        "l through the ghetto groovin' this here song \nNow you're amazed by the VIP posse. \n\nSteppin' so hard like a German Na"
+        "zi \nStartled by the bases hittin' ground \nThere's no trippin' on mine, I'm just gettin' down \nSparkamatic, I'm hangin"
+        "' tight like a fanatic \nYou trapped me once and I thought that \nYou might have it \nSo step down and lend me your ear "
+        "\n'89 in my time! You, '90 is my year. \n\nYou're weakenin' fast, YO! and I can tell it \nYour body's gettin' hot, so, s"
+        "o I can smell it \nSo don't be mad and don't be sad \n'Cause the lyrics belong to ICE, You can call me Dad \nYou're pitc"
+        "hin' a fit, so step back and endure \nLet the witch doctor, Ice, do the dance to cure \nSo come up close and don't be sq"
+        "uare \nYou wanna battle me -- Anytime, anywhere \n\nYou thought that I was weak, Boy, you're dead wrong \nSo come on, ev"
+        "erybody and sing this song \n\nSay -- Play that funky music Say, go white boy, go white boy go \nplay that funky music G"
+        "o white boy, go white boy, go \nLay down and boogie and play that funky music till you die. \n\nPlay that funky music Co"
+        "me on, Come on, let me hear \nPlay that funky music white boy you say it, say it \nPlay that funky music A little louder"
+        " now \nPlay that funky music, white boy Come on, Come on, Come on \nPlay that funky music \nn";
+
+    CU_ASSERT_STRING_EQUAL(result->text, expected_text);
+
+    free(result->key.ptr);
+    free((void *) result->hex);
+    free((void *) result);
 
     fclose(fp);
 }
