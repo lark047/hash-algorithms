@@ -13,10 +13,6 @@
 #define PADDING2  (PADDING1 PADDING1)
 #define CHARS     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
-#ifdef DEBUG
-# define CHECK(b) (b ? "true" : "false")
-#endif
-
 /**
  * Input: (0x)49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d
  * Expected output: SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t
@@ -63,10 +59,17 @@ const char *EncodeBase64(const char * const msg)
     }
     else if (strlen(msg) == 0)
     {
-        return NULL;
+        return "";
     }
 
-    char *base64 = malloc(4 * ceil((double) strlen(msg) / 2 / 3) + 1); /* TODO check */
+    size_t base64_len = 4 * ceil((double) strlen(msg) / 2 / 3);
+    char *base64 = malloc(base64_len + 1);
+
+    if (base64 == NULL)
+    {
+        errno = ENOMEM;
+        return NULL;
+    }
 
     for (size_t i = 0; i < strlen(msg); i += 6)
     {
