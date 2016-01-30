@@ -7,6 +7,8 @@
 #define _STR(x)    #x
 #define STR(x) _STR(x)
 
+#define LENGTH(a) (sizeof (a) / sizeof *(a))
+
 #ifdef DEBUG
 #  define fprint_d(fp, f, ...) fprintf(fp, "[debug] " __FILE__ ":" STR(__LINE__) " " f, __VA_ARGS__)
 #  define print_d(f, ...)      fprint_d(stdout, f, __VA_ARGS__)

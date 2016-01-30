@@ -12,7 +12,6 @@
 #include "matasano-test.h"
 
 #define FREE(ptr) do { free((void *) ptr); ptr = NULL; } while (0)
-#define SIZE(a)                         (sizeof (a) / sizeof *(a))
 
 static void testEncodeDecodeBase64(void);
 static void testFixedXOR(void);
@@ -32,12 +31,12 @@ const char *RunTests(void)
         if ((suite = CU_add_suite("Matasano Crypto Challenge #1", NULL, NULL)) != NULL)
         {
             /* add the tests to the suite */
-            if (/* CU_ADD_TEST(suite, testEncodeDecodeBase64) != NULL &&
+            if ( CU_ADD_TEST(suite, testEncodeDecodeBase64) != NULL /* &&
                 CU_ADD_TEST(suite, testFixedXOR) != NULL &&
                 CU_ADD_TEST(suite, testDecodeXOR) != NULL &&
                 CU_ADD_TEST(suite, testDecodeXORFromFile) != NULL &&
-                CU_ADD_TEST(suite, testRepeatingKeyXOR) != NULL && */
-                CU_ADD_TEST(suite, testBreakRepeatingKeyXOR) != NULL)
+                CU_ADD_TEST(suite, testRepeatingKeyXOR) != NULL &&
+                CU_ADD_TEST(suite, testBreakRepeatingKeyXOR) != NULL*/)
             {
                 /* Run all tests using the CUnit Basic interface */
                 CU_basic_set_mode(CU_BRM_VERBOSE);
@@ -71,8 +70,9 @@ static void testEncodeBase64(void)
 
     errno = 0;
     base64 = EncodeBase64("");
-    CU_ASSERT_PTR_NULL(base64);
+    CU_ASSERT_PTR_NOT_NULL(base64);
     CU_ASSERT_EQUAL(0, errno);
+    CU_ASSERT_STRING_EQUAL(base64, "");
 
     errno = 0;
     base64 = EncodeBase64("e");
@@ -120,7 +120,7 @@ static void testEncodeBase64(void)
         "bWVuY2Ugb2YgYW55IGNhcm5hbCBwbGVhc3VyZS4="
     };
 
-    for (uint8_t i = 0; i < SIZE(input); ++i)
+    for (uint8_t i = 0; i < LENGTH(input); ++i)
     {
         errno = 0;
 
