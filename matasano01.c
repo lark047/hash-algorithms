@@ -43,7 +43,7 @@ const char *EncodeBase64(const char * const msg)
         return NULL;
     }
 
-    for (size_t i = 0; i < strlen(msg); i += 6)
+    for (size_t i = 0; i < msg_length; i += 6)
     {
         /* operate on 3 bytes at a time */
         uint8_t bytes[3] = {0};
@@ -51,7 +51,7 @@ const char *EncodeBase64(const char * const msg)
 
         for (uint8_t j = 0; j < LENGTH(bytes); ++j)
         {
-            if (i + 2 * j >= strlen(msg))
+            if (i + 2 * j >= msg_length)
             {
                 break;
             }
