@@ -10,23 +10,10 @@
 
 #define CHARS  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
-#if 0
-
-/* using uint32_t */
-#  define INDEX1(bytes) ((bytes & 0xfc0000) >> 18)
-#  define INDEX2(bytes) ((bytes & 0x03f000) >> 12)
-#  define INDEX3(bytes) ((bytes & 0x000fc0) >>  6)
-#  define INDEX4(bytes) ((bytes & 0x00003f) >>  0)
-
-#else
-
-/* using uint8_t[3] */
-#  define INDEX1(bytes) (bytes[0] >> 2)
-#  define INDEX2(bytes) (((bytes[0] & 0x03) << 4) | ((bytes[1] & 0xf0) >> 4))
-#  define INDEX3(bytes) (((bytes[1] & 0x0f) << 2) | ((bytes[2] & 0xc0) >> 6))
-#  define INDEX4(bytes) (bytes[2] & 0x3f)
-
-#endif
+#define INDEX1(bytes) (bytes[0] >> 2)
+#define INDEX2(bytes) (((bytes[0] & 0x03) << 4) | ((bytes[1] & 0xf0) >> 4))
+#define INDEX3(bytes) (((bytes[1] & 0x0f) << 2) | ((bytes[2] & 0xc0) >> 6))
+#define INDEX4(bytes) (bytes[2] & 0x3f)
 
 /**
  * Input: (0x)49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d
@@ -71,22 +58,6 @@ const char *EncodeBase64(const char * const msg)
 
             n += sscanf(msg + i + 2 * j, "%2" SCNx8, bytes + j * sizeof *bytes);
         }
-
-#if 0
-        /* convert to base 16 string to use strtoul() */
-        char base16[9];
-        snprintf(base16, sizeof base16, "0x%x%x%x", bytes[0], bytes[1], bytes[2]);
-
-        errno = 0;
-        uint32_t b = (uint32_t) strtoul(base16, NULL, 0);
-
-        if (errno != 0)
-        {
-            fprintf(stderr, "Could not convert %s to uint32_t:", bytes);
-            perror(NULL);
-            return NULL;
-        }
-#endif
 
         char encoded[] = {
             CHARS[INDEX1(bytes)],
