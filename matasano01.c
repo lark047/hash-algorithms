@@ -15,6 +15,8 @@
 #define INDEX3(bytes) (((bytes[1] & 0x0f) << 2) | ((bytes[2] & 0xc0) >> 6))
 #define INDEX4(bytes) (bytes[2] & 0x3f)
 
+#define INDEXOF(c) (strchr(CHARS, c) - CHARS)
+
 /**
  * Input: (0x)49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d
  * Expected output: SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t
@@ -106,39 +108,15 @@ const uint8_t *DecodeBase64(const char * const msg)
 
         /* 010010 010010 011101 101101 */
         /* ^^^^^^ ^^                   */
-        char *p = strchr(CHARS, encoded[0]);
-        hex[3 * i / 4 + 0] = (p - CHARS) << 2;
-
-        p = strchr(CHARS, encoded[1]);
-        hex[3 * i / 4 + 0] |= (p - CHARS) >> 4;
+        hex[3 * i / 4 + 0] = (INDEXOF(encoded[0]) << 2) | (INDEXOF(encoded[1]) >> 4);
 
         /* 010010 010010 011101 101101 */
         /*          ^^^^ ^^^^          */
-        hex[3 * i / 4 + 1] = (p - CHARS) << 4;
-
-        if (encoded[2] != '=')
-        {
-            p = strchr(CHARS, encoded[2]);
-            hex[3 * i / 4 + 1] |= (p - CHARS) >> 2;
-        }
+        hex[3 * i / 4 + 1] = (INDEXOF(encoded[1]) << 4) | (encoded[2] == '=' ? 0x0 : (INDEXOF(encoded[2]) >> 2));
 
         /* 010010 010010 011101 101101 */
         /*                   ^^ ^^^^^^ */
-        if (encoded[2] == '=')
-        {
-            hex[3 * i / 4 + 2] = 0x0;
-        }
-        else
-        {
-            p = strchr(CHARS, encoded[2]);
-            hex[3 * i / 4 + 2] = (p - CHARS) << 6;
-        }
-
-        if (encoded[3] != '=')
-        {
-            p = strchr(CHARS, encoded[3]);
-            hex[3 * i / 4 + 2] |= (p - CHARS) & 0x3f;
-        }
+        hex[3 * i / 4 + 2] = (encoded[2] == '=' ? 0x0 : (INDEXOF(encoded[2]) << 6)) | (encoded[3] == '=' ? 0x0 : (INDEXOF(encoded[3]) & 0x3f));
     }
 
     return hex;
