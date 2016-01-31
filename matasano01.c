@@ -76,22 +76,30 @@ const char *EncodeBase64(const char * const msg)
 
 const uint8_t *DecodeBase64(const char * const msg)
 {
-    if (msg == NULL || strlen(msg) % 4 != 0)
+    size_t msg_length;
+
+    if (msg == NULL || (msg_length = strlen(msg)) % 4 != 0)
     {
         errno = EINVAL;
         return NULL;
     }
-    else if (strlen(msg) == 0)
+    else if (msg_length == 0)
     {
         return NULL;
     }
 
-    uint8_t *hex = malloc(3 * strlen(msg) / 4 + 1); /* TODO check */
+    uint8_t *hex = malloc(3 * msg_length / 4 + 1);
+
+    if (hex == NULL)
+    {
+        errno = ENOMEM;
+        return NULL;
+    }
 
     /* operate on 4 encoded chars at a time */
     char encoded[4];
 
-    for (size_t i = 0; i < strlen(msg); i += 4)
+    for (size_t i = 0; i < msg_length; i += sizeof encoded)
     {
         /* SSdt... */
         memcpy(encoded, msg + i, sizeof encoded);
