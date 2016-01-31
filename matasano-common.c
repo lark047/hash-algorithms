@@ -53,6 +53,7 @@ static const uint32_t SAMPLE_TEXT_LENGTH =
 ;
 
 static void PrintHelper(const uint8_t * const, const uint64_t, const char *, bool, int (*)(int));
+static int alphaplus(int c);
 
 void StringToHex(const char * const msg, uint8_t * const hex)
 {
@@ -70,7 +71,7 @@ void HexToCleanString(const uint8_t * const hex, const uint64_t length, unsigned
 {
     for (uint64_t i = 0; i < length; ++i)
     {
-        msg[i] = (isalpha(hex[i]) || hex[i] == ' ' ? hex[i] : '*');
+        msg[i] = alphaplus(hex[i]) ? hex[i] : '*';
         // if (!(isalpha(hex[i]) || hex[i] == ' ')) { print_d("printing '*' for 0x%02x\n", hex[i]); }
     }
 }
@@ -93,7 +94,7 @@ void PrintHexWithSpace(const uint8_t * const hex, const uint64_t length)
 
 static int alphaplus(int c)
 {
-    return isalpha(c) || ispunct(c) || isspace(c) || isdigit(c);
+    return isalpha(c) || ispunct(c) || c == ' ' || isdigit(c);
 }
 
 void PrintAsString(const uint8_t * const hex, const uint64_t length)
