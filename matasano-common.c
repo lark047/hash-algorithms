@@ -152,7 +152,8 @@ double CalculateScore(const uint8_t * const xor_result, const uint64_t length)
         return DBL_MAX;
     }
 
-    const double hit_score = (double) (ASIZE - text.hits + 1) / ASIZE;
+    // const double hit_score = (double) (ASIZE - text.hits + 1) / ASIZE;
+    const double hit_score = (double) text.length / text.hits; /* inverse to minimize */
     double freq_score = 0;
 
     for (uint8_t i = 0; i < ASIZE; ++i)

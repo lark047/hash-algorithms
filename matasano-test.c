@@ -32,8 +32,8 @@ const char *RunTests(void)
         {
             /* add the tests to the suite */
             if ( CU_ADD_TEST(suite, testEncodeDecodeBase64) != NULL &&
-                CU_ADD_TEST(suite, testFixedXOR) != NULL /* &&
-                CU_ADD_TEST(suite, testDecodeXOR) != NULL &&
+                CU_ADD_TEST(suite, testFixedXOR) != NULL  &&
+                CU_ADD_TEST(suite, testDecodeXOR) != NULL /* &&
                 CU_ADD_TEST(suite, testDecodeXORFromFile) != NULL &&
                 CU_ADD_TEST(suite, testRepeatingKeyXOR) != NULL &&
                 CU_ADD_TEST(suite, testBreakRepeatingKeyXOR) != NULL*/)
@@ -405,7 +405,7 @@ static void testBreakRepeatingKeyXOR(void)
         0x65
     };
 
-    CU_ASSERT_EQUAL(result->keysize, SIZE(expected_key));
+    CU_ASSERT_EQUAL(result->keysize, LENGTH(expected_key));
     CU_ASSERT_PTR_NOT_NULL_FATAL(result->key.ptr);
     CU_ASSERT_PTR_NOT_NULL_FATAL(result->hex);
     CU_ASSERT_PTR_NOT_NULL_FATAL(result->text);
