@@ -9,7 +9,6 @@
 #include "matasano.h"
 
 #define LINESIZE             (60 + 1 + 1)
-#define MIN(a,b)  ((a) < (b) ? (a) : (b))
 
 enum GuessType
 {
