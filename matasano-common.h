@@ -28,6 +28,8 @@ void PrintHex(const uint8_t * const, const uint64_t, const bool);
 void PrintHexWithSpace(const uint8_t * const, const uint64_t);
 void PrintAsString(const uint8_t * const, const uint64_t);
 
+double CalculateScore(const uint8_t * const, const uint64_t);
+
 /* result of XOR decode */
 struct result
 {
