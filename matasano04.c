@@ -44,23 +44,22 @@ const struct result *DecodeXORFromFile(FILE *fp)
         StringToHex(line, hex);
         PrintHexWithSpace(hex, length);
 
-        const struct result *tmp = DecodeXOR(hex, length);
+        const struct result *tmp_result = DecodeXOR(hex, length);
 
-        print_d("length %" PRIu8 " and score %f with key 0x%02x\n", length, tmp->score, tmp->key.c);
+        print_d("length %" PRIu8 " and score %f with key 0x%02x\n", length, tmp_result->score, tmp_result->key.c);
 
-
-        if (result == NULL || tmp->score < result->score)
+        if (result == NULL || tmp_result->score < result->score)
         {
-            print_d("best score is %.5f\n", tmp->score);
-            print_d("decoded with '%c' (0x%02x)\n", (isprint(tmp->key.c) ? tmp->key.c : '*'), tmp->key.c);
-            PrintAsString(tmp->text, 30);
-            result = tmp;
+            print_d("best score is %.5f\n", tmp_result->score);
+            print_d("decoded with '%c' (0x%02x)\n", (isprint(tmp_result->key.c) ? tmp_result->key.c : '*'), tmp_result->key.c);
+            PrintAsString(tmp_result->text, 30);
+            result = tmp_result;
         }
         else
         {
-            free((void *) tmp->hex);
-            free(tmp->text);
-            free((void *) tmp);
+            free((void *) tmp_result->hex);
+            free(tmp_result->text);
+            free((void *) tmp_result);
         }
     }
 
