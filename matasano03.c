@@ -18,10 +18,10 @@ const struct result *DecodeXOR(const uint8_t * const hex, const uint64_t length)
     const uint8_t  *xor_result;
     uint8_t        *buffer = malloc(length * sizeof *buffer); /* TODO check */
     uint8_t         key = 0;
-    double          score, min_score = DBL_MAX;
+    double          min_score = DBL_MAX;
 
     /* from 0x00 to 0xff */
-    for (uint16_t c = 0; c <= UCHAR_MAX; ++c)
+    for (uint8_t c = 0; c < UCHAR_MAX; ++c)
     {
         memset(buffer, c, length);
         xor_result = FixedXOR(hex, buffer, length);
@@ -32,13 +32,14 @@ const struct result *DecodeXOR(const uint8_t * const hex, const uint64_t length)
         tmpbuf[length] = '\0';
 #endif
 
-        score = CalculateScore(xor_result, length);
+        double score = CalculateScore(xor_result, length);
         free((void *) xor_result);
 
         if (score != DBL_MAX)
         {
             print_d("score with key '%c' (0x%02x) is %.5f \"%s\"\n", isprint((int) c) ? (int) c : ' ', (int) c, score, tmpbuf);
         }
+
 #ifdef DEBUG
         free(tmpbuf);
 #endif
