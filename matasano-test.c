@@ -34,8 +34,8 @@ const char *RunTests(void)
             if ( CU_ADD_TEST(suite, testEncodeDecodeBase64) != NULL &&
                 CU_ADD_TEST(suite, testFixedXOR) != NULL  &&
                 CU_ADD_TEST(suite, testDecodeXOR) != NULL &&
-                CU_ADD_TEST(suite, testDecodeXORFromFile) != NULL /* &&
-                CU_ADD_TEST(suite, testRepeatingKeyXOR) != NULL &&
+                CU_ADD_TEST(suite, testDecodeXORFromFile) != NULL &&
+                CU_ADD_TEST(suite, testRepeatingKeyXOR) != NULL /* &&
                 CU_ADD_TEST(suite, testBreakRepeatingKeyXOR) != NULL*/)
             {
                 /* Run all tests using the CUnit Basic interface */

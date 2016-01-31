@@ -2,29 +2,39 @@
 #include <stdlib.h>
 #include <string.h>
 #include <inttypes.h>
+#include <errno.h>
 
 #include "matasano.h"
 
 const uint8_t *RepeatingKeyXOR(const uint8_t * const msg, uint64_t msg_length, const uint8_t * const key, uint64_t key_length)
 {
+    errno = 0;
+
     if (msg == NULL || key == NULL)
     {
         /* TODO maybe a better way? */
+        errno = EINVAL;
         return NULL;
     }
 
     print_d("start RepeatingKeyXOR(msg, %" PRIu64 ", key, %" PRIu64 ")\n", msg_length, key_length);
-    uint8_t *buffer = malloc(msg_length); /* TODO check */
+    uint8_t *buffer = malloc(msg_length);
 
-    if (msg_length == key_length)
+    if (buffer == NULL)
     {
-        memcpy(buffer, key, key_length);
+        errno = ENOMEM;
+        return NULL;
     }
-    else if (msg_length > key_length)
+
+    if (key_length >= msg_length)
+    {
+        memcpy(buffer, key, MIN(key_length, msg_length));
+    }
+    else if (key_length < msg_length)
     {
         memset(buffer, 0, msg_length);
 
-        size_t i;
+        uint64_t i;
 
         for (i = 0; i < msg_length; i+= key_length)
         {
