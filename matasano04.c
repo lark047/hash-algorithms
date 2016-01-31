@@ -48,11 +48,12 @@ const struct result *DecodeXORFromFile(FILE *fp)
 
         print_d("length %" PRIu8 " and score %f with key 0x%02x\n", length, tmp->score, tmp->key.c);
 
-        // print_d("decoded with '%c' (0x%02x)\n", (isprint(tmp->key) ? tmp->key : '*'), tmp->key);
-        // PrintAsString(tmp->text, 30);
 
-        if (result == NULL || result->score < tmp->score)
+        if (result == NULL || tmp->score < result->score)
         {
+            print_d("best score is %.5f\n", tmp->score);
+            print_d("decoded with '%c' (0x%02x)\n", (isprint(tmp->key.c) ? tmp->key.c : '*'), tmp->key.c);
+            PrintAsString(tmp->text, 30);
             result = tmp;
         }
         else
