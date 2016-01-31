@@ -2,14 +2,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <errno.h>
 
 #include "matasano.h"
 
 const uint8_t *FixedXOR(const uint8_t * const hex1, const uint8_t * const hex2, const uint64_t length)
 {
+    errno = 0;
+
     if (hex1 == NULL || hex2 == NULL)
     {
-        // TODO
+        errno = EINVAL;
         return NULL;
     }
 
@@ -18,7 +21,7 @@ const uint8_t *FixedXOR(const uint8_t * const hex1, const uint8_t * const hex2, 
 
     if (result == NULL)
     {
-        // TODO
+        errno = ENOMEM;
         return NULL;
     }
 

@@ -31,8 +31,8 @@ const char *RunTests(void)
         if ((suite = CU_add_suite("Matasano Crypto Challenge #1", NULL, NULL)) != NULL)
         {
             /* add the tests to the suite */
-            if ( CU_ADD_TEST(suite, testEncodeDecodeBase64) != NULL /* &&
-                CU_ADD_TEST(suite, testFixedXOR) != NULL &&
+            if ( CU_ADD_TEST(suite, testEncodeDecodeBase64) != NULL &&
+                CU_ADD_TEST(suite, testFixedXOR) != NULL /* &&
                 CU_ADD_TEST(suite, testDecodeXOR) != NULL &&
                 CU_ADD_TEST(suite, testDecodeXORFromFile) != NULL &&
                 CU_ADD_TEST(suite, testRepeatingKeyXOR) != NULL &&
@@ -253,12 +253,14 @@ static void testFixedXOR(void)
     const uint8_t *result;
 
     result = FixedXOR(NULL, NULL, 0);
+    CU_ASSERT_EQUAL(errno, EINVAL);
     CU_ASSERT_PTR_NULL(result);
 
     uint8_t *hex1 = malloc(1 * sizeof *hex1), *hex2;
     hex1[0] = 0xff;
 
     result = FixedXOR(hex1, NULL, 1);
+    CU_ASSERT_EQUAL(errno, EINVAL);
     CU_ASSERT_PTR_NULL(result);
     FREE(hex1);
 
