@@ -28,8 +28,7 @@ const struct result *DecodeXOR(const uint8_t * const hex, const uint64_t length)
         return NULL;
     }
 
-    /* from 0x00 to 0xff */
-    for (uint8_t c = 0; c < UCHAR_MAX; ++c)
+    for (uint16_t c = 0x00; c <= UCHAR_MAX /* 0xff */; ++c)
     {
         memset(buffer, c, length);
         xor_result = FixedXOR(hex, buffer, length);
