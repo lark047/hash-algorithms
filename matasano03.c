@@ -4,6 +4,7 @@
 #include <limits.h>
 #include <stdint.h>
 #include <float.h>
+#include <errno.h>
 
 #ifdef DEBUG
 #  include <ctype.h>
