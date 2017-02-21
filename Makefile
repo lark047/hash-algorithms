@@ -240,20 +240,6 @@ sha512-256-test-debug.o: sha512-256-test.c sha512-256-debug.o hmac-debug.o
 	$(CC) $(CFLAGS) -c $< -o $@ -DSHA512256 $(DEBUG)
 
 
-#### Matasano challenge ####
-
-matasano : matasano.o matasano-common.o \
-	   matasano01.o matasano02.o matasano03.o matasano04.o \
-	   matasano05.o matasano06.o \
-	   matasano-test.o
-	$(CC) $(CFLAGS) -L$(LIB-DIR) $(DEBUG) -lm $^ -o $@ -l$(LIB-CUNIT)
-
-matasano-common.o : matasano-common.c matasano.h matasano-common.h
-	$(CC) $(CFLAGS) $(DEBUG) -c $< -o $@
-
-matasano%.o : matasano%.c matasano.h matasano-common.o
-	$(CC) $(CFLAGS) $(DEBUG) -c $< -o $@
-
 .PHONY: clean nuke
 
 clean:
